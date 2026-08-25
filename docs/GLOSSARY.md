@@ -37,6 +37,11 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **materializer freshness** — the committed canonical sequence or watermark incorporated and exposed by a derived representation; distinct from ingestion acknowledgement latency.
 - **durability boundary** — the explicitly declared completion condition and platform contract that must be crossed before canonical commit.
 - **durability group** — D3 events sharing one declared synchronization outcome; grouping is not an atomic multi-event transaction.
+- **baseline profile** — a versioned baseline family, semantic D-mode mapping, adapter contract, and complete configuration used to answer one declared experimental question; a product name alone is not a profile.
+- **equivalent candidate** — a baseline profile eligible to attempt like-for-like validation; equivalence exists only after its acknowledgement, adapter, platform, and recovery correctness gates pass.
+- **conditionally equivalent** — a comparison eligible as like-for-like only under explicitly recorded conditions such as the VFS, synchronization path, platform durability contract, and observable group outcomes.
+- **diagnostic comparison** — a useful measurement whose semantic mismatch prevents a like-for-like ranking, including opaque group commit or stronger atomic batch behavior presented separately.
+- **benchmark series** — repetitions sharing one immutable product/source/build/configuration, adapter, workload, durability, repository, and environment identity; a material identity change starts a new series.
 - **recovery oracle** — out-of-band test-controller lifecycle evidence used only to compare recovered canonical history with pre-fault obligations; it is not an authoritative source of system state or recovery input.
 - **uncertain outcome** — an attempt for which canonical commit may have completed but the caller did not receive a conclusive acknowledgement; recovery may contain the canonical event without inventing an acknowledgement.
 - **fail-closed recovery** — an explicit failure or degraded result when canonical status or valid ordering cannot be established, rather than silently accepting, repairing, or promoting physical data.
