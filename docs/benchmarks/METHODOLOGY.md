@@ -92,6 +92,8 @@ A workload must declare:
 - read/write ratio;
 - preconditioning steps.
 
+For EXP-0001, the [reproducible workload contract](../experiments/EXP-0000/WORKLOADS.md) controls these declarations and the minimal matrix. Results must distinguish opaque payload bytes, encoded event bytes, and physical bytes written, and must report each applicable count/rate rather than using payload size as total record size. Comparable systems consume identical or byte-for-byte reproducible semantic operation streams; durability modes with different guarantees are not equivalent workload cells.
+
 ## 8. Isolation of variables
 
 Prefer experiments that change one independent variable at a time.
