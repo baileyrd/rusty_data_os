@@ -55,16 +55,11 @@ Each result must distinguish intended guarantees from fault behavior actually de
 
 ## 5. Workload dimensions
 
-At minimum vary:
+All streams and matrix expansions must follow the frozen [EXP-0000 reproducible workload contract](EXP-0000/WORKLOADS.md). Its primary payload points are P1 (32 bytes), P2 (256 bytes), and P3 (4 KiB); P0 and P4 are boundary diagnostics, and P5 is a separately reported optional stress case. The primary mixed profiles have exact deterministic class counts and semantic class order. This does not claim byte-for-byte regeneration until the remaining content, identity, and envelope generation rules are frozen or an immutable digested stream is supplied.
 
-- event payload size;
-- fixed versus variable payload size;
-- single producer versus multiple producers;
-- queue depth / outstanding operations;
-- batch size where applicable;
-- durability class.
+Every run declares measured extent, warm-up, producers, outstanding queue depth, batching/group policy, D0–D3 mode, payload distribution and content, envelope profile, temporal profile, generator/seed, and cache/preconditioning state. The single-producer, queue-depth-one case is the reference, not a universal concurrency prescription. Primary comparisons use deterministic high-variation content, the minimal envelope, and monotonic effective time; content, optional envelope metadata, temporal behavior, and concurrency are changed separately unless a predeclared interaction hypothesis justifies a factorial subset.
 
-Initial payload sizes should include small metadata-like events and larger data-bearing events; exact values must be declared before benchmark runs.
+Data OS and baselines must consume semantically equivalent deterministic operation streams. The single-producer reference preserves one predeclared global ordinal-to-assigned-sequence order. Concurrent cases preserve the operation set, producer assignment, and each producer's local order; absent a controlled global submission schedule, cross-producer interleaving and the ordinal-to-assigned-sequence mapping are observed and need not match between systems. Each mapping must be recorded and checked for unique monotonic assignment. D0/D1 checks make no canonical-history or replay claim. In D2/D3, assigned sequence determines canonical replay order only for canonically committed events; deterministic replay and no unexplained loss, duplication, or invention are checked against the declared successful/eligible operation set for that mode. Failed or uncommitted candidates need not appear as canonical events, and resulting gaps are reported without selecting a sequencing-gap policy. Effective time never replaces the assigned sequence or canonical replay order of committed events. Payload, encoded-event, and physical byte counts and rates remain distinct, and durability modes are never treated as equivalent guarantees.
 
 ## 6. Metrics
 

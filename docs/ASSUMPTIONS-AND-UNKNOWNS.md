@@ -31,3 +31,6 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-015 | Concrete crash/fault-injection mechanisms and physical validity detection for partial, torn, truncated, or uncertain outcomes; the semantic procedure and required classifications are defined by the EXP-0000 crash/recovery correctness contract. |
 | UNK-016 | Retry and uncertain-outcome policy after persistence or D3 group synchronization errors. |
 | UNK-017 | Sequencing gap policy for candidates that fail before canonical commit. |
+| UNK-018 | Platform-independent generator, permutation, identity, and stream-digest algorithms and their reference test vectors; the workload contract fixes their required reproducibility but not their implementation. |
+| UNK-019 | Physical workload-manifest serialization and storage/reference mechanism. |
+| UNK-020 | Fair EXP-0001 baseline product versions, adapters, and configurations under the frozen workload and durability contracts. |
