@@ -1,9 +1,9 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 0 — Foundation and Measurement Design
+**Status:** Phase 1 planning/readiness — implementation not authorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `c583bbc2c551ff3088d51c35947fb2c81d9fd4d4`
+**Verified starting `main` checkpoint:** `842512cb980d0400bb70d71632da6c7ea56d3773`
 
 ## 1. Current facts
 
@@ -35,7 +35,9 @@ These are constraints on research and correctness, not evidence that the archite
 
 The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. Exact threshold values remain open under UNK-008, and confirmatory execution is blocked until a reviewed execution plan freezes them and all remaining physical inputs. EXP-0000 completion neither configures a product nor authorizes implementation or execution.
 
-[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its next bounded step is an explicit readiness/implementation proposal requiring repository review; confirmatory execution remains blocked by unresolved thresholds, environment, versions, adapters, encodings, integrity mechanisms, serialization, and harness choices. EXP-0000 completion is not automatic implementation authorization.
+[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its repository-recorded planning bridge is the [execution-readiness and staged-implementation plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md), which inventories open blockers, orders readiness increments, and gates every implementation slice. It does not resolve the blockers or authorize implementation or execution. The next bounded increment is R1: minimum physical event-record, framing, integrity-policy, and replay/recovery requirements, without selecting an encoding or checksum algorithm.
+
+Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not Phase 1 implementation. No Phase 1 evidence exists; Cargo or Rust work remains prohibited until the plan's explicit first-implementation authorization gate passes.
 
 ## 5. Decision policy
 
