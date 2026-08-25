@@ -4,7 +4,7 @@ Rusty Data OS is explicitly fact-based and data-driven. Benchmark methodology is
 
 ## 1. General rule
 
-A benchmark result is evidence only when another contributor can understand what was measured, under what semantics, and under what environment.
+A benchmark result is evidence only when another contributor can understand what was measured, under what semantics, and under what environment. EXP-0001 evidence must also pass the frozen [interpretation and decision contract](INTERPRETATION-CRITERIA.md).
 
 ## 2. Equivalence before comparison
 
@@ -138,11 +138,11 @@ Once a benchmark becomes a recognized baseline, future changes should report bot
 
 Do not impose a universal rule such as "must be 10% faster." Different architectural decisions have different trade spaces.
 
-Whenever practical, an experiment should predeclare what outcome would:
+Before confirmatory EXP-0001 execution, the interpretation contract requires a versioned per-cell threshold registry and frozen analysis specification. More generally, an experiment should predeclare what outcome would:
 
 - support the hypothesis;
 - refute the hypothesis;
 - be practically equivalent/noise;
 - require further investigation.
 
-The rationale for those thresholds must be documented.
+The rationale for those thresholds must be documented. Unresolved thresholds permit descriptive or exploratory reporting only; they do not permit post-hoc confirmatory interpretation.

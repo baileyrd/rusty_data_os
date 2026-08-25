@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `05b77516b9155aaa419093c7fa860e37d5517ecc`
+**Verified starting `main` checkpoint:** `c583bbc2c551ff3088d51c35947fb2c81d9fd4d4`
 
 ## 1. Current facts
 
@@ -31,11 +31,11 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 4. Active and next incomplete increments
 
-[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), [reproducible workload contract](experiments/EXP-0000/WORKLOADS.md), [EXP-0001 baseline contract](benchmarks/BASELINES.md), [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) are complete. The [environment](benchmarks/ENVIRONMENT-TEMPLATE.md) and [raw-result](benchmarks/RAW-RESULT-TEMPLATE.md) record contracts are also complete. Predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is complete as a readiness-documentation experiment. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), [reproducible workload contract](experiments/EXP-0000/WORKLOADS.md), [EXP-0001 baseline contract](benchmarks/BASELINES.md), [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) are complete. The [environment](benchmarks/ENVIRONMENT-TEMPLATE.md) and [raw-result](benchmarks/RAW-RESULT-TEMPLATE.md) record contracts are also complete. The [interpretation and decision contract](benchmarks/INTERPRETATION-CRITERIA.md) completes its outputs by freezing admissibility, analysis, uncertainty, threshold-registry, outcome, trade-space, and ingestion-complexity rules. These are documentation and measurement-readiness outputs, not implementation or evidence.
 
-The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. Predeclared interpretation criteria are the recommended next bounded output; that recommendation neither configures a product nor authorizes implementation or execution.
+The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. Exact threshold values remain open under UNK-008, and confirmatory execution is blocked until a reviewed execution plan freezes them and all remaining physical inputs. EXP-0000 completion neither configures a product nor authorizes implementation or execution.
 
-[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
+[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its next bounded step is an explicit readiness/implementation proposal requiring repository review; confirmatory execution remains blocked by unresolved thresholds, environment, versions, adapters, encodings, integrity mechanisms, serialization, and harness choices. EXP-0000 completion is not automatic implementation authorization.
 
 ## 5. Decision policy
 
