@@ -36,6 +36,10 @@ A representation is therefore treated as a view or projection with measurable qu
 
 ## 4. Initial thesis
 
+The primary research claim is:
+
+> **A single canonical information history can support multiple independently optimized representations with acceptable performance and complexity.**
+
 The initial research thesis is that a system built around:
 
 1. immutable canonical events;

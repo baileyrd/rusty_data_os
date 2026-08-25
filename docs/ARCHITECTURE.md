@@ -55,7 +55,7 @@ Rusty Data OS separates four ideas that traditional database implementations oft
                      +----------------> Row / index / snapshot
 ```
 
-The exact ordering between in-memory application and durable acknowledgement is deliberately unresolved. Multiple durability modes may eventually exist. Early experiments must measure and define the consequences.
+An event becomes canonically committed only after crossing its declared durability boundary. Earlier memory visibility is provisional. Weaker modes may be measured but must not be described as durable canonical commit. Exact pipeline mechanics remain unresolved.
 
 ## 3. Candidate components
 
@@ -63,24 +63,26 @@ The exact ordering between in-memory application and durable acknowledgement is 
 
 Accepts mutation intent. The command representation should not be mistaken for the canonical event representation.
 
-Responsibilities may include:
+Commands have stable request identities for duplicate detection and idempotent retry; request identity is distinct from event identity and does not imply universal exactly-once delivery. Responsibilities may include:
 
 - validation;
 - authorization in later layers;
 - precondition checks;
-- deterministic conversion to one or more events.
+- deterministic conversion to one or more events. EXP-0001 supports only one-event commits; atomic multi-event batches are deferred.
 
 ### 3.2 Event constructor
 
 Creates immutable events containing enough information to preserve meaning and support deterministic replay.
 
-Event identity, ordering, schema/versioning, checksums, timestamps, metadata, and encoding remain research topics.
+Every event has permanent identity independent of sequence and physical location. The minimal versioned envelope covers ordering, temporal meanings, event and information identity, provenance/causal references, payload boundaries, and integrity; the core does not interpret domain payload meaning. Schema definitions and changes are canonical versioned information, although EXP-0001 may treat payload bytes as opaque with schema identity/version. Concrete identity, clock, timestamp, and encoding choices remain open.
 
 ### 3.3 Sequencer / append path
 
 Provides the ordering and append semantics required by the selected correctness model.
 
-This is the focus of the first experiment because it establishes the basic ingest cost before additional database features distort measurement.
+The initial local log uses monotonically increasing sequence numbers for deterministic total replay order. This local constraint makes no commitment to one future distributed global order.
+
+This is the focus of the planned ingestion experiment because it establishes the basic ingest cost before additional database features distort measurement.
 
 ### 3.4 In-memory execution state
 
@@ -164,7 +166,11 @@ reconstructed in-memory state
 
 The project should benchmark recovery and replay as first-class performance dimensions rather than treating startup time as incidental.
 
+A checkpoint identifies the exact canonical-history position represented and must be validatable against that history. It is an optimization, never an alternative authority.
+
 ## 6. Temporal model
+
+The model distinguishes sequence/replay order, effective time, system time, durability time, and observation time. Late-arriving facts are supported: effective time may precede system time.
 
 Canonical history creates opportunities for:
 
@@ -197,7 +203,6 @@ This preserves the ability to embed the engine locally and keeps network latency
 
 Major unresolved questions include:
 
-- whether events should remain the sole canonical durable form;
 - event granularity and encoding;
 - sequencing and concurrency model;
 - acknowledgement/durability modes;
@@ -213,3 +218,5 @@ Major unresolved questions include:
 - distributed behavior.
 
 These are intentionally unresolved. The roadmap exists to resolve them with evidence.
+
+Ordinary compaction may reorganize, compress, or archive canonical history but cannot silently discard its meaning. Destructive retention requires a future explicit, auditable decision.
