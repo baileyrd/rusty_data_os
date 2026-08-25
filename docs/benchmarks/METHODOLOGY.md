@@ -21,6 +21,8 @@ For write tests, document at least:
 
 ## 3. Environment capture
 
+Every series must use the versioned [benchmark environment record contract](ENVIRONMENT-TEMPLATE.md). Its identity and series-freeze rules control when a changed execution context begins a new series; unknown or unavailable facts carry reasons rather than guessed values.
+
 Every published benchmark series should record:
 
 - date/time of run;
@@ -113,6 +115,8 @@ If the project cannot make semantics equivalent, report the mismatch explicitly 
 EXP-0001 follows the [baseline contract](BASELINES.md): every series freezes product/source/build/binding, complete effective configuration, adapter, workload, durability contract, environment, and repository identity. Baseline-native transactions, rows, keys, WAL records, or batches are not presumed to equal canonical events. D0/D1 provisional results are not ranked as equivalent to D2/D3 canonical commit, and atomic or opaque engine grouping is diagnostic unless it satisfies the D3 contract. A material identity or semantic change starts a new series; samples from distinct series are not silently pooled.
 
 ## 11. Raw results
+
+Every observation must follow the versioned [raw benchmark result record contract](RAW-RESULT-TEMPLATE.md), including immutable corrections, explicit missing-value states, correctness gating, artifact provenance, and exact environment/workload/configuration identities.
 
 Prefer machine-readable raw results in addition to summarized tables/charts.
 

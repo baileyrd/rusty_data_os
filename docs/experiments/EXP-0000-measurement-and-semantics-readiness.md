@@ -24,10 +24,10 @@ Experiment 0 is a documentation and measurement-readiness increment. It does not
 - [x] baseline selection and configuration — completed by the [EXP-0001 baseline contract](../benchmarks/BASELINES.md);
 - [x] acknowledgement, visibility, fault, and durability semantics — completed by the [lifecycle and durability contract](EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md);
 - [x] crash/recovery procedures — completed by the [crash/recovery correctness contract](EXP-0000/CRASH-RECOVERY-CORRECTNESS.md);
-- [ ] environment and raw-result templates — incomplete;
+- [x] environment and raw-result templates — completed by the [environment record contract](../benchmarks/ENVIRONMENT-TEMPLATE.md) and [raw-result record contract](../benchmarks/RAW-RESULT-TEMPLATE.md);
 - [ ] interpretation criteria — incomplete.
 
-The completed envelope, workload, baseline, lifecycle/durability, and crash/recovery contracts are bounded readiness outputs, not experimental evidence. Experiment 0 remains incomplete, EXP-0001 is not ready, and no implementation work is authorized. The benchmark environment and raw-result templates are the recommended next bounded output; this is a recommendation, not approval to implement or run a baseline.
+The completed envelope, workload, baseline, lifecycle/durability, crash/recovery, and environment/raw-result contracts are bounded readiness outputs, not experimental evidence. Experiment 0 remains incomplete, EXP-0001 is not ready, and no implementation work is authorized. Predeclared interpretation criteria are the recommended next bounded output; this is a recommendation, not approval to implement or run a baseline.
 
 ## Completion criteria
 
