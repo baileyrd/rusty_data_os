@@ -26,6 +26,8 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **temporal workload profile** — a deterministic rule for effective-time relationships relative to operation ordinals; it does not confer canonical status or generate system, durability, or observation lifecycle times.
 - **workload manifest** — the serialization-neutral declaration needed to regenerate and verify the frozen aspects of an operation stream and its execution settings; until all byte-generation rules are frozen, complete byte identity requires a referenced immutable stream and digest.
 - **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
+- **structural-only integrity mode** — an algorithm-neutral physical-profile capability that validates framing/structure but makes no content-corruption, canonical-recovery, D2, or D3 claim; eligible only for explicitly provisional or diagnostic D0/D1 measurements.
+- **error-detecting integrity mode** — an algorithm-neutral physical-profile capability required for EXP-0001 D2/D3 canonical-history, recovery-correctness, or corruption-detection claims; it detects accidental corruption only within its declared capability and supplies no authenticity or malicious-tampering guarantee.
 - **late-arriving fact** — a fact whose effective time precedes its system time.
 - **correction / retraction** — a newly appended event referencing an affected event; canonical facts are not overwritten.
 - **materialization** — a derived representation optimized for a workload; it is not authoritative history.

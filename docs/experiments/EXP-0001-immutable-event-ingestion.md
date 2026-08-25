@@ -3,7 +3,7 @@
 **Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. All physical choices remain open, and its first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. The [R1 requirements record](EXP-0001/R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md) resolves minimum integrity and recovery policy, but physical encoding and integrity algorithms remain open, and the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -42,7 +42,7 @@ Potential candidates:
 
 Not every candidate must appear in the first implementation.
 
-Each variant must declare its integrity mode and any claimed corruption or truncation detection capability explicitly enough to measure. Per-event integrity metadata is conditional on that mode: the checksummed versus non-checksummed comparison remains a candidate, while Experiment 0 still must define the minimum required integrity policy before EXP-0001 is ready.
+Each variant must declare its integrity mode and any claimed corruption or truncation detection capability explicitly enough to measure. R1 requires an algorithm-neutral structural-only mode for provisional/diagnostic D0/D1 work and an error-detecting mode for any D2/D3 canonical-history, recovery-correctness, or corruption-detection claim. Concrete profiles and algorithms remain open.
 
 ## 4. Durability modes
 
@@ -118,7 +118,7 @@ All evidence and conclusions must follow the frozen [EXP-0001 interpretation and
 
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. The readiness proposal now exists but does not resolve its blocker registry; its next bounded step is R1, the minimum physical event-record, framing, integrity-policy, and replay/recovery requirements.
+A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. The readiness plan and R1 requirements record now resolve BLK-002 and BLK-013 without evidence or implementation authorization. BLK-001/003 remain open, and R2 deterministic workload bytes, identity/reference inputs, and digests is next.
 
 ## 11. Completion criteria
 

@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 1 planning/readiness — implementation not authorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `842512cb980d0400bb70d71632da6c7ea56d3773`
+**Verified starting `main` checkpoint:** `ee9d3e89602576f9ad70280f6d9dba40a206c62f`
 
 ## 1. Current facts
 
@@ -35,7 +35,7 @@ These are constraints on research and correctness, not evidence that the archite
 
 The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. Exact threshold values remain open under UNK-008, and confirmatory execution is blocked until a reviewed execution plan freezes them and all remaining physical inputs. EXP-0000 completion neither configures a product nor authorizes implementation or execution.
 
-[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its repository-recorded planning bridge is the [execution-readiness and staged-implementation plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md), which inventories open blockers, orders readiness increments, and gates every implementation slice. It does not resolve the blockers or authorize implementation or execution. The next bounded increment is R1: minimum physical event-record, framing, integrity-policy, and replay/recovery requirements, without selecting an encoding or checksum algorithm.
+[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its repository-recorded planning bridge is the [execution-readiness and staged-implementation plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md), which inventories open blockers, orders readiness increments, and gates every implementation slice. Its [R1 physical-record, integrity, and recovery requirements](experiments/EXP-0001/R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md) now resolve BLK-002 and BLK-013 as requirements-only constraints while BLK-001 and BLK-003 remain open. R2—deterministic workload bytes, identity/reference inputs, and digests—is the next bounded increment. Implementation, Cargo bootstrap, fixtures, validators, and execution remain unauthorized.
 
 Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not Phase 1 implementation. No Phase 1 evidence exists; Cargo or Rust work remains prohibited until the plan's explicit first-implementation authorization gate passes.
 
