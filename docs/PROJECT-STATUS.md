@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `637ccf26f04d683f7f80173645d0103c5039111a`
+**Verified starting `main` checkpoint:** `f671e19fe7b6fad5ccffa30ea53abf29a94846a3`
 
 ## 1. Current facts
 
@@ -31,9 +31,9 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 4. Active and next incomplete increments
 
-[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its first bounded output, the [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), is complete. Workload distributions, baselines, acknowledgement/visibility/fault/durability semantics, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria remain incomplete. This is documentation and measurement readiness, not implementation or evidence collection.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md) and [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md) are complete. Workload distributions, baselines, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
 
-The next recommended bounded Experiment 0 sub-increment is to define acknowledgement, visibility, fault, and durability semantics because those definitions must resolve the envelope's measurement-critical lifecycle timing ambiguities before comparable ingestion measurements. This recommendation is neither approval nor completion of that work.
+The next recommended bounded Experiment 0 sub-increment is to define crash/recovery correctness procedures against the now-declared fault taxonomy. This recommendation neither resolves integrity policy nor authorizes implementation.
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
 

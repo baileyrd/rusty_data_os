@@ -25,3 +25,9 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **materialization** — a derived representation optimized for a workload; it is not authoritative history.
 - **checkpoint** — a validatable rebuild/recovery optimization identifying the exact history position represented.
 - **canonical commit** — acceptance only after the declared durability boundary; earlier memory visibility is provisional.
+- **caller acknowledgement** — the result returned for a command attempt; a successful result must name its durability mode, lifecycle point, canonical/provisional status, and measured interval.
+- **provisional visibility** — observation of an uncommitted candidate by a reader whose contract exposes that status and permits later disappearance; it is never canonical-reader visibility.
+- **canonical-reader visibility** — availability to a reader of authoritative canonical history, never before canonical commit.
+- **materializer freshness** — the committed canonical sequence or watermark incorporated and exposed by a derived representation; distinct from ingestion acknowledgement latency.
+- **durability boundary** — the explicitly declared completion condition and platform contract that must be crossed before canonical commit.
+- **durability group** — D3 events sharing one declared synchronization outcome; grouping is not an atomic multi-event transaction.

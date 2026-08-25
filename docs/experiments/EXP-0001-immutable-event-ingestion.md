@@ -42,16 +42,16 @@ Not every candidate must appear in the first implementation.
 
 Each variant must declare its integrity mode and any claimed corruption or truncation detection capability explicitly enough to measure. Per-event integrity metadata is conditional on that mode: the checksummed versus non-checksummed comparison remains a candidate, while Experiment 0 still must define the minimum required integrity policy before EXP-0001 is ready.
 
-## 4. Durability classes
+## 4. Durability modes
 
-Benchmarks must label the exact acknowledgement semantics. Initial classes to define may include:
+Benchmarks must follow the D0–D3 modes and result-declaration requirements in the [EXP-0000 acknowledgement, visibility, fault, and durability contract](EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md):
 
-- **D0 — process-memory accepted:** acknowledged after insertion into process memory; does not survive process failure.
-- **D1 — OS-buffer accepted:** bytes handed to the operating system but not explicitly synchronized to stable storage.
-- **D2 — stable-storage sync:** acknowledgement occurs only after the selected OS/filesystem sync operation returns successfully.
-- **D3 — grouped stable-storage sync:** a group of events shares a sync operation; acknowledgement semantics and failure window must be explicit.
+- **D0 — process-memory provisional acceptance:** never canonical commit.
+- **D1 — OS-buffer provisional acceptance:** no explicit declared stable-storage synchronization and never canonical commit.
+- **D2 — per-event declared stable-storage synchronization:** canonical only under the recorded platform durability contract.
+- **D3 — grouped declared stable-storage synchronization:** canonical only under the recorded platform contract; a durability group is not an atomic multi-event transaction.
 
-Names may change before implementation. Semantics must not be ambiguous.
+Each result must distinguish intended guarantees from fault behavior actually demonstrated. No synchronization call universally implies power-loss durability.
 
 ## 5. Workload dimensions
 
@@ -90,14 +90,17 @@ Collect where practical:
 
 Performance results are invalid unless applicable invariants pass.
 
-Candidate invariants:
+Required obligations, refined by the lifecycle contract and the later crash/recovery procedure:
 
-1. every acknowledged event that the selected durability class promises to retain is recoverable after the corresponding fault model;
+1. every canonically acknowledged D2/D3 event is recoverable after every fault its recorded platform contract claims; D0/D1 acknowledgements remain provisional and are never recovered or exposed as committed merely because they were acknowledged;
 2. recovered event order matches declared sequencing semantics;
 3. partial/torn terminal records are detected and handled deterministically;
 4. checksums, if enabled, detect intentional corruption within their documented capability;
 5. duplicate or missing sequence identifiers are detectable;
 6. replay never silently invents events.
+7. explicit persistence or synchronization errors never produce successful acknowledgement; a failed D3 group acknowledges no member as committed;
+8. canonical-reader and committed-history materializer visibility never precede canonical commit, while any earlier exposure is explicitly provisional;
+9. every latency sample names its lifecycle interval; D3 per-event latency includes that event's group-formation wait through its own acknowledgement return.
 
 ## 8. Baselines
 
