@@ -21,7 +21,7 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-005 | Concurrency, batching, and multi-event transaction design. |
 | UNK-006 | Checkpoint format and validation mechanism. |
 | UNK-007 | Query, materialization, retention, replication, and distributed designs. |
-| UNK-008 | Quantitative thresholds for acceptable performance and complexity across selected workloads. |
+| UNK-008 | Quantitative thresholds for acceptable performance and ingestion-path complexity across selected workloads. The interpretation contract defines their registry fields, but justified per-cell values remain unresolved and block confirmatory interpretation until frozen by the EXP-0001 execution plan. |
 | UNK-009 | Permanent event-identity assignment authority and exact lifecycle point. |
 | UNK-010 | Exact system-acceptance-time capture point relative to sequencing. |
 | UNK-011 | Observation-side metadata retention, observer/context identity and multiplicity rules, and criteria for appending an observation as a separate canonical event. |
