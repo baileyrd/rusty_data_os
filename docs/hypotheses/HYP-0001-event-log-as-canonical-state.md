@@ -5,7 +5,7 @@
 
 ## Hypothesis
 
-A data engine using an immutable canonical event history together with derived in-memory state can achieve competitive or superior performance for selected workloads while decoupling logical information from any single persistent row, column, vector, graph, or document representation.
+A single canonical information history can support multiple independently optimized representations with acceptable performance and complexity while decoupling logical information from any single persistent row, column, vector, graph, or document representation.
 
 ## Motivation
 
@@ -48,7 +48,8 @@ No single synthetic benchmark can prove HYP-0001. The purpose of the research pr
 
 ## Related experiments
 
-- `EXP-0001` — Immutable Event Ingestion (planned)
+- `EXP-0000` — Measurement and Semantics Readiness (planned next; incomplete)
+- `EXP-0001` — Immutable Event Ingestion (planned; blocked by EXP-0000)
 
 ## Related decisions
 

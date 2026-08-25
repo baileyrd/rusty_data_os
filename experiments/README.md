@@ -6,4 +6,4 @@ Experimental code is allowed to be narrow, disposable, duplicated, or deliberate
 
 Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.
 
-The first planned implementation directory is expected to correspond to `docs/experiments/EXP-0001-immutable-event-ingestion.md`.
+No implementation or Cargo project exists. `EXP-0000` must establish measurement readiness before any directory for `EXP-0001` is created.

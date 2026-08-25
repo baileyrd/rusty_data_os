@@ -40,3 +40,10 @@ Foundational technical ADRs should cite experiment evidence whenever the decisio
 ## Rule
 
 An ADR records why a choice was made under known evidence and constraints. It is not proof that the choice can never change.
+
+## Registry
+
+| ADR | Status | Scope |
+|---|---|---|
+| [ADR-0001](ADR-0001-evidence-driven-architecture.md) | Accepted | Evidence-driven governance process. |
+| [ADR-0002](ADR-0002-foundational-canonical-history-constraints.md) | Accepted | Approved semantic research constraints; not empirical validation. |

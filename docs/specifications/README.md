@@ -4,6 +4,8 @@ Specifications define behavior that has become sufficiently understood and stabl
 
 This directory intentionally begins without engine specifications.
 
+**Registry status:** no specifications exist. Approved research constraints are recorded in [ADR-0002](../adr/ADR-0002-foundational-canonical-history-constraints.md) and the [requirements registry](../REQUIREMENTS.md), not promoted to an implementation specification.
+
 ## Promotion rule
 
 Do not write a specification merely to make an exploratory idea look official.

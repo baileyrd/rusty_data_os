@@ -1,103 +1,52 @@
 # Project Status
 
-**Project:** Rusty Data OS  
-**Status:** Phase 0 — Foundation and Measurement Design  
+**Project:** Rusty Data OS
+**Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
+**Verified starting checkpoint:** `cd9ab9380a05b41ca0f28663d2e73e5a25b9abee`
 
-## 1. Established direction
+## 1. Current facts
 
-The project began from the observation that database systems commonly force early commitment to a physical representation—row, column, graph, vector, document, key/value, or similar—despite the deeper commonality that these are alternative views of data.
+This repository is documentation-only. No engine implementation, Cargo baseline, CI configuration, or benchmark evidence exists. No event encoding, identity algorithm, timestamp representation, clock source, concurrency model, checkpoint format, transaction model, query language, or distributed design has been selected.
 
-The working direction is to investigate a system where:
+The conceptual architecture is a research direction, not a benchmark-validated design.
 
-- immutable events are the candidate canonical history;
-- active work occurs against in-memory state;
-- persistent and specialized representations are derived materializations;
-- materializations are rebuildable;
-- durability boundaries are explicit;
-- architecture decisions are evidence-driven;
-- server behavior is deferred until the core engine has been characterized.
+## 2. Approved foundation
 
-## 2. Agreed principles
+The primary unproven research claim is that a single canonical information history can support multiple independently optimized representations with acceptable performance and complexity.
 
-The following are currently accepted as the project foundation, subject to revision if evidence contradicts them:
+The approved semantic constraints are recorded in [ADR-0002](adr/ADR-0002-foundational-canonical-history-constraints.md) and [REQ-001 through REQ-014](REQUIREMENTS.md). In summary:
 
-1. Events are canonical candidates; state is derived.
-2. Memory is the primary execution substrate.
-3. Persistence and execution should be separable concerns.
-4. Materializations should be rebuildable.
-5. Time/history should be first-class.
-6. Storage models are projections, not assumed ownership models.
-7. Every major performance/architecture claim must be benchmarkable.
-8. Failed experiments are preserved.
-9. Correctness and durability semantics gate performance claims.
-10. The embedded/core engine comes before a server layer.
+- canonical events are accepted facts, while commands are requested intent and rejected commands remain separate evidence;
+- canonical history alone is authoritative; memory, checkpoints, indexes, and materializations are derived;
+- local monotonic sequence provides deterministic replay without committing future distributed ordering;
+- temporal, permanent identity, provenance, correction/retraction, schema-version, payload-boundary, compaction, checkpoint, and durability semantics are explicit;
+- EXP-0001 is restricted to single-event commit and opaque payloads with schema identity/version.
 
-## 3. Current architecture maturity
+These are constraints on research and correctness, not evidence that the architecture performs acceptably.
 
-The architecture in `ARCHITECTURE.md` is conceptual and exploratory. No event encoding, concurrency model, log format, checkpoint mechanism, transaction model, or query language has been selected as final.
+## 3. Active hypothesis
 
-## 4. Active hypothesis
+[HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. No implementation or experimental result supports or refutes it yet.
 
-`HYP-0001` asks whether an immutable canonical event history plus derived in-memory state can achieve competitive or superior behavior while decoupling logical data from physical storage representation.
+## 4. Next incomplete increment
 
-This hypothesis is broad. It will be decomposed into smaller experiments rather than tested as one monolithic implementation.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is next. It must define the semantic envelope, workload distributions, baselines, durability/fault semantics, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria. It is documentation and measurement readiness, not implementation or evidence collection.
 
-## 5. Next experiment
+[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
 
-The next planned executable work is:
+## 5. Decision policy
 
-**EXP-0001 — Immutable Event Ingestion**
-
-Scope is intentionally narrow:
-
-```text
-caller -> event construction -> sequencing/append -> durability boundary
-```
-
-Excluded from EXP-0001:
-
-- SQL;
-- indexes;
-- secondary materializers;
-- generalized plugin framework;
-- networking/server;
-- transactions beyond what is required to define single-event correctness;
-- distributed behavior.
-
-## 6. Work required before EXP-0001 implementation
-
-Before performance code is treated as benchmark evidence:
-
-- finalize the initial benchmark environment reporting template;
-- define initial event payload sizes/workload distributions;
-- choose baseline primitives/systems for comparison;
-- specify exact durability modes to be measured;
-- define crash/recovery correctness tests;
-- define raw-result storage conventions.
-
-## 7. Decision policy
-
-The project does not adopt architecture through consensus by intuition alone.
-
-For major choices:
+Foundational empirical claims follow:
 
 ```text
 Hypothesis -> Experiment -> Evidence -> ADR -> Specification -> Core code
 ```
 
-A result may support, refute, narrow, or leave a hypothesis inconclusive.
+Governance and approved research constraints may be decided before empirical validation when their evidence classification is explicit. They must not be presented as proven performance claims.
 
-## 8. Repository continuity
+## 6. Continuity and navigation
 
-A new contributor or AI agent should read, in order:
+Read [AGENTS.md](../AGENTS.md) and [CHATGPT_WORKFLOW.md](../CHATGPT_WORKFLOW.md) first, then the authorities in the order they prescribe. Supporting registries are the [glossary](GLOSSARY.md), [assumptions and unknowns](ASSUMPTIONS-AND-UNKNOWNS.md), [research questions](RESEARCH-QUESTIONS.md), [requirements](REQUIREMENTS.md), and [traceability registry](TRACEABILITY.md).
 
-1. `/AGENTS.md`
-2. `/docs/PROJECT-STATUS.md`
-3. `/docs/VISION.md`
-4. `/docs/PRINCIPLES.md`
-5. `/docs/ARCHITECTURE.md`
-6. `/docs/RESEARCH-ROADMAP.md`
-7. Applicable hypothesis, experiment, benchmark, ADR, and specification files.
-
-The latest `main` branch is authoritative.
+The latest `main` branch is authoritative over conversation memory. The checkpoint above records the verified repository starting point for this continuity increment; it is not experiment evidence.

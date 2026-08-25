@@ -6,9 +6,9 @@ These principles define the current conceptual foundation. Some are research ass
 
 Rows, columns, vectors, graphs, documents, and indexes are representations of information optimized for different access patterns. The system should avoid allowing one representation to become the permanent conceptual owner of the data unless evidence shows that such ownership is necessary.
 
-## P-002 — Events are the candidate canonical history
+## P-002 — Accepted facts form canonical history
 
-Mutations should be representable as immutable events. Events describe what happened; derived state describes the result.
+Canonical events represent accepted facts. Commands represent requested intent, and rejected commands remain separate operational or audit evidence. Accepted facts are corrected or retracted by appending referencing events, never by overwriting history.
 
 This is a hypothesis-bearing principle, not yet a performance claim. The cost, encoding, ordering, storage, and recovery implications must be measured.
 
@@ -40,7 +40,7 @@ Rebuildability creates freedom to change physical layout as workloads evolve.
 
 If history is preserved canonically, replay, rewind, point-in-time reconstruction, audit, temporal debugging, and alternative materialization become natural capabilities rather than unrelated bolt-ons.
 
-Time semantics must be explicit: event order, logical time, wall-clock time, commit/durability time, and observation time are not automatically equivalent.
+Time semantics must distinguish deterministic sequence/replay order, effective time, system acceptance time, durability time, and observation time. Effective time may precede system time for late-arriving facts.
 
 ## P-008 — Durability is a contract, not a feeling
 
