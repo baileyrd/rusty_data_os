@@ -24,9 +24,11 @@ Exit criteria:
 - baseline systems/primitives are identified;
 - target test environments can be recorded consistently.
 
-The next incomplete increment is `EXP-0000`. `EXP-0001` is planned but blocked until this phase exits.
+Phase 0 exited when EXP-0000 and these documentation criteria were completed. This is a readiness exit, not implementation or experimental evidence.
 
 ## Phase 1 — Canonical event ingestion
+
+**Current substate:** planning/readiness. EXP-0001 is proposed, is not ready to execute, and has no implementation or evidence. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) controls the remaining decisions, first-slice authorization, and separate descriptive and confirmatory gates. The next increment is R1: minimum physical event-record, framing, integrity-policy, and replay/recovery requirements; R1 must not select an encoding or checksum algorithm.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
