@@ -23,15 +23,17 @@ No ADR is required: this record makes no durable architecture selection. It is a
 | `seed` | Canonical unsigned-decimal representation of an unsigned 64-bit value; no sign, whitespace, separators, alternate radix, or leading zeros except the single value `0`. |
 | `segment_operation_ordinal` | Non-negative, segment-local ordinal with a declared legal bound; ordinal zero in each segment is distinct. |
 | `payload_size_class`, `payload_length` | Assigned P0–P5 class and its exact byte length; both are checked against the frozen class definition. |
-| `payload_content_profile` | Versioned `deterministic-high-variation`, `repeated-low-variation`, or `all-zero-diagnostic` profile. |
-| `envelope_profile` | Versioned minimal, provenance, causal-reference, or correction/retraction profile. |
+| `payload_content_profile` | Versioned `deterministic-high-variation`, `repeated-low-variation`, or `all-zero` profile. |
+| `envelope_profile` | Versioned `envelope-minimal`, `envelope-provenance`, `envelope-causal-reference`, or `envelope-correction-retraction-reference` profile. |
+| `envelope_semantic_version`, `event_fact_type`, `schema_identity`, `schema_version` | The envelope contract version and the exact event/fact and opaque-payload schema meanings required by the selected profile; none may be inferred from adapter defaults. |
+| `source_provenance`, `actor_provenance` | Applicable source and actor provenance inputs required by the selected envelope profile, with explicit absence where they do not apply. |
 | `temporal_profile`, `logical_effective_time_parameters` | Versioned logical effective-time relationship and all logical ordinal/offset parameters required to derive it. |
 | `producer_identity`, `producer_local_ordinal` | Present where producer assignment applies; producer-local ordinal is independently bounded and must agree with the operation assignment. |
 | `controlled_global_schedule_identity` | Present only when a frozen controlled global schedule exists; otherwise explicitly absent. |
-| `request_identity_namespace`, `event_identity_namespace`, `reference_generation_namespace` | Three distinct, versioned domains; equality or implicit reuse is invalid. |
-| `reference_cardinality`, `target_selection_profile` | Exact cardinality and a versioned deterministic selection rule, including the ordinary-event prefix requirement where applicable. |
+| `request_identity_namespace`, `event_identity_namespace`, `information_identity_namespace`, `reference_generation_namespace` | Four distinct, versioned generation domains; equality or implicit reuse is invalid wherever the corresponding identities or references apply. |
+| `reference_cardinality`, `target_selection_profile`, `reference_fact_semantics` | Exact cardinality, a versioned deterministic selection rule, and the applicable causal, correction, or retraction fact/reference meaning, including the ordinary-event prefix requirement where applicable. |
 
-Every algorithm MUST domain-separate purpose, profile, segment, namespace, and every applicable version. Typed fields and sequences MUST have unambiguous boundaries and type identities; raw concatenation whose decomposition is not unique is forbidden. Required fields cannot be inferred from implementation defaults.
+Every algorithm MUST domain-separate purpose, profile, segment, the request-, event-, information-, and reference-generation namespaces wherever applicable, and every applicable version. Typed fields and sequences MUST have unambiguous boundaries and type identities; raw concatenation whose decomposition is not unique is forbidden. Required fields cannot be inferred from implementation defaults.
 
 Generation MUST NOT depend on wall-clock or benchmark time; system, durability, or observation time; thread scheduling; uncontrolled producer interleaving; host endianness, pointer width, alignment, locale, or filesystem; Data OS or baseline behavior; or incidental random-number-library defaults. It MUST fail explicitly for incomplete or inconsistent tuples, unsupported versions/profiles, invalid lengths or ordinals, arithmetic overflow, and declared resource-limit violations.
 
@@ -39,9 +41,9 @@ Generation MUST NOT depend on wall-clock or benchmark time; system, durability, 
 
 For every valid tuple, output length MUST equal the exact P0–P5 length assigned by the frozen workload contract, including zero bytes for P0. Identical complete versioned inputs MUST produce identical bytes across implementations. Warm-up and measured domains MUST remain distinct even at equal seed and ordinal.
 
-- `deterministic-high-variation` MUST provide deterministic byte-to-byte and event-to-event variation sufficient for its neutral-workload purpose. It MUST NOT be described as cryptographic randomness or measured entropy.
+- `deterministic-high-variation` MUST provide deterministic byte-to-byte and event-to-event variation sufficient for its neutral-workload purpose where the assigned payload length permits variation. P0's required empty output cannot exhibit variation and is not a generation failure. The profile MUST NOT be described as cryptographic randomness or measured entropy.
 - `repeated-low-variation` MUST use the later profile's exactly specified repeat/variation rule and MUST remain domain-separated from other profiles.
-- `all-zero-diagnostic` MUST yield the requested count of zero bytes only because that profile explicitly requests it.
+- `all-zero` MUST yield the requested count of zero bytes only because that profile explicitly requests it.
 
 No adapter may substitute zeroes, compression-friendly patterns, reused implementation-native buffers, or any convenient local representation for generated bytes. Event-to-event variation is mandatory where the chosen profile specifies it. An inability to allocate or emit the exact requested length is a failure, not a truncated or substituted success.
 
@@ -51,12 +53,13 @@ R2 constrains BLK-006 but leaves it open: the expansion mechanism, parameters, d
 
 R2 specifies generator inputs, not identity algorithms, assignment authority, or lifecycle. BLK-004 and R3 retain those decisions.
 
-- Request and event identities MUST use distinct namespaces and MUST NOT be conflated. Information identity remains distinct from both.
+- Request, event, information, and reference-generation domains MUST remain distinct wherever applicable and MUST NOT be conflated. Information identity has its own versioned namespace and remains distinct from request and event identity.
 - Generated identities MUST be stable across adapters and physical representations. Their complete input tuples MUST be deterministic and versioned.
+- Envelope meaning MUST be reproducible from explicit typed inputs and versioned rule references: envelope semantic version, event/fact type, schema identity/version, and applicable source/actor provenance. `envelope-causal-reference` and `envelope-correction-retraction-reference` MUST also determine their exact fact/reference semantics rather than relying on adapter interpretation.
 - A detected collision MUST fail generation with the conflicting inputs identified; silent retry, remapping, replacement, or namespace switching is forbidden.
 - Causal and correction/retraction targets MUST be valid earlier generated event identities in the permitted stream. Cardinality and target selection MUST be deterministic, and a target-bearing stream MUST declare any required prefix of ordinary target events.
 - Self, future, missing, cross-stream, wrong-kind, duplicate-when-forbidden, or otherwise invalid targets MUST fail explicitly.
-- Generator inputs MUST NOT decide canonical commit, retry/idempotency behavior, uncertain outcomes, or sequencing-gap policy.
+- Generator inputs MUST NOT decide canonical commit, retry/idempotency behavior, uncertain outcomes, or sequencing-gap policy. Assigned sequence, system time, durability time, observation time, identity-assignment authority, and lifecycle capture points remain deferred to R3 and MUST NOT be fabricated as R2 generator inputs.
 
 Time remains first-class. The generator produces only the workload's logical effective-time relationships. It MUST NOT fabricate or select representations for system-acceptance, durability, or observation time. Effective time MUST NOT be used as assigned sequence or replay order, including for late-arriving or out-of-effective-order profiles.
 
@@ -106,8 +109,8 @@ These are documentation-level case requirements, not executable fixtures and not
 |---|---|
 | Input normalization | Canonical typed tuples; seed `0` and `18446744073709551615`; malformed decimal forms; missing, ambiguous, unsupported-version, overflowing, and resource-limit cases. |
 | Payload generation | P0 through P5 exact lengths; warm-up/measured separation; ordinal zero, adjacent ordinals, profile boundaries, and large legal ordinals; every content profile; prohibited substitution cases. |
-| Envelope and identity inputs | Minimal, provenance, causal-reference, and correction/retraction profiles; distinct identity namespaces; collision failure; incomplete and cross-namespace inputs. |
-| References | First valid target, ordinary-event prefix, multiple targets, deterministic cardinality/order, and self/future/missing/cross-stream/wrong-kind invalid targets. |
+| Envelope and identity inputs | `envelope-minimal`, `envelope-provenance`, `envelope-causal-reference`, and `envelope-correction-retraction-reference`; envelope semantic version; event/fact type; schema identity/version; applicable source/actor provenance; distinct request, event, information, and reference-generation namespaces; collision failure; incomplete and cross-namespace inputs. |
+| References | Causal and correction/retraction fact/reference semantics; first valid target; ordinary-event prefix; multiple targets; deterministic cardinality/order; and self/future/missing/cross-stream/wrong-kind invalid targets. |
 | Logical time | Every temporal profile, including late-arriving and out-of-effective-order events; cases proving effective time does not reorder replay. |
 | Producer order | Single producer, producer-local order, controlled global order, and an explicit uncontrolled-interleaving declaration whose observed mapping is excluded from shared input. |
 | Serialization | Canonical manifest cases after selection, plus duplicate/conflicting, absent/empty/zero/missing-state, normalization, unknown-field, compatibility, correction, and external-artifact cases. |
