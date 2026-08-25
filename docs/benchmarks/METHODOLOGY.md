@@ -110,6 +110,8 @@ Established systems should be configured by documented settings rather than deli
 
 If the project cannot make semantics equivalent, report the mismatch explicitly and avoid winner/loser claims.
 
+EXP-0001 follows the [baseline contract](BASELINES.md): every series freezes product/source/build/binding, complete effective configuration, adapter, workload, durability contract, environment, and repository identity. Baseline-native transactions, rows, keys, WAL records, or batches are not presumed to equal canonical events. D0/D1 provisional results are not ranked as equivalent to D2/D3 canonical commit, and atomic or opaque engine grouping is diagnostic unless it satisfies the D3 contract. A material identity or semantic change starts a new series; samples from distinct series are not silently pooled.
+
 ## 11. Raw results
 
 Prefer machine-readable raw results in addition to summarized tables/charts.

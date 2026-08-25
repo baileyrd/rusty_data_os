@@ -100,17 +100,11 @@ Required obligations, refined by the lifecycle contract and the [crash/recovery 
 
 ## 8. Baselines
 
-Baselines should include both simple primitives and established systems where semantics can be made comparable.
+The [EXP-0001 baseline contract](../benchmarks/BASELINES.md) selects B0 minimal in-memory, B1 raw OS append, B2 SQLite WAL, and B3 RocksDB WAL. Each answers a distinct cost/behavior question and must use the frozen semantic workload through a versioned adapter.
 
-Potential baseline categories:
+B0 is D0 only. B1 is the primary D1/D2/controlled-D3 primitive. SQLite and RocksDB D1 are provisional and their D2 profiles are only conditionally equivalent under recorded platform contracts. Their atomic multi-event transaction/`WriteBatch` forms are not D3 equivalents; opaque internal group commit is diagnostic unless it satisfies observable D3 membership, acknowledgement, and shared-outcome semantics. Analytic/columnar, vector, graph, server, distributed, and unrelated database baselines are deferred.
 
-- direct Rust/OS file append implementation;
-- a simple in-memory queue/vector lower bound;
-- SQLite WAL modes with explicitly matched durability settings;
-- RocksDB or another log-structured engine where configuration can be documented;
-- other engines only when their semantics can be compared fairly.
-
-The baseline set must be finalized before interpreting results.
+The contract freezes semantic profiles, not exact future binaries or physical adapters. Series-specific versions, effective configuration, adapter mapping, environment, and correctness evidence must be frozen before execution.
 
 ## 9. Benchmark environment
 
@@ -130,6 +124,6 @@ The experiment is complete when:
 - each claimed fault class has valid crash/recovery runs under the declared platform contract, with correctness passing before its performance is interpretable;
 - benchmark harness and configuration are reproducible;
 - raw results are preserved;
-- baselines are run under documented equivalent conditions;
+- B0–B3 applicable profiles are run under the baseline contract, with every conditionally equivalent or diagnostic classification preserved and no excluded semantic form presented like-for-like;
 - a written conclusion identifies supported, unsupported, and unresolved claims;
 - HYP-0001 or follow-on hypotheses are updated without overstating evidence.
