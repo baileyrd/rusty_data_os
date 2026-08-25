@@ -11,7 +11,7 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **event/fact type** — the kind of accepted fact asserted by an event; it does not require the canonical core to interpret domain payload meaning.
 - **schema identity / schema version** — the identity and applicable version of canonical schema information for an opaque payload; these values do not themselves define executable schema behavior.
 - **envelope semantic version** — the version of the core-understood envelope contract, distinct from domain schema identity/version.
-- **sequence number** — monotonically increasing position providing deterministic total order in the initial local log; it makes no distributed-order commitment.
+- **sequence number / assigned local sequence** — a monotonically increasing position assigned to a local event candidate. Assignment fixes ordering behavior but does not itself make the candidate canonical; only canonically committed D2/D3 events contribute their assigned positions to canonical replay order. The policy for gaps left by failed or uncommitted candidates remains unresolved, and no distributed-order commitment is made.
 - **effective time** — when a fact applies in the modeled domain.
 - **system time** — when Data OS accepted a fact.
 - **durability time** — when an event crossed its declared durability boundary.
@@ -22,8 +22,8 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **payload bytes** — bytes inside the opaque domain-payload boundary, excluding the semantic envelope and physical framing.
 - **encoded event bytes** — payload bytes plus the encoded semantic envelope and event-encoding overhead, excluding external storage-path framing.
 - **physical bytes written** — all output emitted through the measured storage path, including attributable framing, alignment, integrity, filesystem, or other write amplification where measurable.
-- **operation-stream identity** — the stable identity of a semantic workload, including its operation set, payload bytes, identities, references, temporal relationships, producer assignment, and producer-local order. It includes exact global order for the single-producer reference or a controlled global schedule; for uncontrolled concurrent runs, the resulting cross-producer ordinal-to-sequence mapping is recorded output rather than shared input.
-- **temporal workload profile** — a deterministic rule for effective-time relationships relative to canonical operation ordinals; it does not generate system, durability, or observation lifecycle times.
+- **operation-stream identity** — the stable identity of a semantic workload, including its operation set, payload bytes, identities, references, temporal relationships, producer assignment, and producer-local order. It includes exact global assigned-sequence order for the single-producer reference or a controlled global schedule; for uncontrolled concurrent runs, the resulting cross-producer ordinal-to-assigned-sequence mapping is recorded output rather than shared input.
+- **temporal workload profile** — a deterministic rule for effective-time relationships relative to operation ordinals; it does not confer canonical status or generate system, durability, or observation lifecycle times.
 - **workload manifest** — the serialization-neutral declaration needed to regenerate and verify the frozen aspects of an operation stream and its execution settings; until all byte-generation rules are frozen, complete byte identity requires a referenced immutable stream and digest.
 - **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
 - **late-arriving fact** — a fact whose effective time precedes its system time.
