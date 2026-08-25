@@ -51,6 +51,12 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
 - `docs/ARCHITECTURE.md` — current conceptual architecture; explicitly non-final.
 - `docs/RESEARCH-ROADMAP.md` — staged research program.
 - `docs/PROJECT-STATUS.md` — authoritative continuity point for current state.
+- `CHATGPT_WORKFLOW.md` — human-coordinated ChatGPT/Codex/PR workflow.
+- `docs/GLOSSARY.md` — shared terminology.
+- `docs/ASSUMPTIONS-AND-UNKNOWNS.md` — explicit assumptions and unresolved choices.
+- `docs/RESEARCH-QUESTIONS.md` — stable research-question registry.
+- `docs/REQUIREMENTS.md` — approved initial research constraints.
+- `docs/TRACEABILITY.md` — links from intent through planned validation and decisions.
 - `docs/hypotheses/` — falsifiable technical hypotheses.
 - `docs/experiments/` — experiment definitions and conclusions.
 - `docs/benchmarks/` — benchmark methodology and baseline definitions.
@@ -63,6 +69,6 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
 
 The project is in **Phase 0: foundation and measurement design**. No production architecture is considered proven yet.
 
-The first planned technical experiment is `EXP-0001`: immutable event ingestion, measuring the path from caller to event construction, append, and explicitly defined durability boundaries before introducing SQL, indexes, networking, generalized plugin frameworks, or persistent secondary representations.
+No engine implementation, Cargo baseline, CI, or benchmark evidence exists yet. `EXP-0000` (Experiment 0), a documentation and measurement-readiness increment, is next. `EXP-0001` remains planned but is blocked until Experiment 0 and its prerequisites are complete.
 
 See `docs/PROJECT-STATUS.md` for the authoritative current state.

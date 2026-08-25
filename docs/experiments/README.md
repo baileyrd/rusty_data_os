@@ -37,3 +37,10 @@ Each experiment document should contain:
 ## Rule
 
 Do not rewrite an experiment's original hypothesis after observing results. Add clarifications or follow-up experiments so the history of reasoning remains inspectable.
+
+## Registry
+
+| Experiment | Status | Purpose |
+|---|---|---|
+| [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Proposed; next incomplete increment | Define semantics and measurement prerequisites without implementation. |
+| [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; blocked by EXP-0000 | Measure single-event ingestion after prerequisites are complete. |

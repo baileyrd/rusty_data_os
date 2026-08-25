@@ -7,12 +7,13 @@ This file defines how human contributors and AI coding agents must work in this 
 Before proposing or implementing work, read these files in order:
 
 1. `/AGENTS.md`
-2. `/docs/PROJECT-STATUS.md`
-3. `/docs/VISION.md`
-4. `/docs/PRINCIPLES.md`
-5. `/docs/ARCHITECTURE.md`
-6. `/docs/RESEARCH-ROADMAP.md`
-7. Applicable hypotheses, experiment definitions, benchmark methodology, ADRs, and specifications.
+2. `/CHATGPT_WORKFLOW.md`
+3. `/docs/PROJECT-STATUS.md`
+4. `/docs/VISION.md`
+5. `/docs/PRINCIPLES.md`
+6. `/docs/ARCHITECTURE.md`
+7. `/docs/RESEARCH-ROADMAP.md`
+8. Applicable hypotheses, experiment definitions, benchmark methodology, ADRs, and specifications.
 
 Repository state on `main` is authoritative over chat history or unstaged ideas.
 
@@ -89,4 +90,4 @@ When Rust code begins:
 
 ## 10. Current constraint
 
-The project is currently documentation-first. No engine architecture is considered final. `EXP-0001` is the next planned executable research increment.
+The project is currently documentation-first. No engine architecture is considered final. Documentation and measurement prerequisites, followed by `EXP-0000` (Experiment 0), must be completed before `EXP-0001` is ready to implement. Do not create Cargo files or prescribe Cargo validation commands until a Cargo project exists. During this documentation-only phase, run `git diff --check` from the repository root.

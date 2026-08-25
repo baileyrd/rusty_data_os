@@ -1,6 +1,6 @@
 # EXP-0001 — Immutable Event Ingestion
 
-**Status:** Proposed  
+**Status:** Proposed; blocked by EXP-0000 and its documented prerequisites
 **Linked hypothesis:** HYP-0001
 
 ## 1. Research question
@@ -20,6 +20,8 @@ caller
 ```
 
 This experiment deliberately excludes query execution, indexes, secondary materializations, SQL, server networking, generalized plugin infrastructure, distributed behavior, and complex multi-record transactions.
+
+Only single-event commits are in scope. Atomic multi-event batches are deferred. Payloads may be opaque bytes carrying schema identity/version; schema execution and concrete encoding are not selected here.
 
 ## 3. Candidate variants
 

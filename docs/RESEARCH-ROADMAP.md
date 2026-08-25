@@ -15,12 +15,16 @@ Deliverables:
 - baseline definitions;
 - project continuity process;
 - first experiment specification.
+- Experiment 0 semantics, workload, baseline, fault-model, environment, raw-result, and interpretation prerequisites.
 
 Exit criteria:
 
+- `EXP-0000` is complete;
 - `EXP-0001` has a reproducible benchmark plan and correctness criteria;
 - baseline systems/primitives are identified;
 - target test environments can be recorded consistently.
+
+The next incomplete increment is `EXP-0000`. `EXP-0001` is planned but blocked until this phase exits.
 
 ## Phase 1 — Canonical event ingestion
 
