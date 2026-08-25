@@ -33,4 +33,5 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-017 | Sequencing gap policy for candidates that fail before canonical commit. |
 | UNK-018 | Platform-independent generator, permutation, identity, and stream-digest algorithms and their reference test vectors; the workload contract fixes their required reproducibility but not their implementation. |
 | UNK-019 | Physical workload-manifest serialization and storage/reference mechanism. |
-| UNK-020 | Fair EXP-0001 baseline product versions, adapters, and configurations under the frozen workload and durability contracts. |
+| UNK-020 | Exact EXP-0001 baseline releases/source identities, builds, bindings, physical adapters/mappings, verified defaults, and environment-specific configurations. The baseline families and semantic profiles are selected by the baseline contract, but these execution inputs remain unfrozen. |
+| UNK-021 | Whether SQLite/RocksDB synchronization paths satisfy D2 on any selected platform and whether observable engine behavior can ever satisfy strict D3 rather than diagnostic group commit. |
