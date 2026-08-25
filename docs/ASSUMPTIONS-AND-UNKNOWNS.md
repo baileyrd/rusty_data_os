@@ -28,6 +28,6 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-012 | Minimum required integrity policy, supported integrity modes, semantic coverage, finalization point, and physical algorithm/framing. |
 | UNK-013 | Validation and locality rules for causal-event and correction/retraction references. |
 | UNK-014 | Platform-specific durability contracts and the empirical survival behavior of each synchronization primitive across OS, filesystem, mount, device, and cache configurations. |
-| UNK-015 | Crash/fault-injection procedure and deterministic recovery treatment for partial, torn, truncated, or uncertain physical outcomes. |
+| UNK-015 | Concrete crash/fault-injection mechanisms and physical validity detection for partial, torn, truncated, or uncertain outcomes; the semantic procedure and required classifications are defined by the EXP-0000 crash/recovery correctness contract. |
 | UNK-016 | Retry and uncertain-outcome policy after persistence or D3 group synchronization errors. |
 | UNK-017 | Sequencing gap policy for candidates that fail before canonical commit. |

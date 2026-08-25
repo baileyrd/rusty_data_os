@@ -31,3 +31,6 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **materializer freshness** — the committed canonical sequence or watermark incorporated and exposed by a derived representation; distinct from ingestion acknowledgement latency.
 - **durability boundary** — the explicitly declared completion condition and platform contract that must be crossed before canonical commit.
 - **durability group** — D3 events sharing one declared synchronization outcome; grouping is not an atomic multi-event transaction.
+- **recovery oracle** — out-of-band test-controller lifecycle evidence used only to compare recovered canonical history with pre-fault obligations; it is not an authoritative source of system state or recovery input.
+- **uncertain outcome** — an attempt for which canonical commit may have completed but the caller did not receive a conclusive acknowledgement; recovery may contain the canonical event without inventing an acknowledgement.
+- **fail-closed recovery** — an explicit failure or degraded result when canonical status or valid ordering cannot be established, rather than silently accepting, repairing, or promoting physical data.
