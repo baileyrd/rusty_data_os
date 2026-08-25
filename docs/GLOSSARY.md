@@ -19,6 +19,12 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **source/actor provenance** — the applicable origin or actor responsible for a fact, distinct from causation and request correlation.
 - **causal-event reference** — a reference to a prior event that caused or directly motivated a fact, distinct from provenance and request correlation.
 - **opaque payload boundary** — the boundary containing domain-specific fact content that the canonical core preserves but does not interpret.
+- **payload bytes** — bytes inside the opaque domain-payload boundary, excluding the semantic envelope and physical framing.
+- **encoded event bytes** — payload bytes plus the encoded semantic envelope and event-encoding overhead, excluding external storage-path framing.
+- **physical bytes written** — all output emitted through the measured storage path, including attributable framing, alignment, integrity, filesystem, or other write amplification where measurable.
+- **operation-stream identity** — the stable identity of an exact ordered semantic workload, including payload bytes, identities, references, and temporal relationships, shared by repeat runs and comparable baselines.
+- **temporal workload profile** — a deterministic rule for effective-time relationships relative to canonical operation ordinals; it does not generate system, durability, or observation lifecycle times.
+- **workload manifest** — the serialization-neutral declaration needed to regenerate and verify an operation stream and its execution settings.
 - **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
 - **late-arriving fact** — a fact whose effective time precedes its system time.
 - **correction / retraction** — a newly appended event referencing an affected event; canonical facts are not overwritten.
