@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `f671e19fe7b6fad5ccffa30ea53abf29a94846a3`
+**Verified starting `main` checkpoint:** `9992bae56c19ef2f6dc3828ea86610c6716437e9`
 
 ## 1. Current facts
 
@@ -31,9 +31,9 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 4. Active and next incomplete increments
 
-[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md) and [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md) are complete. Workload distributions, baselines, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) are complete. Workload distributions, baselines, environment and raw-result templates, and predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
 
-The next recommended bounded Experiment 0 sub-increment is to define crash/recovery correctness procedures against the now-declared fault taxonomy. This recommendation neither resolves integrity policy nor authorizes implementation.
+The crash/recovery checkpoint defines the oracle, lifecycle injection points, D0–D3 fault matrix, repeatable recovery procedure, correctness invariants, D3 treatment, and result classifications. It deliberately leaves physical validity detection, integrity policy, platform APIs, retry/idempotency, uncertain-outcome resolution, and gap policy open and neither authorizes implementation nor claims fault evidence. The next bounded increment must be selected from the remaining Experiment 0 outputs.
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
 

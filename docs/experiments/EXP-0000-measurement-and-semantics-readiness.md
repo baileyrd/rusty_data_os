@@ -23,11 +23,11 @@ Experiment 0 is a documentation and measurement-readiness increment. It does not
 - [ ] workload payloads and distributions — incomplete;
 - [ ] baseline selection and configuration — incomplete;
 - [x] acknowledgement, visibility, fault, and durability semantics — completed by the [lifecycle and durability contract](EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md);
-- [ ] crash/recovery procedures — incomplete;
+- [x] crash/recovery procedures — completed by the [crash/recovery correctness contract](EXP-0000/CRASH-RECOVERY-CORRECTNESS.md);
 - [ ] environment and raw-result templates — incomplete;
 - [ ] interpretation criteria — incomplete.
 
-The completed envelope and lifecycle/durability contract are bounded readiness outputs, not experimental evidence. Experiment 0 remains incomplete, EXP-0001 is not ready, and no implementation work is authorized.
+The completed envelope, lifecycle/durability contract, and crash/recovery correctness contract are bounded readiness outputs, not experimental evidence. Experiment 0 remains incomplete, EXP-0001 is not ready, and no implementation work is authorized.
 
 ## Completion criteria
 
