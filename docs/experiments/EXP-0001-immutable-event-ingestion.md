@@ -90,7 +90,7 @@ Collect where practical:
 
 Performance results are invalid unless applicable invariants pass.
 
-Required obligations, refined by the lifecycle contract and the later crash/recovery procedure:
+Required obligations, refined by the lifecycle contract and the [crash/recovery correctness contract](EXP-0000/CRASH-RECOVERY-CORRECTNESS.md):
 
 1. every canonically acknowledged D2/D3 event is recoverable after every fault its recorded platform contract claims; D0/D1 acknowledgements remain provisional and are never recovered or exposed as committed merely because they were acknowledged;
 2. recovered event order matches declared sequencing semantics;
@@ -101,6 +101,7 @@ Required obligations, refined by the lifecycle contract and the later crash/reco
 7. explicit persistence or synchronization errors never produce successful acknowledgement; a failed D3 group acknowledges no member as committed;
 8. canonical-reader and committed-history materializer visibility never precede canonical commit, while any earlier exposure is explicitly provisional;
 9. every latency sample names its lifecycle interval; D3 per-event latency includes that event's group-formation wait through its own acknowledgement return.
+10. recovery uses the predeclared oracle, injection points, fault matrix, repeat procedure, invariants, D3 rules, and pass/fail/invalid/inconclusive classifications; uncertain commit-before-acknowledgement outcomes remain explicit and corrupt or undecidable history fails closed.
 
 ## 8. Baselines
 
@@ -131,6 +132,7 @@ A useful result may be that some durability modes are competitive while others a
 The experiment is complete when:
 
 - correctness tests exist for each measured durability class;
+- each claimed fault class has valid crash/recovery runs under the declared platform contract, with correctness passing before its performance is interpretable;
 - benchmark harness and configuration are reproducible;
 - raw results are preserved;
 - baselines are run under documented equivalent conditions;
