@@ -7,7 +7,7 @@
 
 ## 1. Current facts
 
-This repository is documentation-only. No engine implementation, Cargo baseline, CI configuration, or benchmark evidence exists. No event encoding, identity algorithm, timestamp representation, clock source, concurrency model, checkpoint format, transaction model, query language, or distributed design has been selected.
+This repository is documentation-only. An active documentation-validation CI workflow checks Markdown links and changed-line whitespace, but no engine implementation, Cargo baseline, Rust engine build/test/benchmark or implementation-validation CI baseline, or benchmark evidence exists. No event encoding, identity algorithm, timestamp representation, clock source, concurrency model, checkpoint format, transaction model, query language, or distributed design has been selected.
 
 The conceptual architecture is a research direction, not a benchmark-validated design.
 

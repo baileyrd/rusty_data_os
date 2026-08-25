@@ -209,7 +209,7 @@ Cargo bootstrap, Rust implementation, fixtures, validators, byte vectors, execut
 
 | R1 output | Traces to |
 |---|---|
-| Integrity capability and coverage policy | BLK-002; UNK-012 policy portion; REQ-001, REQ-002, REQ-009, REQ-013, REQ-014 |
+| Integrity capability and coverage policy | BLK-002; UNK-012 policy portion; REQ-001 through REQ-010, REQ-013, REQ-014 |
 | Physical-record constraints | BLK-001 constraint only; UNK-001 remains open; semantic envelope |
 | Scan/replay/recovery invariants | BLK-013; UNK-015 policy portion; crash/recovery correctness contract; REQ-001–REQ-006, REQ-009, REQ-012–REQ-014 |
 | Gap/duplicate/uncertain classifications | Constraints on BLK-011 and BLK-012; UNK-016 and UNK-017 remain unresolved |
