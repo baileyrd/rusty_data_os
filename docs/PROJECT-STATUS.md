@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `70a29efd46dd3aee9ea9cb0831d0285b83cdd70a`
+**Verified starting `main` checkpoint:** `05b77516b9155aaa419093c7fa860e37d5517ecc`
 
 ## 1. Current facts
 
@@ -31,9 +31,9 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 4. Active and next incomplete increments
 
-[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), [reproducible workload contract](experiments/EXP-0000/WORKLOADS.md), [EXP-0001 baseline contract](benchmarks/BASELINES.md), [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) are complete. Environment and raw-result templates and predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), [reproducible workload contract](experiments/EXP-0000/WORKLOADS.md), [EXP-0001 baseline contract](benchmarks/BASELINES.md), [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) are complete. The [environment](benchmarks/ENVIRONMENT-TEMPLATE.md) and [raw-result](benchmarks/RAW-RESULT-TEMPLATE.md) record contracts are also complete. Predeclared interpretation criteria remain incomplete. These are documentation and measurement-readiness outputs, not implementation or evidence.
 
-The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. The benchmark environment and raw-result templates are the recommended next bounded output; that recommendation neither configures a product nor authorizes implementation or execution.
+The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. It freezes semantic profiles, equivalence classifications, adapter fairness, series identity, correctness gates, and exclusion/replacement policy without selecting binaries, implementations, schemas, encodings, platform sync mechanisms, or claiming evidence. SQLite/RocksDB D2 remains conditional; atomic multi-event transactions and opaque group commit are not strict D3 equivalence. Predeclared interpretation criteria are the recommended next bounded output; that recommendation neither configures a product nor authorizes implementation or execution.
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
 
