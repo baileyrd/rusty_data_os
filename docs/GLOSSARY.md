@@ -15,11 +15,11 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **effective time** — when a fact applies in the modeled domain.
 - **system time** — when Data OS accepted a fact.
 - **durability time** — when an event crossed its declared durability boundary.
-- **observation time** — when a reader or materialization could observe an event.
+- **observation time** — when a reader or materialization could observe an event; observation-side lifecycle metadata outside the immutable original envelope. Recording it cannot mutate the observed event, and making the observation canonical requires a separately appended event.
 - **source/actor provenance** — the applicable origin or actor responsible for a fact, distinct from causation and request correlation.
 - **causal-event reference** — a reference to a prior event that caused or directly motivated a fact, distinct from provenance and request correlation.
 - **opaque payload boundary** — the boundary containing domain-specific fact content that the canonical core preserves but does not interpret.
-- **integrity metadata** — semantic metadata binding an event to declared corruption/truncation checks without preselecting a physical algorithm or framing.
+- **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
 - **late-arriving fact** — a fact whose effective time precedes its system time.
 - **correction / retraction** — a newly appended event referencing an affected event; canonical facts are not overwritten.
 - **materialization** — a derived representation optimized for a workload; it is not authoritative history.

@@ -40,6 +40,8 @@ Potential candidates:
 
 Not every candidate must appear in the first implementation.
 
+Each variant must declare its integrity mode and any claimed corruption or truncation detection capability explicitly enough to measure. Per-event integrity metadata is conditional on that mode: the checksummed versus non-checksummed comparison remains a candidate, while Experiment 0 still must define the minimum required integrity policy before EXP-0001 is ready.
+
 ## 4. Durability classes
 
 Benchmarks must label the exact acknowledgement semantics. Initial classes to define may include:

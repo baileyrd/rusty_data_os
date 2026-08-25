@@ -24,6 +24,6 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-008 | Quantitative thresholds for acceptable performance and complexity across selected workloads. |
 | UNK-009 | Permanent event-identity assignment authority and exact lifecycle point. |
 | UNK-010 | Exact system-acceptance-time capture point relative to sequencing. |
-| UNK-011 | Whether observation time is canonical-envelope data, observation-side metadata, or both, including representation of multiple observers. |
-| UNK-012 | Integrity metadata capability, semantic coverage, finalization point, and physical algorithm/framing. |
+| UNK-011 | Observation-side metadata retention, observer/context identity and multiplicity rules, and criteria for appending an observation as a separate canonical event. |
+| UNK-012 | Minimum required integrity policy, supported integrity modes, semantic coverage, finalization point, and physical algorithm/framing. |
 | UNK-013 | Validation and locality rules for causal-event and correction/retraction references. |
