@@ -3,6 +3,8 @@
 **Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. All physical choices remain open, and its first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
+
 ## 1. Research question
 
 What are the throughput, latency, CPU, memory, storage, and correctness characteristics of the smallest useful immutable event ingestion path under explicitly different durability guarantees?
@@ -116,7 +118,7 @@ All evidence and conclusions must follow the frozen [EXP-0001 interpretation and
 
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment; the next bounded step is an explicit readiness/implementation proposal requiring repository review.
+A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. The readiness proposal now exists but does not resolve its blocker registry; its next bounded step is R1, the minimum physical event-record, framing, integrity-policy, and replay/recovery requirements.
 
 ## 11. Completion criteria
 

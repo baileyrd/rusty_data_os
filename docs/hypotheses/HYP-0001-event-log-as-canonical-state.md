@@ -48,8 +48,8 @@ No single synthetic benchmark can prove HYP-0001. The purpose of the research pr
 
 ## Related experiments
 
-- `EXP-0000` — Measurement and Semantics Readiness (planned next; incomplete)
-- `EXP-0001` — Immutable Event Ingestion (planned; blocked by EXP-0000)
+- `EXP-0000` — Measurement and Semantics Readiness (complete as documentation; no evidence)
+- `EXP-0001` — Immutable Event Ingestion (proposed; execution-readiness plan exists, gates remain closed)
 
 ## Related decisions
 
