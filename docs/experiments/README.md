@@ -42,5 +42,5 @@ Do not rewrite an experiment's original hypothesis after observing results. Add 
 
 | Experiment | Status | Purpose |
 |---|---|---|
-| [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Proposed; next incomplete increment | Define semantics and measurement prerequisites without implementation. |
+| [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Running; first output complete, remaining outputs incomplete | Define semantics and measurement prerequisites without implementation. Its [single-event semantic envelope](EXP-0000/SEMANTIC-EVENT-ENVELOPE.md) is frozen for measurement preparation. |
 | [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; blocked by EXP-0000 | Measure single-event ingestion after prerequisites are complete. |
