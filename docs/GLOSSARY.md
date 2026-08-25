@@ -22,9 +22,9 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **payload bytes** — bytes inside the opaque domain-payload boundary, excluding the semantic envelope and physical framing.
 - **encoded event bytes** — payload bytes plus the encoded semantic envelope and event-encoding overhead, excluding external storage-path framing.
 - **physical bytes written** — all output emitted through the measured storage path, including attributable framing, alignment, integrity, filesystem, or other write amplification where measurable.
-- **operation-stream identity** — the stable identity of an exact ordered semantic workload, including payload bytes, identities, references, and temporal relationships, shared by repeat runs and comparable baselines.
+- **operation-stream identity** — the stable identity of a semantic workload, including its operation set, payload bytes, identities, references, temporal relationships, producer assignment, and producer-local order. It includes exact global order for the single-producer reference or a controlled global schedule; for uncontrolled concurrent runs, the resulting cross-producer ordinal-to-sequence mapping is recorded output rather than shared input.
 - **temporal workload profile** — a deterministic rule for effective-time relationships relative to canonical operation ordinals; it does not generate system, durability, or observation lifecycle times.
-- **workload manifest** — the serialization-neutral declaration needed to regenerate and verify an operation stream and its execution settings.
+- **workload manifest** — the serialization-neutral declaration needed to regenerate and verify the frozen aspects of an operation stream and its execution settings; until all byte-generation rules are frozen, complete byte identity requires a referenced immutable stream and digest.
 - **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
 - **late-arriving fact** — a fact whose effective time precedes its system time.
 - **correction / retraction** — a newly appended event referencing an affected event; canonical facts are not overwritten.
