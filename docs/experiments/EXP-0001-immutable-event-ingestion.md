@@ -1,6 +1,6 @@
 # EXP-0001 — Immutable Event Ingestion
 
-**Status:** Proposed; blocked by EXP-0000 and its documented prerequisites
+**Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
 ## 1. Research question
@@ -112,9 +112,11 @@ Follow `docs/benchmarks/METHODOLOGY.md`. Record CPU, RAM, storage device, filesy
 
 ## 10. Interpretation
 
+All evidence and conclusions must follow the frozen [EXP-0001 interpretation and decision contract](../benchmarks/INTERPRETATION-CRITERIA.md). Before confirmatory execution, a reviewed execution plan must freeze its threshold registry and analysis choices; unresolved entries permit descriptive or exploratory evidence only.
+
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model.
+A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment; the next bounded step is an explicit readiness/implementation proposal requiring repository review.
 
 ## 11. Completion criteria
 
@@ -125,5 +127,5 @@ The experiment is complete when:
 - benchmark harness and configuration are reproducible;
 - raw results are preserved;
 - B0–B3 applicable profiles are run under the baseline contract, with every conditionally equivalent or diagnostic classification preserved and no excluded semantic form presented like-for-like;
-- a written conclusion identifies supported, unsupported, and unresolved claims;
+- an immutable interpretation record identifies supported, refuted, constrained, and unresolved claims under the frozen criteria and threshold versions;
 - HYP-0001 or follow-on hypotheses are updated without overstating evidence.
