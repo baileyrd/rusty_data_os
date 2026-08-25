@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 0 — Foundation and Measurement Design
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting checkpoint:** `cd9ab9380a05b41ca0f28663d2e73e5a25b9abee`
+**Verified starting `main` checkpoint:** `637ccf26f04d683f7f80173645d0103c5039111a`
 
 ## 1. Current facts
 
@@ -29,9 +29,11 @@ These are constraints on research and correctness, not evidence that the archite
 
 [HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. No implementation or experimental result supports or refutes it yet.
 
-## 4. Next incomplete increment
+## 4. Active and next incomplete increments
 
-[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is next. It must define the semantic envelope, workload distributions, baselines, durability/fault semantics, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria. It is documentation and measurement readiness, not implementation or evidence collection.
+[EXP-0000 — Measurement and Semantics Readiness](experiments/EXP-0000-measurement-and-semantics-readiness.md), also called Experiment 0, is in progress. Its first bounded output, the [minimal single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md), is complete. Workload distributions, baselines, acknowledgement/visibility/fault/durability semantics, crash/recovery procedures, environment and raw-result templates, and predeclared interpretation criteria remain incomplete. This is documentation and measurement readiness, not implementation or evidence collection.
+
+The next recommended bounded Experiment 0 sub-increment is to define acknowledgement, visibility, fault, and durability semantics because those definitions must resolve the envelope's measurement-critical lifecycle timing ambiguities before comparable ingestion measurements. This recommendation is neither approval nor completion of that work.
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned, but is blocked by completion of Experiment 0 and its documented prerequisites. EXP-0001 must not begin during this increment.
 

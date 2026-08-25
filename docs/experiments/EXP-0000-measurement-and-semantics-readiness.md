@@ -1,6 +1,6 @@
 # EXP-0000 — Measurement and Semantics Readiness (Experiment 0)
 
-**Status:** Proposed; next incomplete increment
+**Status:** Running; documentation and measurement-readiness work in progress
 **Linked hypothesis:** HYP-0001 (prerequisite only)
 
 ## Purpose
@@ -16,6 +16,18 @@ Experiment 0 is a documentation and measurement-readiness increment. It does not
 5. define crash/recovery correctness procedures;
 6. create benchmark environment and raw-result templates;
 7. predeclare interpretation criteria, including how acceptable performance and complexity will be evaluated.
+
+## Output checklist
+
+- [x] semantic event envelope — completed by this increment in the [semantic event envelope contract](EXP-0000/SEMANTIC-EVENT-ENVELOPE.md);
+- [ ] workload payloads and distributions — incomplete;
+- [ ] baseline selection and configuration — incomplete;
+- [ ] acknowledgement, visibility, fault, and durability semantics — incomplete;
+- [ ] crash/recovery procedures — incomplete;
+- [ ] environment and raw-result templates — incomplete;
+- [ ] interpretation criteria — incomplete.
+
+The completed envelope is one bounded readiness output, not experimental evidence. Experiment 0 remains incomplete, EXP-0001 is not ready, and no implementation work is authorized.
 
 ## Completion criteria
 
