@@ -3,11 +3,11 @@
 **Project:** Rusty Data OS
 **Status:** Phase 1 planning/readiness — implementation not authorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `439963b7198ea8c716f25fbc21473fffe777ddec`
+**Verified starting `main` checkpoint:** `2659fb34caf054a7742a854d69d17cdd59bd2040`
 
 ## 1. Current facts
 
-This repository is documentation-only. An active documentation-validation CI workflow checks Markdown links and changed-line whitespace, but no engine implementation, Cargo baseline, Rust engine build/test/benchmark or implementation-validation CI baseline, or benchmark evidence exists. No event encoding, identity algorithm, timestamp representation, clock source, concurrency model, checkpoint format, transaction model, query language, or distributed design has been selected.
+This repository is documentation-only. An active documentation-validation CI workflow checks Markdown links and changed-line whitespace, but no engine implementation, Cargo baseline, Rust engine build/test/benchmark or implementation-validation CI baseline, or benchmark evidence exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. Deterministic identity generation/serialization/vectors, concrete normalized-request equality, event encoding, target platform clock APIs and verified resolution, physical durability/finalization mechanics, concurrency model, checkpoint format, transaction model, query language, and distributed design remain unselected.
 
 The conceptual architecture is a research direction, not a benchmark-validated design.
 
