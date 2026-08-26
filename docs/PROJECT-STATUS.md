@@ -3,7 +3,7 @@
 **Project:** Rusty Data OS
 **Status:** Phase 1 planning/readiness — implementation not authorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `2659fb34caf054a7742a854d69d17cdd59bd2040`
+**Verified starting `main` checkpoint:** `111d17b1e0a1546198d7ef97428e095c6c55673c`
 
 ## 1. Current facts
 

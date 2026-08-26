@@ -108,16 +108,35 @@ swapon --show --bytes
 cat /proc/sys/vm/overcommit_memory
 cat /sys/devices/system/clocksource/clocksource0/current_clocksource
 getconf CLK_TCK
-systemd-analyze cat-config systemd/timesyncd.conf
-systemctl show systemd-timesyncd --property=NTPSynchronized --property=StatusText
+systemctl list-unit-files --type=service | sed -n '/chronyd\|systemd-timesyncd/p'
+systemctl list-units --type=service --all | sed -n '/chronyd\|systemd-timesyncd/p'
 sudo dmidecode --type system --type baseboard --type bios --type memory
 ```
 
 `getconf CLK_TCK` is not a `clock_getres` measurement. Because R4 may not add a collector, the owner must additionally retain output from an independently reviewed read-only utility that calls `clock_getres` for every proposed `clockid_t`, naming its source/version. Until then API resolution remains evidence-pending.
 
+First use the two `systemctl` discovery commands to identify the installed and active realtime-synchronization provider; do not assume one from the distribution. If `chronyd.service` is installed and active, capture only read-only chrony status and configuration provenance:
+
+```text
+chronyc tracking
+chronyc -n sources -v
+systemctl show chronyd.service --property=ActiveState --property=SubState --property=FragmentPath
+systemctl cat chronyd.service
+```
+
+`chronyc -n` suppresses hostname lookups; redact any remaining addresses, hostnames and reference identifiers consistently. If `systemd-timesyncd.service` is instead installed and active, capture:
+
+```text
+systemctl show systemd-timesyncd.service --property=ActiveState --property=SubState --property=NTPSynchronized --property=StatusText --property=FragmentPath
+systemctl cat systemd-timesyncd.service
+systemd-analyze cat-config systemd/timesyncd.conf
+```
+
+Do not run provider commands that add/delete sources, step or slew clocks, write configuration, or restart/reload a service. If neither provider is installed and active, record that result and identify any other provider for separate primary-manual review; synchronization state remains evidence-pending until its read-only status and configuration provenance are captured.
+
 ### 4.2 Placement, filesystem, block path, queues, and caches
 
-Run the path-sensitive commands once for every proposed data, log/WAL, temporary, and controller-ledger path.
+Run the path-sensitive commands once for every proposed data, log/WAL, temporary, and controller-ledger path. Plain `dmsetup table` retains the default key suppression; `--showkeys` is prohibited. `dmsetup status --noflush` is required because unqualified thin-pool status can commit metadata. If discovery shows a dm-crypt mapping, `sudo cryptsetup status <MAPPING>` may be captured for non-secret status only; do not use any option or command that exposes key material.
 
 ```text
 findmnt --json --output-all --target <PATH>
@@ -129,8 +148,8 @@ sudo blkid --probe --output export <LEAF-DEVICE>
 udevadm info --query=property --name=<LEAF-DEVICE>
 lspci -nnk
 sudo dmsetup ls --tree
-sudo dmsetup table --showkeys
-sudo dmsetup status
+sudo dmsetup table
+sudo dmsetup status --noflush
 sudo blockdev --getss <LEAF-DEVICE>
 sudo blockdev --getpbsz <LEAF-DEVICE>
 cat /sys/class/block/<LEAF>/queue/logical_block_size
@@ -160,7 +179,9 @@ Use filesystem-native read-only inspection only after discovery: for XFS, `xfs_i
 
 Expected output is complete command/version metadata plus exact values or an explicit permission/not-supported/not-present result. Preserve stdout and stderr separately, command text, exit status, UTC capture time, package version, and the association between every path, mount, mapper and leaf. Missing utilities are reported; do not install or change the target merely to make this R4 capture look complete.
 
-Redact host/user names, serial numbers, WWNs, UUIDs, IP addresses, absolute user paths, and asset tags consistently. Preserve pseudonymous equality and topology: the same device/path must retain the same token across outputs. Do not redact model, firmware, kernel, filesystem type/features, mount options, queue/cache modes, block sizes, or protection evidence. Record every redaction rule and its reproducibility impact. Secrets printed by `dmsetup table --showkeys` must be removed; if encrypted mapping parameters cannot be safely retained, record that limitation and preserve the non-secret topology.
+Redact host/user names, serial numbers, WWNs, UUIDs, IP addresses, absolute user paths, and asset tags consistently. Preserve pseudonymous equality and topology: the same device/path must retain the same token across outputs. Do not redact model, firmware, kernel, filesystem type/features, mount options, queue/cache modes, block sizes, or protection evidence. Record every redaction rule and its reproducibility impact. Secret material must never be requested, displayed, captured, retained, or committed; `dmsetup --showkeys` and equivalent key-disclosing options are prohibited. If encrypted mapping parameters cannot be safely retained, record that limitation and preserve only non-secret topology.
+
+The command review is fail-closed: omit and report any command whose installed version cannot be verified as read-only for the exact device/stack. Do not use commands or options that flush or commit metadata, initiate device self-tests, change clocks/caches/queues/power settings, reload services, mount or remount filesystems, or otherwise mutate target state. Package/manual differences remain evidence-pending rather than permission to try a potentially mutating command.
 
 ## 5. Primary-source semantics and limitations
 
@@ -168,6 +189,9 @@ The following are documented semantics, not empirical survival results. Version/
 
 | Source | Documented support used by this contract | Limitation / R4 interpretation |
 |---|---|---|
+| LVM2 project, [`dmsetup(8)` manual](https://man7.org/linux/man-pages/man8/dmsetup.8.html) | The default table output suppresses encryption keys; `--showkeys` exposes them. `status --noflush` suppresses thin-pool metadata commit associated with status. | R4 prohibits `--showkeys` and requires `--noflush`; installed-version semantics must be checked before capture. Secret material is never an evidence artifact. |
+| chrony project, [`chronyc` manual](https://chrony-project.org/doc/4.8/chronyc.html) | `tracking` and `sources` report clock/source state; `-n` avoids resolving addresses to hostnames. The command also has mutating operations. | Only the listed status subcommands are permitted, conditionally when chronyd is active. The exact installed chrony version must be recorded; this citation does not assert Fedora's installed provider/version. |
+| systemd project, [`systemctl` manual](https://www.freedesktop.org/software/systemd/man/latest/systemctl.html) | `list-unit-files`, `list-units`, `show`, and `cat` provide unit discovery, properties, and file content. | Only the listed observational forms are permitted; no start/restart/reload/enable operation is allowed. Provider absence or inactivity is evidence-pending, not a configured result. |
 | Linux man-pages 6.15, [`write(2)`](https://man7.org/linux/man-pages/man2/write.2.html) | `write` may transfer fewer bytes; successful return does not guarantee space was reserved or data reached disk; delayed errors may surface later, including at `fsync`. | R5 must loop over short writes, preserve offsets/order, handle interruption/errors, and never treat append return as D2. Concurrent append atomicity wording does not select a record format or recovery rule. |
 | Linux man-pages 6.15, [`open(2)`](https://man7.org/linux/man-pages/man2/open.2.html) | `O_APPEND` positions and writes atomically for the file operation on supported local filesystems; NFS may simulate it and corrupt under concurrent append. `O_DSYNC`/`O_SYNC` describe synchronized-I/O flags. | Primary local storage is required. R5 must still choose concurrency, flags and error handling; `O_APPEND` does not make a complete record or canonical commit atomic. |
 | Linux man-pages 6.15, [`fsync(2)`](https://man7.org/linux/man-pages/man2/fsync.2.html) and [`fdatasync(2)`](https://man7.org/linux/man-pages/man2/fdatasync.2.html) | `fsync` flushes file data and associated metadata; `fdatasync` may omit metadata not needed for later data retrieval. A file sync does not necessarily persist the directory entry; the directory also needs `fsync`. Errors can report writeback failure. | Exact file creation/rename/replacement sequence determines whether a directory sync is required. Successful return supports only the verified stack contract and is not universal power-loss proof. |
