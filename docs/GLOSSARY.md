@@ -53,3 +53,7 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **recovery oracle** — out-of-band test-controller lifecycle evidence used only to compare recovered canonical history with pre-fault obligations; it is not an authoritative source of system state or recovery input.
 - **uncertain outcome** — an attempt for which canonical commit may have completed but the caller did not receive a conclusive acknowledgement; recovery may contain the canonical event without inventing an acknowledgement.
 - **fail-closed recovery** — an explicit failure or degraded result when canonical status or valid ordering cannot be established, rather than silently accepting, repairing, or promoting physical data.
+- **selected target fact** — an owner-approved requirement for a future environment, not an observation that the target has that value.
+- **verified target fact** — an exact environment value supported by retained reproducible capture output and provenance.
+- **evidence-pending** — a required field for which no adequate repository evidence exists; it cannot be inferred or used to support a durability claim.
+- **platform durability contract** — the exact OS, kernel, filesystem, mount, device/controller/cache/firmware/protection, API-ordering, acknowledgement, fault, and recovery conditions under which a D2/D3 claim is evaluated; documented semantics alone are not empirical survival evidence.
