@@ -6,12 +6,16 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **canonical history** — the single authoritative ordered event history from which state and representations are derived.
 - **command** — requested intent. Rejection is operational/audit evidence, not a canonical event asserting the requested fact.
 - **request identity** — stable command identity for duplicate detection and idempotent retry; distinct from event identity and not a universal exactly-once guarantee.
+- **attempt identity** — noncanonical identity assigned freshly to each submission or retry attempt; it never substitutes for request or event identity.
+- **request binding** — recoverable lifecycle association between one normalized request and its single event candidate/identity; it supports reconciliation but is not canonical history.
+- **normalized request** — complete versioned semantic inputs that may affect validation or event construction, excluding attempt identity and observation timing; exact serialization remains an EXP-0001 generator/manifest decision.
 - **event identity** — permanent event identity independent of sequence number and physical location.
 - **information identity** — stable logical identity of information or an entity independent of schema and physical representation.
 - **event/fact type** — the kind of accepted fact asserted by an event; it does not require the canonical core to interpret domain payload meaning.
 - **schema identity / schema version** — the identity and applicable version of canonical schema information for an opaque payload; these values do not themselves define executable schema behavior.
 - **envelope semantic version** — the version of the core-understood envelope contract, distinct from domain schema identity/version.
-- **sequence number / assigned local sequence** — a monotonically increasing position assigned to a local event candidate. Assignment fixes ordering behavior but does not itself make the candidate canonical; only canonically committed D2/D3 events contribute their assigned positions to canonical replay order. The policy for gaps left by failed or uncommitted candidates remains unresolved, and no distributed-order commitment is made.
+- **sequence number / assigned local sequence** — a monotonically increasing position durably reserved for a local event candidate after construction and before persistence. Assignment does not make the candidate canonical; only committed D2/D3 events enter canonical replay. Reserved positions are never reused, and gaps are legal and reported without implying corruption. No distributed-order commitment is made.
+- **sequence reservation watermark** — recoverable noncanonical allocator evidence at least as high as every sequence exposed or reserved; uncertainty stops further assignment pending reconciliation.
 - **effective time** — when a fact applies in the modeled domain.
 - **system time** — when Data OS accepted a fact.
 - **durability time** — when an event crossed its declared durability boundary.
