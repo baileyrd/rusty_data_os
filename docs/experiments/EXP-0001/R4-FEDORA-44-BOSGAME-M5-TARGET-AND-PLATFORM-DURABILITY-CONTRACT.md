@@ -1,16 +1,18 @@
-# R4 — Fedora 43 Bosgame M5 Target and Platform Durability Contract
+# R4 — Fedora 44 Bosgame M5 Target and Platform Durability Contract
 
-**Status:** Complete as a documentation/readiness increment; target selected, machine evidence pending; BLK-014 and BLK-015 remain open
+**Status:** Complete as a documentation/readiness increment; target selected and externally reviewed observations recorded, repository-retained machine evidence pending; BLK-014 and BLK-015 remain open
 **Scope:** EXP-0001 primary bare-metal target only
-**Evidence classification:** owner-approved selection plus primary-source semantics; no machine capture, implementation, fault result, or benchmark evidence
+**Evidence classification:** owner-approved selection, non-sensitive observations transcribed by an external review of an owner-supplied capture, and primary-source semantics; no repository-retained machine capture, implementation, fault result, or benchmark evidence
 **Profile schema:** `benchmark-environment/v1`
 **Source review date:** 2026-08-26
 
 ## 1. Decision boundary and invariants
 
-R4 selects exactly one primary execution target: **a bare-metal Bosgame M5 running Fedora Linux 43**. “Bosgame M5,” “bare metal,” and “Fedora Linux 43” are owner-approved target requirements, not observations of a particular host. No repository artifact currently verifies that the selected machine is present, that Fedora 43 is installed, or any exact CPU, memory, kernel, filesystem, mount, block-device, firmware, cache, clock-resolution, or power-loss-protection value.
+R4 selects exactly one primary execution target: **a bare-metal Bosgame M5 running Fedora Linux 44**. The owner approved the owner-facing “Bosgame M5” machine identity, bare-metal execution form, Fedora Linux 44, and the four intended paths recorded in section 3.2. An external review of the owner-supplied capture identified the firmware-reported system product as **GMKtec NucBox EVO-X2** and observed the installed distribution as Fedora Linux 44. These names describe different identity sources and are not treated as contradictory.
 
-This record therefore does not resolve BLK-014 or BLK-015. It defines the evidence needed to resolve them and a stack-specific contract whose D2/D3 survival promises remain blocked until the owner capture, source review, and later empirical fault evidence satisfy the gates below. Documentation of an API is not evidence that a particular event survived a fault.
+The owner-supplied capture was externally reviewed outside the repository and is not retained here: that external review found that the capture's NVMe EUI remained visible in `lsblk-all.json` under `id` and `id-link`, so the archive is unsafe for publication or retention. Its reported SHA-256 digest was `d306dd8bb94139fcb1d50eea2cb9bff9a401aa599fdb005e9903850d73bd0b89`, but a digest does not supply the unavailable artifact, command provenance, authenticity, or reproducibility. Only the non-sensitive observations transcribed by the external review in section 4 are recorded here. They are **observed but not verified target facts** because their source artifact is not repository-retained. Exact CPU, memory, kernel, clock resolution, write-cache mode, flush/FUA behavior, NAND type, DRAM/cache architecture, protection claims, and other omitted values remain evidence-pending.
+
+This record therefore does not resolve BLK-014 or BLK-015. It defines the evidence needed to resolve them and a stack-specific contract whose D2/D3 survival promises remain blocked until a corrected owner-supplied capture, its external review, and later empirical fault evidence satisfy the gates below. Documentation of an API is not evidence that a particular event survived a fault.
 
 The following constraints are unchanged:
 
@@ -29,6 +31,8 @@ R4 selects no event framing, integrity/checksum algorithm, append API, synchroni
 | Classification | Meaning in this record |
 |---|---|
 | **Selected** | Owner-approved requirement for the future primary cell; not yet observed. |
+| **Externally reviewed observation** | Non-sensitive value transcribed by an external review of an owner-supplied artifact that is not safe or approved for repository retention; useful for follow-up, but not a verified target fact. |
+| **Repository-retained evidence** | Sanitized source artifact, capture provenance, and reviewable association retained by the project; none exists for the reviewed archive. |
 | **Verified** | Exact value supported by retained, reproducible output from the target and linked to provenance. |
 | **Evidence-pending** | Required value has no repository evidence. It cannot support a durability or equivalence claim. |
 | **Conditional** | Documented semantics apply only if named preconditions are later verified. |
@@ -52,14 +56,15 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 | `repository.commit`, `repository.dirty_state` | Evidence-pending for execution | Exact future execution checkout; this R4 document is not a run record. |
 | `host.label` | Selected form; label pending | Pseudonymous stable label. |
 | `host.execution_form` | Selected | Bare metal; capture must verify no VM/container layer rather than infer it from the product name. |
-| host manufacturer/product/board/BIOS/UEFI | Evidence-pending | Exact observed identifiers and firmware revisions; redact serial numbers and UUIDs. |
+| owner-facing machine identity | Selected | Bosgame M5. |
+| firmware-reported system product | Externally reviewed observation; not repository-verified | GMKtec NucBox EVO-X2. Manufacturer, board and BIOS/UEFI values remain pending; redact serial numbers and UUIDs. |
 | `cpu.model`, architecture/features, microcode | Evidence-pending | Exact target output, including microcode provenance. |
 | `cpu.topology`, NUMA, SMT, visible CPUs | Evidence-pending | Packages/dies/cores/threads/nodes and benchmark-visible set. |
 | CPU frequency policy, boost, affinity/isolation | Evidence-pending | Effective driver/governor/min/max/boost plus boot and task placement. |
 | `memory.capacity_bytes`, topology, speed, limits | Evidence-pending | OS-visible bytes, NUMA and DIMM/channel facts where available; never substitute advertised product capacity. |
 | huge pages, THP, swap, overcommit | Evidence-pending | Effective settings and observed use. |
-| `os.name`, distribution, version | Selected; unverified | Fedora Linux 43 must be installed on the captured host. Exact edition/release files remain pending. |
-| `os.kernel`, architecture | Evidence-pending | Exact release/build; “Fedora 43” does not select one kernel. |
+| `os.name`, distribution, version | Selected; externally observed; not repository-verified | Fedora Linux 44. Exact edition/release files and retained provenance remain pending. |
+| `os.kernel`, architecture | Evidence-pending | Exact release/build; “Fedora 44” does not select one kernel. |
 | boot parameters, mitigations, scheduler/limits, power/thermal/background activity | Evidence-pending | Effective target state for the series. |
 | `clocks` | Evidence-pending | APIs actually used, clocksource, `clock_getres` results, realtime synchronization/steps, monotonic placement, and conversion. R3 permits OS realtime for engine-assigned canonical times and run-relative monotonic time for lifecycle measurements; it does not verify target resolution. |
 
@@ -67,24 +72,43 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 
 | Logical field | State | Value or evidence required |
 |---|---|---|
-| `data_location` | Evidence-pending | Pseudonymized exact data, log/WAL, temporary, controller-ledger, and artifact paths; mount and underlying device for each. |
-| `storage.stack_path` | Evidence-pending | Ordered application/runtime → Linux VFS → filesystem → dm/LVM/RAID if any → block driver/device/controller/cache → medium. |
-| `filesystem` | Evidence-pending | Type and implementation/version, creation/features, allocation/discard behavior, capacity state, and complete effective mount options. No ext4, XFS, Btrfs, or other filesystem is presumed. |
-| `storage.device` | Evidence-pending | Exact model, firmware, interface, capacity, medium, namespace/topology, and pseudonymized stable identity. No NVMe device is presumed. |
+| `data_location` | Selected; final placement evidence-pending | Intended paths: `/var/lib/data-os/data`, `/var/lib/data-os/log`, `/var/lib/data-os/tmp`, and `/var/lib/data-os/controller-ledger`. All were observed absent, so these are not verified existing or mounted placements. |
+| `storage.stack_path` | Externally reviewed nearest-parent observation; incomplete | `/var/lib` was associated with `/dev/mapper/fedora-root` → linear LVM → `/dev/nvme0n1p3` → local PCIe NVMe namespace `/dev/nvme0n1`. Each absent final path could later become a distinct mount, so final path associations remain pending. |
+| `filesystem` | Externally reviewed nearest-parent observation; incomplete | `/var/lib` was on the XFS root filesystem mounted at `/`, with effective options `rw,relatime,seclabel,inode64,logbufs=8,logbsize=32k,noquota` and filesystem/fundamental block size 4096 bytes. Creation features and retained provenance remain pending. |
+| `storage.device` | Externally reviewed observation; incomplete | Local PCIe NVMe `KINGSTON OM8PGP42048N-A0`, firmware `ELFK7N.7`, namespace size 2,048,408,248,320 bytes, logical/physical sectors 512/512 bytes. Stable identifiers, including the exposed EUI, are deliberately not recorded. |
 | controller/bridge/RAID/dm/LVM | Evidence-pending | Exact model, firmware, topology, mode, cache and battery/capacitor state, or verified absence. |
 | logical/physical block and filesystem allocation/I/O sizes | Evidence-pending | Report each separately from target output. |
-| scheduler/queue | Evidence-pending | Scheduler, hardware queues/depth, request settings, merges and read-ahead for every leaf device. |
+| scheduler/queue | Externally reviewed observation; incomplete | Scheduler `none`, request queue size 1023, read-ahead 128 KiB. Hardware queue topology/depth, merges, and repository-retained provenance remain pending. |
 | cache and write-cache behavior | Evidence-pending | Page cache, filesystem barriers/flushes, device/controller volatile write cache, FUA/flush support and effective mode. |
 | `storage.power_loss_protection` | Evidence-pending | Exact installed device/controller evidence and scope; unknown until verified. Successful `fsync` is not proof. |
 | network storage | Inapplicable by selection | Primary target is local bare metal; discovery of remote-backed data/log placement violates the selected target and blocks the series. |
 | build/software/instrumentation/preconditioning fields | Evidence-pending and outside R4 selection | Must be frozen by their later increments before execution. R4 authorizes none. |
 | `durability_contract_ref` | Conditional | This document plus a future immutable revision containing the verified exact stack and selected R5 API profile. |
 
-## 4. Safe owner capture procedure
+## 4. Externally reviewed observations and provenance limits
+
+The owner supplied a path/storage capture that was externally reviewed outside the repository. That external review discovered an exposed NVMe EUI and transcribed the following non-sensitive observations. The archive itself is neither fetched nor retained here and remains unsafe for publication or retention. These provenance-limited, non-verified observations therefore guide the next capture but do not satisfy the retained-provenance acceptance gate:
+
+- all four selected paths were absent;
+- the nearest existing ancestor, `/var/lib`, resolved to source `/dev/mapper/fedora-root`, target `/`, XFS, the effective mount options recorded in section 3.2, and 4096-byte filesystem/fundamental blocks;
+- the observed stack was XFS root → linear LVM mapping `fedora-root` → `/dev/nvme0n1p3` → local PCIe NVMe namespace `/dev/nvme0n1`;
+- the NVMe model, firmware, namespace size, sector sizes, scheduler, request queue size, and read-ahead are recorded in section 3.2;
+- the installed tooling was reported as nvme-cli 2.16 / libnvme 1.16.2; and
+- PCI evidence was reported to identify a Kingston OM8PGP4 PCIe 4 NVMe SSD using the Linux `nvme` driver.
+
+The device identification in the last bullet depends on the unavailable capture and its external review; it is not a repository-verified controller, cache, or protection claim. NAND type and DRAM/cache architecture remain evidence-pending for a corrected capture or exact vendor evidence. None of these observations establishes volatile write-cache mode, flush/FUA behavior, controller/cache protection, power-loss protection, sync-call survival, or empirical fault survival. Because the intended final directories were absent, their later creation could place any one on a different mount. The observations associate intended locations only with their **current nearest existing parent**, not their eventual mounted placement.
+
+### 4.1 Smallest safe follow-up
+
+The next step is one separately authorized, read-only capture with corrected sanitization and external review before retention. Without creating any selected directory, run path discovery against each selected path and its nearest existing ancestor, preserving the explicit mapping from path → ancestor → mount/source/filesystem → mapper chain → partition → leaf device. Capture the effective mount options and block sizes; leaf model, firmware and non-sensitive topology; queue/scheduler/read-ahead settings; volatile write-cache and flush/FUA support/effective state; and exact vendor evidence (or an explicit unavailable result) for NAND type, DRAM/cache architecture, controller/cache protection, and PLP. The same bounded capture must record `clock_getres` for each clock proposed by R3 using an independently reviewed read-only utility.
+
+No package installation, configuration change, directory creation, mount/remount, cache or queue change, firmware action, benchmark, or fault action is part of this step. Sanitization must remove EUI, serial, WWN, UUID, host/user, address, and asset identifiers while preserving pseudonymous equality and topology. Until the corrected artifact, command/version/time/exit-status provenance, redaction record, and review are retained, the observations remain externally reviewed rather than verified.
+
+## 5. Safe owner capture procedure
 
 Run these commands **on the intended bare-metal target**, from a non-mutating administrative session, after substituting actual data and log paths. Redirecting output to owner-controlled evidence storage is acceptable; do not write capture output into the benchmark data device when that would perturb later state. These commands are observational, but privileged reads can expose identifiers. Do not run formatting, mounting/remounting, cache dropping, write-cache changes, firmware commands, SMART self-tests, benchmarks, or power faults for R4.
 
-### 4.1 Provenance, host, OS, CPU, memory, and clocks
+### 5.1 Provenance, host, OS, CPU, memory, and clocks
 
 ```text
 date --iso-8601=ns
@@ -134,7 +158,7 @@ systemd-analyze cat-config systemd/timesyncd.conf
 
 Do not run provider commands that add/delete sources, step or slew clocks, write configuration, or restart/reload a service. If neither provider is installed and active, record that result and identify any other provider for separate primary-manual review; synchronization state remains evidence-pending until its read-only status and configuration provenance are captured.
 
-### 4.2 Placement, filesystem, block path, queues, and caches
+### 5.2 Placement, filesystem, block path, queues, and caches
 
 Run the path-sensitive commands once for every proposed data, log/WAL, temporary, and controller-ledger path. Plain `dmsetup table` retains the default key suppression; `--showkeys` is prohibited. `dmsetup status --noflush` is required because unqualified thin-pool status can commit metadata. If discovery shows a dm-crypt mapping, `sudo cryptsetup status <MAPPING>` may be captured for non-secret status only; do not use any option or command that exposes key material.
 
@@ -175,7 +199,7 @@ sudo nvme get-feature <CONTROLLER> --feature-id=6 --human-readable
 
 Use filesystem-native read-only inspection only after discovery: for XFS, `xfs_info <PATH>`; for ext4, `sudo tune2fs -l <LEAF-DEVICE>`; for Btrfs, `btrfs filesystem show <PATH>` and `btrfs filesystem usage --bytes <PATH>`. A filesystem not listed here still remains eligible only after equivalent official semantics and feature evidence are reviewed.
 
-### 4.3 Expected output, retention, and redaction
+### 5.3 Expected output, retention, and redaction
 
 Expected output is complete command/version metadata plus exact values or an explicit permission/not-supported/not-present result. Preserve stdout and stderr separately, command text, exit status, UTC capture time, package version, and the association between every path, mount, mapper and leaf. Missing utilities are reported; do not install or change the target merely to make this R4 capture look complete.
 
@@ -183,7 +207,7 @@ Redact host/user names, serial numbers, WWNs, UUIDs, IP addresses, absolute user
 
 The command review is fail-closed: omit and report any command whose installed version cannot be verified as read-only for the exact device/stack. Do not use commands or options that flush or commit metadata, initiate device self-tests, change clocks/caches/queues/power settings, reload services, mount or remount filesystems, or otherwise mutate target state. Package/manual differences remain evidence-pending rather than permission to try a potentially mutating command.
 
-## 5. Primary-source semantics and limitations
+## 6. Primary-source semantics and limitations
 
 The following are documented semantics, not empirical survival results. Version/date refers to the source version visible at the cited primary source and the R4 review date above; the later execution record must archive or immutably identify the exact source revision applicable to its installed kernel/filesystem/device.
 
@@ -207,9 +231,9 @@ The following are documented semantics, not empirical survival results. Version/
 
 Where a later selected filesystem or device is absent from this table, R4 must be revised with its primary documentation before BLK-015 can close. Documentation describes intended interfaces; only admissible apparatus-specific results can support actual process-crash, kernel-reset, or abrupt-power-loss survival.
 
-## 6. Platform durability contract
+## 7. Platform durability contract
 
-### 6.1 Common lifecycle and error obligations
+### 7.1 Common lifecycle and error obligations
 
 A later physical profile must establish and recoverably validate the entire event envelope before canonical commit. Sequence reservation and permanent gaps follow R3. Event bytes, integrity/finalization marker(s), and any metadata required to recognize the record as complete must be submitted in the selected order. The canonical durability time is captured **after** the declared durability-boundary operation returns success, while canonical commit occurs only after the complete envelope can be recoverably classified as valid. Durability time never substitutes for the boundary or finalization evidence and cannot be backdated to submission.
 
@@ -217,7 +241,7 @@ Every write path must handle partial/short writes, `EINTR`, deferred/writeback e
 
 File content durability and namespace durability are separate. Any design that creates, links, renames, replaces, rotates, or deletes a log/segment must identify and synchronize every required file and parent directory in order. D3 records exact group membership before the shared boundary, one shared outcome, individual commit eligibility and acknowledgement. D3 is not an atomic multi-event transaction.
 
-### 6.2 Mode mapping for this selected target
+### 7.2 Mode mapping for this selected target
 
 | Mode | Eligible later Linux API families | Acknowledgement and canonical status | Permitted claim now |
 |---|---|---|---|
@@ -228,14 +252,14 @@ File content durability and namespace durability are separate. Any design that c
 
 R5 must explicitly choose between data-and-metadata and data-only synchronization, state why omitted metadata cannot affect recovery, define append offsets and concurrency, and list every directory sync. It must also bind the file descriptor to the intended local mount/device stack and prevent silent fallback to a different placement. R5 cannot claim D2/D3 until the exact filesystem/mount/device/cache/firmware/protection preconditions are verified and the later correctness/fault gate passes.
 
-### 6.3 Conditional and unsupported claims
+### 7.3 Conditional and unsupported claims
 
 - **Conditional:** documented completion of `fsync`/`fdatasync` or appropriately defined synchronized I/O orders Linux-visible writes according to the exact kernel, filesystem, mount and block path semantics.
 - **Empirically unverified:** survival of process termination, kernel panic/reset, abrupt power loss, torn/partial writes, or volatile-cache loss on the selected physical host.
 - **Unsupported now:** “on stable media,” “power-loss safe,” “no torn writes,” “atomic event append,” “exactly once,” or D2/D3 canonical survival based solely on a successful syscall, distribution/product defaults, generic device-family claims, or vendor marketing.
 - **Blocked:** any D2/D3 claim while filesystem/mount, full device/controller/cache path, firmware, flush/FUA behavior, placement, or power-loss protection is unknown.
 
-## 7. Contract-to-fault matrix
+## 8. Contract-to-fault matrix
 
 Every proposed D2/D3 claim is currently blocked. “Valid” below means a complete integrity-valid canonical event at its original sequence; “provisional” means residue that cannot be promoted; “terminal damage” means a deterministic valid prefix followed by an invalid/partial terminal extent under R1; “ambiguous/fail closed” means canonical status cannot be established.
 
@@ -254,10 +278,10 @@ Every proposed D2/D3 claim is currently blocked. “Valid” below means a compl
 
 A future result uses the EXP-0000 top-level classifications: valid execution can pass or fail; missing environment/apparatus evidence makes it invalid; inability to demonstrate the declared physical boundary is inconclusive. “Not tested” never means pass.
 
-## 8. Blocker disposition and next boundary
+## 9. Blocker disposition and next boundary
 
-- **BLK-014 remains open:** the target form is selected, but no completed environment record or retained owner capture verifies the particular Bosgame M5, Fedora 43 installation, CPU/memory/firmware/kernel/clock/placement facts.
-- **BLK-015 remains open:** filesystem, mount, block path, device/controller firmware, cache behavior, flush/FUA propagation, PLP, and empirical survival are unknown; no exact R5 API profile exists.
+- **BLK-014 remains open:** the target form and paths are selected and limited observations were externally reviewed, but no completed environment record or safe retained capture verifies provenance, exact final path existence/placement, CPU/memory/kernel, or required `clock_getres` facts.
+- **BLK-015 remains open:** the current nearest-parent XFS/LVM/NVMe stack, device model and firmware were externally observed, but final path placement, volatile-cache mode, flush/FUA behavior, exact controller/cache protection, PLP, retained provenance, and empirical survival remain incomplete; no exact R5 API profile exists.
 - **R4 documentation is complete:** it supplies the selected target, evidence-pending conforming profile, capture procedure, primary-source semantics, conditional platform contract, and complete proposed D2/D3 fault mapping.
 
-The next action is owner capture and review of the resulting immutable evidence. That is not R5 authorization. R5–R9, implementation, fixtures, tooling, CI expansion, benchmark execution, and performance claims remain prohibited until separately authorized by the readiness plan.
+The next action is the smallest safe follow-up in section 4.1: one separately authorized, corrected read-only capture and review of the resulting sanitized immutable evidence. That is not R5 authorization. R5–R9, implementation, fixtures, tooling, CI expansion, benchmark execution, and performance claims remain prohibited until separately authorized by the readiness plan.
