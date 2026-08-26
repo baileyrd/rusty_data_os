@@ -2,17 +2,17 @@
 
 **Status:** Complete as a documentation/readiness increment; target selected and externally reviewed observations recorded, repository-retained machine evidence pending; BLK-014 and BLK-015 remain open
 **Scope:** EXP-0001 primary bare-metal target only
-**Evidence classification:** owner-approved selection, non-sensitive observations transcribed from an owner review, and primary-source semantics; no repository-retained machine capture, implementation, fault result, or benchmark evidence
+**Evidence classification:** owner-approved selection, non-sensitive observations transcribed by an external review of an owner-supplied capture, and primary-source semantics; no repository-retained machine capture, implementation, fault result, or benchmark evidence
 **Profile schema:** `benchmark-environment/v1`
 **Source review date:** 2026-08-26
 
 ## 1. Decision boundary and invariants
 
-R4 selects exactly one primary execution target: **a bare-metal Bosgame M5 running Fedora Linux 44**. “Bosgame M5” is the owner-facing machine identity; “bare metal” and “Fedora Linux 44” are also owner-approved target requirements. The owner separately reported that a reviewed capture identified the firmware-reported system product as **GMKtec NucBox EVO-X2** and the installed distribution as Fedora Linux 44. These names describe different identity sources and are not treated as contradictory.
+R4 selects exactly one primary execution target: **a bare-metal Bosgame M5 running Fedora Linux 44**. The owner approved the owner-facing “Bosgame M5” machine identity, bare-metal execution form, Fedora Linux 44, and the four intended paths recorded in section 3.2. An external review of the owner-supplied capture identified the firmware-reported system product as **GMKtec NucBox EVO-X2** and observed the installed distribution as Fedora Linux 44. These names describe different identity sources and are not treated as contradictory.
 
-The reviewed archive is not retained in this repository: owner review found that its NVMe EUI remained visible in `lsblk-all.json` under `id` and `id-link`, so the archive is unsafe for publication or retention. Its reported SHA-256 digest was `d306dd8bb94139fcb1d50eea2cb9bff9a401aa599fdb005e9903850d73bd0b89`, but a digest does not supply the unavailable artifact, command provenance, authenticity, or reproducibility. Only the non-sensitive owner-reviewed observations in section 4 are recorded here. They are **observed but not verified target facts** because their source artifact is not repository-retained. Exact CPU, memory, kernel, clock resolution, write-cache mode, flush/FUA behavior, protection claims, and other omitted values remain evidence-pending.
+The owner-supplied capture was externally reviewed outside the repository and is not retained here: that external review found that the capture's NVMe EUI remained visible in `lsblk-all.json` under `id` and `id-link`, so the archive is unsafe for publication or retention. Its reported SHA-256 digest was `d306dd8bb94139fcb1d50eea2cb9bff9a401aa599fdb005e9903850d73bd0b89`, but a digest does not supply the unavailable artifact, command provenance, authenticity, or reproducibility. Only the non-sensitive observations transcribed by the external review in section 4 are recorded here. They are **observed but not verified target facts** because their source artifact is not repository-retained. Exact CPU, memory, kernel, clock resolution, write-cache mode, flush/FUA behavior, NAND type, DRAM/cache architecture, protection claims, and other omitted values remain evidence-pending.
 
-This record therefore does not resolve BLK-014 or BLK-015. It defines the evidence needed to resolve them and a stack-specific contract whose D2/D3 survival promises remain blocked until the owner capture, source review, and later empirical fault evidence satisfy the gates below. Documentation of an API is not evidence that a particular event survived a fault.
+This record therefore does not resolve BLK-014 or BLK-015. It defines the evidence needed to resolve them and a stack-specific contract whose D2/D3 survival promises remain blocked until a corrected owner-supplied capture, its external review, and later empirical fault evidence satisfy the gates below. Documentation of an API is not evidence that a particular event survived a fault.
 
 The following constraints are unchanged:
 
@@ -31,7 +31,7 @@ R4 selects no event framing, integrity/checksum algorithm, append API, synchroni
 | Classification | Meaning in this record |
 |---|---|
 | **Selected** | Owner-approved requirement for the future primary cell; not yet observed. |
-| **Externally reviewed observation** | Non-sensitive value transcribed from the owner's review of an artifact that is not safe or approved for repository retention; useful for follow-up, but not a verified target fact. |
+| **Externally reviewed observation** | Non-sensitive value transcribed by an external review of an owner-supplied artifact that is not safe or approved for repository retention; useful for follow-up, but not a verified target fact. |
 | **Repository-retained evidence** | Sanitized source artifact, capture provenance, and reviewable association retained by the project; none exists for the reviewed archive. |
 | **Verified** | Exact value supported by retained, reproducible output from the target and linked to provenance. |
 | **Evidence-pending** | Required value has no repository evidence. It cannot support a durability or equivalence claim. |
@@ -85,22 +85,22 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 | build/software/instrumentation/preconditioning fields | Evidence-pending and outside R4 selection | Must be frozen by their later increments before execution. R4 authorizes none. |
 | `durability_contract_ref` | Conditional | This document plus a future immutable revision containing the verified exact stack and selected R5 API profile. |
 
-## 4. Owner-reviewed observations and provenance limits
+## 4. Externally reviewed observations and provenance limits
 
-The owner reviewed a sanitized path/storage capture outside the repository and supplied the following non-sensitive observations. The archive itself is neither fetched nor retained here because the review found an exposed NVMe EUI. These observations therefore guide the next capture but do not satisfy the retained-provenance acceptance gate:
+The owner supplied a path/storage capture that was externally reviewed outside the repository. That external review discovered an exposed NVMe EUI and transcribed the following non-sensitive observations. The archive itself is neither fetched nor retained here and remains unsafe for publication or retention. These provenance-limited, non-verified observations therefore guide the next capture but do not satisfy the retained-provenance acceptance gate:
 
 - all four selected paths were absent;
 - the nearest existing ancestor, `/var/lib`, resolved to source `/dev/mapper/fedora-root`, target `/`, XFS, the effective mount options recorded in section 3.2, and 4096-byte filesystem/fundamental blocks;
 - the observed stack was XFS root → linear LVM mapping `fedora-root` → `/dev/nvme0n1p3` → local PCIe NVMe namespace `/dev/nvme0n1`;
 - the NVMe model, firmware, namespace size, sector sizes, scheduler, request queue size, and read-ahead are recorded in section 3.2;
 - the installed tooling was reported as nvme-cli 2.16 / libnvme 1.16.2; and
-- PCI evidence was reported to identify a Kingston OM8PGP4 PCIe 4 NVMe SSD using the Linux `nvme` driver, described by the reviewer as QLC and DRAM-less.
+- PCI evidence was reported to identify a Kingston OM8PGP4 PCIe 4 NVMe SSD using the Linux `nvme` driver.
 
-The final characterization in the last bullet depends on the unavailable capture and its reviewed interpretation; it is not a repository-verified controller, cache, or protection claim. None of these observations establishes volatile write-cache mode, flush/FUA behavior, controller/cache protection, power-loss protection, sync-call survival, or empirical fault survival. Because the intended final directories were absent, their later creation could place any one on a different mount. The observations associate intended locations only with their **current nearest existing parent**, not their eventual mounted placement.
+The device identification in the last bullet depends on the unavailable capture and its external review; it is not a repository-verified controller, cache, or protection claim. NAND type and DRAM/cache architecture remain evidence-pending for a corrected capture or exact vendor evidence. None of these observations establishes volatile write-cache mode, flush/FUA behavior, controller/cache protection, power-loss protection, sync-call survival, or empirical fault survival. Because the intended final directories were absent, their later creation could place any one on a different mount. The observations associate intended locations only with their **current nearest existing parent**, not their eventual mounted placement.
 
 ### 4.1 Smallest safe follow-up
 
-The next step is one separately authorized, read-only capture with a corrected sanitization and owner review before retention. Without creating any selected directory, run path discovery against each selected path and its nearest existing ancestor, preserving the explicit mapping from path → ancestor → mount/source/filesystem → mapper chain → partition → leaf device. Capture the effective mount options and block sizes; leaf model, firmware and non-sensitive topology; queue/scheduler/read-ahead settings; volatile write-cache and flush/FUA support/effective state; and exact vendor evidence (or an explicit unavailable result) for controller/cache protection and PLP. The same bounded capture must record `clock_getres` for each clock proposed by R3 using an independently reviewed read-only utility.
+The next step is one separately authorized, read-only capture with corrected sanitization and external review before retention. Without creating any selected directory, run path discovery against each selected path and its nearest existing ancestor, preserving the explicit mapping from path → ancestor → mount/source/filesystem → mapper chain → partition → leaf device. Capture the effective mount options and block sizes; leaf model, firmware and non-sensitive topology; queue/scheduler/read-ahead settings; volatile write-cache and flush/FUA support/effective state; and exact vendor evidence (or an explicit unavailable result) for NAND type, DRAM/cache architecture, controller/cache protection, and PLP. The same bounded capture must record `clock_getres` for each clock proposed by R3 using an independently reviewed read-only utility.
 
 No package installation, configuration change, directory creation, mount/remount, cache or queue change, firmware action, benchmark, or fault action is part of this step. Sanitization must remove EUI, serial, WWN, UUID, host/user, address, and asset identifiers while preserving pseudonymous equality and topology. Until the corrected artifact, command/version/time/exit-status provenance, redaction record, and review are retained, the observations remain externally reviewed rather than verified.
 
