@@ -3,11 +3,23 @@
 **Logical schema:** `benchmark-environment/v1`
 **Status:** EXP-0000 measurement contract; no environment has been selected or recorded
 
+**EXP-0001 physical profile:** The fields below are serialized, validated,
+retained, and redacted according to the documentation-only
+[R7 authority](../experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md).
+This remains the logical contract; R7 creates no schema, validator, record, or evidence.
+
 ## 1. Conformance
 
 This versioned logical record identifies the execution context shared by a benchmark series. It is not evidence that a run occurred. **R** means required, **C** conditionally required when applicable, **M** recommended when obtainable and material, and **N** inapplicable only with a reason. `unknown`, `unavailable`, `unsupported`, and `inapplicable` each require a reason and are distinct from zero. Values must never be invented.
 
-Serialization, timestamp representation, identity/digest algorithms, canonical field names, and validation tooling remain unresolved. Values and units must nevertheless be machine-processable in the eventual representation. Sensitive user, hostname, address, and path data must be excluded or consistently pseudonymized while preserving material topology and configuration; redactions and their reproducibility impact are recorded.
+For EXP-0001, serialization, timestamps, UUID record identities, SHA-256 artifact
+digests, canonical physical names, validation rules, and missing states are
+selected by `EXP1-R7-JSON-JCS-1` and its closed field ledger. Validator
+implementation remains unauthorized and absent. Other experiments may select a
+different physical profile. Sensitive user, hostname, address, and path data
+must be excluded or consistently pseudonymized while preserving material
+topology and configuration; redactions and their reproducibility impact are
+recorded.
 
 ## 2. Normative fields
 
@@ -110,4 +122,7 @@ durability_contract_ref: {uri: "artifact:contract", digest: "<algorithm>:<digest
 artifact_manifest: []
 ```
 
-These are placeholders. YAML is illustrative, not the selected serialization or validator.
+These are placeholders. YAML remains a non-normative illustration of the logical
+contract; it is **not** the EXP-0001 serialization. EXP-0001 selects
+`EXP1-R7-JSON-JCS-1`; its complete fictional JSON record is in the
+[R7 examples](../experiments/EXP-0001/R7-PHYSICAL-RECORD-EXAMPLES.md).

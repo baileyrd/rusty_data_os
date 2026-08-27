@@ -3,7 +3,7 @@
 **Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R6 are complete documentation inputs, including the [R6 B2/B3 profile freeze](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md), but the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R7 are complete documentation inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -118,7 +118,7 @@ All evidence and conclusions must follow the frozen [EXP-0001 interpretation and
 
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that grouping changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. R5 resolves BLK-001/003/016/017 and B0/B1 BLK-019 as documentation design. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) resolves BLK-018 and the B2/B3 design portion of BLK-019 while leaving D2 conditional and strict D3 unsupported. BLK-015, implementation, empirical equivalence, and execution remain open. R6 is complete and R7 is next; no R7 content, capture work, code, Cargo file, fixture, validator, adapter, workflow, benchmark, fault action, machine change, implementation, or execution is authorized.
+A useful result may be that some durability modes are competitive while others are not, or that grouping changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. R5 resolves BLK-001/003/016/017 and B0/B1 BLK-019 as documentation design. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) resolves BLK-018 and the B2/B3 design portion of BLK-019 while leaving D2 conditional and strict D3 unsupported. BLK-015, implementation, empirical equivalence, and execution remain open. R7 is complete as documentation design and R8 is next. Owner-dependent apparatus, capture work, code, Cargo files, fixtures, validators, adapters, workflows, benchmarks, fault actions, machine changes, implementation, and execution remain unauthorized.
 
 ## 11. Completion criteria
 
