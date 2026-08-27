@@ -3,7 +3,7 @@
 **Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. The [R1 requirements record](EXP-0001/R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md) resolves minimum integrity and recovery policy, but physical encoding and integrity algorithms remain open, and the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R6 are complete documentation inputs, including the [R6 B2/B3 profile freeze](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md), but the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -106,7 +106,7 @@ The [EXP-0001 baseline contract](../benchmarks/BASELINES.md) selects B0 minimal 
 
 B0 is D0 only. B1 is the primary D1/D2/controlled-D3 primitive. SQLite and RocksDB D1 are provisional and their D2 profiles are only conditionally equivalent under recorded platform contracts. Their atomic multi-event transaction/`WriteBatch` forms are not D3 equivalents; opaque internal group commit is diagnostic unless it satisfies observable D3 membership, acknowledgement, and shared-outcome semantics. Analytic/columnar, vector, graph, server, distributed, and unrelated database baselines are deferred.
 
-The contract freezes semantic profiles, not exact future binaries or physical adapters. Series-specific versions, effective configuration, adapter mapping, environment, and correctness evidence must be frozen before execution.
+R5 freezes B0/B1 design profiles. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) freezes exact SQLite 3.53.4 and RocksDB 11.8.1 source/build/API profiles and mappings. Effective configuration, final environment/toolchain, implementation, and correctness evidence must still be validated before execution.
 
 ## 9. Benchmark environment
 
@@ -118,7 +118,7 @@ All evidence and conclusions must follow the frozen [EXP-0001 interpretation and
 
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that batching changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. The readiness plan and R1–R4 supply the prerequisites. The [R5 authority](EXP-0001/R5-B0-B1-PHYSICAL-PROFILES-AND-ADAPTER-CONTRACTS.md) and [focused physical contract](EXP-0001/R5-PHYSICAL-RECORD-INTEGRITY-AND-RECOVERABLE-COMMIT-CONTRACT.md) resolve BLK-001/003/016/017 and the B0/B1 portion of BLK-019 as documentation design, with stable vectors and append-only recoverable commit. BLK-015 and B2/B3 remain open. R5 is complete and R6 is next; no capture work, code, Cargo file, fixture, validator, adapter, workflow, benchmark, fault action, machine change, implementation, or execution is authorized.
+A useful result may be that some durability modes are competitive while others are not, or that grouping changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. R5 resolves BLK-001/003/016/017 and B0/B1 BLK-019 as documentation design. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) resolves BLK-018 and the B2/B3 design portion of BLK-019 while leaving D2 conditional and strict D3 unsupported. BLK-015, implementation, empirical equivalence, and execution remain open. R6 is complete and R7 is next; no R7 content, capture work, code, Cargo file, fixture, validator, adapter, workflow, benchmark, fault action, machine change, implementation, or execution is authorized.
 
 ## 11. Completion criteria
 

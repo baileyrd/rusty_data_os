@@ -1,6 +1,6 @@
 # EXP-0001 Baseline Contract
 
-**Status:** EXP-0000 baseline selection and semantic configuration complete; no baseline has been implemented, installed, executed, or measured.
+**Status:** EXP-0000 baseline selection complete; R5/R6 freeze all B0–B3 documentation profiles, but no baseline has been implemented, installed, executed, or measured.
 
 This contract selects the EXP-0001 controls that isolate useful costs under the frozen [workload](../experiments/EXP-0000/WORKLOADS.md), [acknowledgement/durability](../experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md), and [crash/recovery](../experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md) contracts. Selection is not a prediction that Data OS will outperform a baseline. No configuration below is benchmark evidence or authorization to begin EXP-0001.
 
@@ -57,7 +57,7 @@ Rust documents `File::sync_all` as attempting to synchronize data and metadata a
 
 ## 5. B2 — SQLite WAL
 
-SQLite is selected as the embedded transactional baseline. No moving “current” version is frozen here: the exact SQLite release, amalgamation/source identifier, source digest, build options, wrapper version, and VFS must be pinned in the future environment manifest before execution. SQLite release behavior changes over time, as shown by the [official release history](https://www.sqlite.org/changes.html); results from different versions are distinct benchmark series and may not be pooled.
+SQLite is selected as the embedded transactional baseline. The later [R6 authority](../experiments/EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) freezes SQLite 3.53.4, its source/build/API profile, schema/mapping, effective-setting obligations, and invalidation rules. Release behavior changes over time, as shown by the [official release history](https://www.sqlite.org/changes.html); results from different versions are distinct benchmark series and may not be pooled.
 
 Initial profiles:
 
@@ -69,7 +69,7 @@ The adapter must use a neutral minimal schema sufficient to preserve the semanti
 
 ## 6. B3 — RocksDB with WAL
 
-RocksDB is selected as the established write-optimized LSM/WAL baseline. As with SQLite, the exact release/tag or commit, source digest, build configuration, dependency and binding versions must be pinned in the future environment manifest. The [official RocksDB releases](https://github.com/facebook/rocksdb/releases) are the version source; no results may be mixed across releases.
+RocksDB is selected as the established write-optimized LSM/WAL baseline. The later [R6 authority](../experiments/EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) freezes RocksDB 11.8.1, its source/build/API profile, mapping, effective-setting obligations, and invalidation rules. The [official RocksDB releases](https://github.com/facebook/rocksdb/releases) remain the upstream version source; no results may be mixed across releases.
 
 Initial profiles:
 
@@ -124,4 +124,4 @@ A baseline may be removed or replaced only when it is unavailable under a reprod
 
 ## 11. Deliberately unresolved
 
-This selection does not choose product binaries, exact versions, bindings, adapters, SQLite schema, RocksDB key/value mapping, B0 structure, B1 API/sync primitive, event encoding/framing, integrity mechanism, platform durability guarantee, checkpoint behavior, retry/idempotency, identity/timestamp/clock algorithms, sequencing-gap policy, transactions, or distributed design. Those choices require later bounded freezes and correctness validation. The recommended next bounded EXP-0000 output is benchmark environment and raw-result templates; that recommendation is not authorization to install, implement, execute, or benchmark anything.
+This original EXP-0000 selection did not choose physical profiles. R5 subsequently freezes B0/B1 documentation design and R6 freezes B2/B3 documentation design. Final toolchain/series inputs, implementation, effective validation, platform durability evidence, checkpoint behavior beyond the profile exclusions, identity/digest algorithms, and distributed design remain unresolved. These later freezes do not authorize installation, implementation, execution, or benchmarking.
