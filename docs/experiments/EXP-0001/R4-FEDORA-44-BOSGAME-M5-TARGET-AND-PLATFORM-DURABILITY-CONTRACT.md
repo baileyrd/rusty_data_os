@@ -4,13 +4,13 @@
 **Scope:** EXP-0001 primary bare-metal target only
 **Evidence classification:** owner-accepted, externally reviewed non-sensitive observations and primary-source semantics; no repository-retained machine capture, implementation, fault result, or benchmark evidence
 **Profile schema:** `benchmark-environment/v1`
-**Source review date:** 2026-08-26
+**Source review date:** 2026-08-27
 
 ## 1. Decision boundary and invariants
 
 R4 selects exactly one primary execution target: **a bare-metal Bosgame M5 running Fedora Linux 44**. The owner approved the owner-facing “Bosgame M5” machine identity, bare-metal execution form, Fedora Linux 44, and the four intended paths recorded in section 3.2. An external review of the owner-supplied capture identified the firmware-reported system product as **GMKtec NucBox EVO-X2** and observed the installed distribution as Fedora Linux 44. These names describe different identity sources and are not treated as contradictory.
 
-The owner-supplied capture was externally reviewed outside the repository and is not retained here because it contained a sensitive NVMe identifier. The owner accepts the non-sensitive findings recorded in sections 3 and 4 as sufficient for **conditional readiness planning**, despite the reproducibility limitation created by the unavailable source artifact. This acceptance does not turn those findings into repository-verified experiment evidence. No capture archive or sensitive identifier is recorded here.
+The accepted artifact, `data-os-r4-final.5fk5yE-sanitized-v2.tar.gz`, was externally reviewed outside the repository. A predecessor archive exposed a sensitive NVMe identifier; the accepted v2 artifact passed the residual-identifier audit except for the owner-accepted public NTP source hostname. The v2 artifact is not committed because issue #26 explicitly excludes committing the archive and accepts externally reviewed, non-retained provenance. The owner accepts its non-sensitive findings recorded in sections 3 and 4 as sufficient for **conditional readiness planning**, despite the reproducibility limitation created by the unavailable source artifact. This acceptance does not turn those findings into repository-verified experiment evidence. No capture archive, digest, or sensitive identifier is recorded here.
 
 This record closes the R4 planning gate and resolves the R4 portion of BLK-014 sufficiently to design conditional R5 B0/B1 physical profiles and adapter contracts. BLK-015 is deliberately only **planning-unblocked**: final-directory placement, exact controller PLP/protection, and empirical fault survival remain unverified and continue to block execution and every dependent D2/D3 survival claim. Documentation of an API is not evidence that a particular event survived a fault.
 
@@ -55,7 +55,7 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 | `environment_id`, `captured_at`, `capture_mechanism`, `record_producer`, `artifact_manifest`, `redactions` | Evidence-pending | Immutable record identity and capture provenance; retain raw outputs and digest them after algorithms/serialization are authorized. |
 | `repository.commit`, `repository.dirty_state` | Evidence-pending for execution | Exact future execution checkout; this R4 document is not a run record. |
 | `host.label` | Selected form; label pending | Pseudonymous stable label. |
-| `host.execution_form` | Selected | Bare metal; capture must verify no VM/container layer rather than infer it from the product name. |
+| `host.execution_form` | Owner-accepted, externally reviewed observation; not repository-verified | Bare metal. Repository-retained execution provenance and any broader virtualization claim remain unavailable. |
 | owner-facing machine identity | Selected | Bosgame M5. |
 | firmware-reported system product | Externally reviewed observation; not repository-verified | GMKtec NucBox EVO-X2. Manufacturer, board and BIOS/UEFI values remain pending; redact serial numbers and UUIDs. |
 | `cpu.model`, architecture/features, microcode | Owner-accepted observation; incomplete | AMD Ryzen AI MAX+ 395; microcode and complete feature provenance remain unavailable. |
@@ -63,7 +63,7 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 | CPU frequency policy, boost, affinity/isolation | Evidence-pending | Effective driver/governor/min/max/boost plus boot and task placement. |
 | `memory.capacity_bytes`, topology, speed, limits | Owner-accepted observation; incomplete | Approximately 32 GiB OS-visible RAM; exact byte count, topology, speed, and limits remain unavailable. |
 | huge pages, THP, swap, overcommit | Evidence-pending | Effective settings and observed use. |
-| `os.name`, distribution, version | Selected; externally observed; not repository-verified | Fedora Linux 44. Exact edition/release files and retained provenance remain pending. |
+| `os.name`, distribution, version | Owner-accepted, externally reviewed observation; not repository-verified | Fedora Linux 44 Server Edition. Repository-retained execution provenance and any broader OS claim remain unavailable. |
 | `os.kernel`, architecture | Owner-accepted observation | `7.1.10-200.fc44.x86_64`; no broader kernel stability claim. |
 | boot parameters, mitigations, scheduler/limits, power/thermal/background activity | Evidence-pending | Effective target state for the series. |
 | `clocks` | Owner-accepted observation; incomplete | All captured relevant realtime, monotonic, boottime, and TAI clocks reported 1 ns implementation resolution. Resolution is not accuracy; synchronization behavior and accuracy remain unverified. |
@@ -87,7 +87,7 @@ This profile supplies all currently knowable values. “Evidence-pending” is a
 
 ## 4. Externally reviewed observations and provenance limits
 
-The owner supplied a capture that was externally reviewed outside the repository. The archive is neither fetched nor retained here because it contained a sensitive device identifier. The owner accepts the following non-sensitive findings for planning, with the explicit limitation that they are not reproducible repository-retained evidence:
+The owner supplied `data-os-r4-final.5fk5yE-sanitized-v2.tar.gz`, which was externally reviewed outside the repository. A predecessor archive exposed a sensitive NVMe identifier; the accepted v2 artifact passed the residual-identifier audit except for the owner-accepted public NTP source hostname. The accepted v2 archive is neither fetched nor retained here because issue #26 explicitly excludes committing it and accepts externally reviewed, non-retained provenance. No digest or sensitive value is recorded. The owner accepts the following non-sensitive findings for planning, with the explicit limitation that they are not reproducible repository-retained evidence:
 
 - all four selected paths were absent;
 - the nearest existing ancestor, `/var/lib`, resolved to source `/dev/mapper/fedora-root`, target `/`, XFS, the effective mount options recorded in section 3.2, and 4096-byte filesystem/fundamental blocks;
