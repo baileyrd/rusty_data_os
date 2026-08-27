@@ -1,6 +1,6 @@
 # EXP-0001 R7 closed physical field ledger
 
-**Profile:** `EXP1-R7-JSON-JCS-1`  
+**Profile:** `EXP1-R7-JSON-JCS-1`
 **Status:** normative documentation design; implementation and evidence absent
 
 This is the complete physical ledger incorporated by the [R7 authority](R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md). Objects are closed. Every table row is required unless its condition says otherwise. An empty array is a known empty set, never missing. Array order is normative. R9 may encode this ledger but may not complete or reinterpret it.
