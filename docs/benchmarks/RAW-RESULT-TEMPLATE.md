@@ -12,7 +12,15 @@ This remains the logical contract; R7 creates no schema, validator, result, or e
 
 This logical record preserves one observation or a bundle whose members remain individually identifiable. **R** is required, **C** conditionally required, and **M** recommended. Raw observations are immutable: corrections create a new `result_id`, cite `supersedes`, and retain the old record. Failed, negative, invalid, diagnostic, non-equivalent, and inconclusive runs remain preserved. Summaries reference raw identities and never replace raw evidence.
 
-Missing values use `unknown`, `unavailable`, `unsupported`, `unmeasured`, or `inapplicable` with a reason. These states, zero, and empty collections are distinct. Every number has a machine-processable unit and measurement method. Serialization, timestamp, identifier, digest, histogram, and validation formats remain unresolved.
+The logical missing concepts `unknown`, `unavailable`, `unmeasured`, and
+`inapplicable` map respectively to the selected EXP-0001 physical states
+`missing`, `not_collected`, `not_collected`, and `not_applicable`;
+`unsupported` remains `unsupported`. These states, zero, and empty collections
+are distinct. Every number has a machine-processable unit and method. For
+EXP-0001, `EXP1-R7-JSON-JCS-1` selects serialization, timestamps, UUID record
+identities, SHA-256 artifact digests, raw-sample representation, and validation
+rules. Validator implementation remains unauthorized and absent; the canonical
+event-integrity algorithm remains the separate R5 CRC-32C decision.
 
 ## 2. Normative fields
 
@@ -117,4 +125,7 @@ latency: {state: unmeasured, reason: "example intentionally contains no data"}
 artifacts: []
 ```
 
-All values are fictional placeholders. YAML is explanatory only; final serialization and validation remain unresolved.
+All values are fictional placeholders. YAML remains a non-normative illustration
+of the logical contract and is not the selected EXP-0001 serialization.
+EXP-0001 selects `EXP1-R7-JSON-JCS-1`; its complete fictional JSON record is in
+the [R7 examples](../experiments/EXP-0001/R7-PHYSICAL-RECORD-EXAMPLES.md).

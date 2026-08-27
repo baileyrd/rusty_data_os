@@ -71,9 +71,15 @@ The only missing-state object states are `present`, `missing`, `not_applicable`,
 `reason`; `redacted` also requires `sanitized_artifact_id`. `not_applicable`
 permits no other member. A consumer must not coerce one state into another.
 
-### 2.2 Logical-field mapping
+### 2.2 Closed physical field ledger
 
-The following closed `body` objects physically cover the logical contracts.
+The normative, complete [R7 physical field ledger](R7-PHYSICAL-FIELD-LEDGER.md)
+defines every envelope and nested member for all six record kinds, including
+types and unions, integer ranges, units, enum domains, conditionality, array
+ordering, and missing-state behavior. The following table is only a navigation
+summary; it does not relax or extend that ledger.
+
+The closed `body` objects physically cover the logical contracts.
 Every `*_ns`, `*_bytes`, count, sequence, ordinal, and counter is a canonical
 decimal string unless explicitly bounded below; rates are not stored in raw
 records and are derived later. Enumerations use the exact lower-snake-case text
@@ -82,22 +88,15 @@ duplicate; those values use arrays sorted by the stated key.
 
 | Kind | Required physical fields and exact rules |
 |---|---|
-| `environment` | `repository_commit` (40 lowercase hex); `authority_revisions` (array of `{path,sha256}` sorted by UTF-8 `path` bytes); `host` closed object containing `machine_pseudonym`, CPU, memory, firmware, virtualization and topology state objects; `software` containing Fedora release, kernel, libc, compiler/toolchain/build and dependency identities; `storage` containing intended/final path state, filesystem/mount/LVM/block/device/cache/PLP and free-space states; `clocks` array sorted by `clock_id`; `security_privilege` state; `preconditioning`; `deviations` array. Units are explicit suffixes. Sensitive raw identifiers are forbidden. This is the complete ENVIRONMENT-TEMPLATE logical record, including unknown and limitation states. |
+| `environment` | Closed body members are `artifact_manifest`, `authority_revisions`, `baseline`, `build`, `capture`, `clocks`, `configuration_refs`, `cpu`, `data_locations`, `deviations`, `durability_contract_ref`, `fault_apparatus`, `host`, `instrumentation`, `memory`, `os`, `preparation`, `record_producer`, `redactions`, `repository`, `scheduler_security`, and `storage`; the ledger closes every nested object and named-fact domain. |
 | `raw_result` | `profile_id`, `subject_id`, `baseline_id` state, `workload_manifest_artifact_id`, `environment_record_id`, `d_mode`, `ack_boundary`, `canonical_status`, `visibility`, `fault_contract`, `configuration`, `phase`, `sample_population`, ordered `operations`, `throughput_window`, `resource_counters`, `background_work`, `errors`, `recovery`, `correctness`, `equivalence`, `deviations`, and `artifact_ids`. Operations are sorted by `workload_ordinal` and carry separate request/event IDs, assigned sequence state, effective/system/durability/observation state, monotonic lifecycle points, acknowledgement, D3 membership/shared outcome, byte accounts, and error state. Latency and throughput use the same named acknowledgement boundary. Every logical RAW-RESULT-TEMPLATE field is represented directly or by a typed missing state. |
 | `artifact_manifest` | `scope` (`series` or `run`), `publication_state` (`staged`, `published`, `superseded`, `expired`, `deleted`), `series_freeze`, ordered `artifacts`, and ordered `provenance_edges`. Artifacts sort by `logical_path`; edges sort by `(from_artifact_id,relation,to_artifact_id)`. Section 5 defines both structures. |
 | `fault_plan` | `plan_version`, `profile_id`, `d_mode`, `fault_class`, `mechanism_label`, `mechanism`, `control_plane`, `lifecycle_injection_point`, `trigger`, `preconditions`, `promised_layers`, `excluded_layers`, `self_tests`, `contamination_controls`, `restart_recovery`, `oracle_obligations`, and `authorization_state`. No plan implies authorization. |
 | `fault_outcome` | `fault_plan_record_id`, `armed_at_monotonic_ns`, `trigger_evidence`, `placement_class`, `observed_condition`, `apparatus_self_test`, `contamination`, `oracle_artifact_id`, `recovery_artifact_ids`, `classification`, `classification_reasons`, and `not_tested_cells`. Classification is exactly `pass`, `fail`, `invalid`, or `inconclusive`; unsupported cells are `not_tested`, never pass. |
 | `validation_report` | `validator_identity`, `validator_version`, `validation_started_at_utc_ns`, `validated_record_id` state, `validated_artifact_id`, `byte_length`, `sha256`, `profile_checks` (ordered by check ID), `errors` (ordered by byte offset then code), and `outcome` (`valid` or `invalid`). Validation software does not exist yet, so future reports cannot be manufactured by this increment. |
 
-Closed subobjects must preserve all named logical distinctions in the linked
-contracts. R9 must turn this table into a complete field ledger before creating
-an executable schema; omission is an implementation blocker, not permission to
-collapse fields. Configuration arrays use `{name,type,value,source}` sorted by
-`name`; samples use `{ordinal,value}` sorted by `ordinal`. Durations and
-timestamps are nanoseconds, byte quantities are octets, CPU is nanoseconds,
-memory is bytes, I/O operations and events are counts. Boolean values are JSON
-booleans. Fixed enums are strings. Human commentary is UTF-8 text and never
-parsed as a measurement.
+R9 may implement the frozen ledger but may not choose, rename, omit, widen, or
+collapse fields. Any needed change requires a reviewed profile revision.
 
 ### 2.3 Identity, digest, and byte domains
 
@@ -121,6 +120,9 @@ ASCII prefix `rusty-data-os/exp1/r7/artifact/v1` followed by `00`:
 The prefix and byte count must be independently checked before R9 adopts the
 vector. Exact artifact digests cover compressed/encrypted containers as stored;
 their decoded content, when needed, is a separate artifact and provenance edge.
+
+The complete fictional examples and independently recomputable record-domain
+vector are in [R7 documentation examples](R7-PHYSICAL-RECORD-EXAMPLES.md).
 
 BLK-008 is therefore **partially resolved**: the algorithm, output, domains, and
 artifact/record coverage are frozen. It remains open on the workload-stream
@@ -147,20 +149,9 @@ discoverable error and byte offset, but the validator must not repair input.
 Parser crash, resource exhaustion, or incomplete validation is an invalid
 validation attempt and cannot yield `valid`.
 
-Positive documentation example (not a complete environment body):
-
-```json
-{"body":{"publication_state":"staged"},"created_at_utc_ns":"0","record_id":"00000000-0000-4000-8000-000000000001","record_kind":"artifact_manifest","run_id":{"state":"not_applicable"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"00000000-0000-4000-8000-000000000002","supersedes_record_id":{"state":"not_applicable"}}
-```
-
-This is intentionally rejected as a full manifest because required body fields
-are missing; it is positive only for JCS ordering, UUID form, integer-string, and
-state syntax. Negative cases: appending LF is `noncanonical`; adding a second
-`record_id` is `duplicate-member`; using JSON number `9223372036854775807` is
-`range`; omitting a required unavailable value rather than recording its state
-is `missing-field`; and adding `notes2` is `unknown-field`. R9 must preserve both
-valid complete fixtures and isolated negative fixtures; these examples are not
-executable fixtures.
+The examples authority supplies complete conforming environment and raw-result
+records, explicit missing and correction/supersession cases, and focused invalid
+cases. They are documentation, not executable fixtures or generated evidence.
 
 ## 3. Validation evidence and publication gate
 
@@ -173,11 +164,14 @@ Validation reports never validate themselves. A series manifest pins validator
 source/build identity before execution, but R9/BLK-026 must authorize it.
 
 The manifest avoids self-reference by excluding its own artifact entry and
-digest. A separate immutable **publication descriptor** stores the manifest
-artifact ID, URI, length, digest, publication generation, and validation-report
-IDs. The descriptor is the atomic discovery pointer; replacing it creates a new
-generation and never mutates the referenced manifest. Filesystem realization is
-not selected here.
+digest. A separate immutable **publication descriptor** is a closed JCS control
+object defined by the ledger. It is the atomic discovery pointer. Generation
+zero has no predecessor; generation `n>0` must equal its predecessor plus one,
+name that predecessor's digest, and replace only a descriptor for the same
+series and scope. A stale, skipped, forked, wrong-scope, invalid, unauthorized,
+or digest-mismatched replacement fails `policy` or `reference` and leaves the
+last valid generation authoritative. Referenced manifests remain immutable.
+Filesystem realization is not selected here.
 
 ## 4. Deterministic artifact layout and references
 
@@ -243,9 +237,13 @@ Evidence moves only `staged -> published -> superseded -> expired -> deleted`;
 invalid, and inconclusive evidence follows the same policy and is never deleted
 because it is unfavorable. `expired` makes bytes inaccessible only after the
 predeclared retention obligation and dependency check. `deleted` requires a
-separate immutable deletion-evidence record with authorization, reason, time,
-scope, method, and prior digest; tombstones and provenance remain. No transition
-rewrites an old manifest.
+separate immutable closed JCS **deletion-evidence control record** defined by the
+ledger. It binds the authorizer, authorization artifact, approved scope, target
+identity/length/prior digest, method, completion observation, and verification
+result. Missing, invalid, mismatched, unauthorized, premature, or failed
+evidence prohibits the transition; partial deletion is `inconclusive`, retains
+the prior state, and requires a new attempt/evidence identity. Tombstones and
+provenance remain. No transition rewrites an old manifest.
 
 Redaction is never in-place. Capture forbids secrets, credentials, personal
 hostnames/addresses, sensitive paths, and unsanitized machine/device IDs in Git.
