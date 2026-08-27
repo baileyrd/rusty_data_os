@@ -401,7 +401,7 @@ BLK-020 remains constrained, not executable. BLK-009, BLK-015, BLK-023/024,
 BLK-026/027, implementation, effective validation, execution, and evidence stay
 open. UNK-022 is resolved as physical records, digest, artifact policy, and
 instrumentation design, but automated validation remains open. UNK-018/019 retain
-the generator/workload-manifest dependencies above. R8 is next and may freeze
+the generator/workload-manifest dependencies above. R8 subsequently froze its candidate matrix and analysis design but remains incomplete at its owner threshold-decision boundary; it may freeze
 only primary matrix/statistics/thresholds; it cannot authorize code or faults.
 
 The owner must provide, in one reviewed future authority: final non-sensitive
