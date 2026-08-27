@@ -81,15 +81,17 @@ summary; it does not relax or extend that ledger.
 
 The closed `body` objects physically cover the logical contracts.
 Every `*_ns`, `*_bytes`, count, sequence, ordinal, and counter is a canonical
-decimal string unless explicitly bounded below; rates are not stored in raw
-records and are derived later. Enumerations use the exact lower-snake-case text
+decimal string unless explicitly bounded below. Raw results store exact rational
+rates together with their numerator, denominator, interval, unit, and method;
+later summaries may derive other rates but cannot replace these inputs.
+Enumerations use the exact lower-snake-case text
 listed here. Maps are forbidden where repeated ordered entries could hide a
 duplicate; those values use arrays sorted by the stated key.
 
 | Kind | Required physical fields and exact rules |
 |---|---|
 | `environment` | Closed body members are `artifact_manifest`, `authority_revisions`, `baseline`, `build`, `capture`, `clocks`, `configuration_refs`, `cpu`, `data_locations`, `deviations`, `durability_contract_ref`, `fault_apparatus`, `host`, `instrumentation`, `memory`, `os`, `preparation`, `record_producer`, `redactions`, `repository`, `scheduler_security`, and `storage`; the ledger closes every nested object and named-fact domain. |
-| `raw_result` | `profile_id`, `subject_id`, `baseline_id` state, `workload_manifest_artifact_id`, `environment_record_id`, `d_mode`, `ack_boundary`, `canonical_status`, `visibility`, `fault_contract`, `configuration`, `phase`, `sample_population`, ordered `operations`, `throughput_window`, `resource_counters`, `background_work`, `errors`, `recovery`, `correctness`, `equivalence`, `deviations`, and `artifact_ids`. Operations are sorted by `workload_ordinal` and carry separate request/event IDs, assigned sequence state, effective/system/durability/observation state, monotonic lifecycle points, acknowledgement, D3 membership/shared outcome, byte accounts, and error state. Latency and throughput use the same named acknowledgement boundary. Every logical RAW-RESULT-TEMPLATE field is represented directly or by a typed missing state. |
+| `raw_result` | The ledger's normative logical-to-physical crosswalk maps every `benchmark-raw-result/v1` field one-to-one. It requires `sample_id`; all eleven operation counts; general and lifecycle intervals; separately sourced time meanings; latency evidence/population/algorithm/loss/rounding; exact operation and byte rates; closed CPU, allocation, memory, I/O, synchronization, amplification, and execution-observation structures; validation/integrity; and digest-bearing environment, workload, artifact, and provenance references. Per-operation entries, generic counters, and bare IDs cannot substitute for these aggregate fields. |
 | `artifact_manifest` | `scope` (`series` or `run`), `publication_state` (`staged`, `published`, `superseded`, `expired`, `deleted`), `series_freeze`, ordered `artifacts`, and ordered `provenance_edges`. Artifacts sort by `logical_path`; edges sort by `(from_artifact_id,relation,to_artifact_id)`. Section 5 defines both structures. |
 | `fault_plan` | `plan_version`, `profile_id`, `d_mode`, `fault_class`, `mechanism_label`, `mechanism`, `control_plane`, `lifecycle_injection_point`, `trigger`, `preconditions`, `promised_layers`, `excluded_layers`, `self_tests`, `contamination_controls`, `restart_recovery`, `oracle_obligations`, and `authorization_state`. No plan implies authorization. |
 | `fault_outcome` | `fault_plan_record_id`, `armed_at_monotonic_ns`, `trigger_evidence`, `placement_class`, `observed_condition`, `apparatus_self_test`, `contamination`, `oracle_artifact_id`, `recovery_artifact_ids`, `classification`, `classification_reasons`, and `not_tested_cells`. Classification is exactly `pass`, `fail`, `invalid`, or `inconclusive`; unsupported cells are `not_tested`, never pass. |

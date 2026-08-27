@@ -54,6 +54,12 @@ Every record is the closed object below. Members are stored in JCS order, indepe
 | `edge` | `{from_artifact_id:uuid,relation:generated_from|validated_by|corrects|supersedes|sanitizes|decodes_to|interprets,to_artifact_id:uuid}`; sort by the three fields in that order; no duplicate. |
 | `check` | `{check_id:nonempty,evidence_artifact_id:state<uuid>,message:state<nonempty>,outcome:pass|fail|not_tested}`; sort by `check_id`. |
 | `error` | `{byte_offset:state<u64>,code:io|length|utf8|json-syntax|duplicate-member|non-ijson|noncanonical|unsupported-version|unknown-field|missing-field|type|range|enum|ordering|duplicate-or-conflict|reference|digest|supersession-cycle|policy,message:nonempty}`; sort by present byte offset (missing last), then code, then message. |
+| `interval` | `{clock_id:nonempty,elapsed_ns:ns_u64,end:state<i64-or-u64>,method:nonempty,precision_ns:state<u64>,source:source,start:state<i64-or-u64>,time_domain:monotonic|utc}`; the domain fixes both endpoint arms; present endpoints are both required and `end >= start`; elapsed is measured rather than inferred and any disagreement is invalid. |
+| `count` | `{method:nonempty,unit:events|operations,value:state<u64>}`. |
+| `rate` | `{denominator_ns:ns_u64,interval:interval,method:nonempty,numerator:u64,unit:bytes_per_second|operations_per_second,value:state<{denominator:u64,numerator:u64}>}`; denominator is nonzero for a present rate, the rational value is numerator operations/bytes per denominator seconds, and all duplicated inputs must agree. |
+| `metric` | `{method:nonempty,scope:nonempty,source:source,unit:allocations|bytes|events|nanoseconds|operations|ratio,value:state<i64-or-u64-or-ratio>}`; each field below fixes its arm and unit. |
+| `artifact_set` | `{artifacts:[ref],manifest_ref:ref}`; artifact references sort by `artifact_id`, are unique, and the manifest contains matching immutable media type, role, producer, relation, and retention metadata. |
+| `provenance_ref` | `{edge_artifact_ref:ref,endpoint_artifact_ids:[uuid]}`; IDs sort ascending, are unique, include the raw-result artifact and every directly referenced artifact, and resolve to the typed edges required by the logical contract. |
 
 ## 3. `environment` body
 
@@ -86,43 +92,77 @@ The closed body is `{artifact_manifest,authority_revisions,baseline,build,captur
 
 ## 4. `raw_result` body
 
-The closed body is `{ack_boundary,adapter_ref,artifact_ids,background_work,baseline_id,canonical_status,configuration,correctness,deviations,d_mode,equivalence,errors,experiment_ref,fault_contract,hypothesis_refs,operations,phase,platform_contract_ref,producer_record,profile_id,recovery,repetition_id,repository,requirement_refs,result_classification,sample_population,subject_id,throughput_window,visibility,workload_manifest_artifact_id,environment_record_id,resource_counters}`.
+The closed body has exactly the following members (shown in JCS name order):
+`{ack_boundary,adapter_ref,allocations,amplification,artifacts,background_work,baseline_id,canonical_status,configuration_refs,correctness,cpu,d_mode,deviations,encoded_bytes,environment_ref,equivalence,errors,execution_observations,experiment_ref,fault_contract,hypothesis_refs,interval,io,latency,lifecycle_interval,logical_bytes,memory,operation_counts,operations,phase,physical_bytes,platform_contract_ref,producer_record,profile_id,provenance,recovery,repetition_id,repository,requirement_refs,resource_measurements,result_classification,sample_id,sample_population,subject_id,synchronization,throughput,time_meanings,validation,visibility,workload_ref}`.
 
 | Member | Closed structure and rule |
 |---|---|
-| Identity/input fields | `profile_id`, `subject_id`, `repetition_id`, and `experiment_ref` are nonempty; `baseline_id` is `state<nonempty>`; `environment_record_id` is `uuid`; workload/adapter/platform/producer fields are `ref`; `hypothesis_refs` and `requirement_refs` are sorted unique `[nonempty]`; `repository` is `{commit:git_sha,dirty_state:clean|dirty|unknown,patch_artifact_id:state<uuid>}` with the environment rules. |
+| Identity/input fields | `profile_id`, `subject_id`, `repetition_id`, `sample_id`, and `experiment_ref` are nonempty; `baseline_id` is `state<nonempty>`; `environment_ref` is `record_ref`; workload, adapter, platform, and producer fields are `ref`; `configuration_refs` is a nonempty artifact-set; `hypothesis_refs` and `requirement_refs` are sorted unique `[nonempty]`; `repository` is `{commit:git_sha,dirty_state:clean|dirty|unknown,patch_artifact_id:state<uuid>}` with the environment rules. Bare IDs never satisfy a reference. |
 | `d_mode` / `canonical_status` | `d0|d1|d2|d3`; `provisional|canonical_committed`. D0/D1 require provisional. |
-| `ack_boundary` | `{name:nonempty,source:source}`; same boundary governs latency and throughput. |
-| `visibility` | `{first_visible_monotonic_ns:state<ns_u64>,probe:nonempty,status:not_observed|observed|unsupported}`; status and state must agree. |
-| `fault_contract` | `state<{fault_plan_record_id:uuid,promised_fault_classes:[process_termination|kernel_crash|power_loss|resulting_condition|storage_error]}>`; list in displayed enum order; present for fault phase. |
-| `configuration` | `[configuration]`, sorted by name. |
+| `ack_boundary` | `{name:nonempty,source:source}`; the same boundary governs latency and throughput. |
+| `interval` / `lifecycle_interval` | `interval`; the general observation interval and exact acknowledgement-latency endpoints respectively. Lifecycle method names its start/end events and includes D3 group wait when applicable. |
+| `time_meanings` | Closed `{durability:state<{source:source,value_ns:ns_i64}>,effective:state<{source:source,value_ns:ns_i64}>,observation:state<{source:source,value_ns:ns_i64}>,system_acceptance:state<{source:source,value_ns:ns_i64}>}`. Each meaning is independently sourced; inapplicable values are explicit. |
+| `operation_counts` | Closed `{accepted:count,acknowledged:count,attempted:count,committed:count,corrupt:count,failed:count,missing:count,provisional:count,recovered:count,rejected:count,uncertain:count}`. Every unit is `operations`; partition/double-count definitions are supplied by each method and conflicts invalidate the record. |
+| Byte accounts | `logical_bytes`, `encoded_bytes`, and `physical_bytes` are `[{domain:enum,bytes:state<bytes_u64>,method:nonempty}]`. Logical domains are `envelope|key|payload|value`; encoded domains `complete_event|framing|integrity`; physical domains `checkpoint|compaction|database|manifest|other|read|requested_io|sst|synchronized|temporary|wal|written`. Arrays use displayed order and contain every domain exactly once. |
+| `throughput` | `{bytes:rate,operations:rate}`; byte rate unit is `bytes_per_second`, operation rate unit `operations_per_second`; each repeats the exact general `interval`. Missing rate values retain numerator/denominator/method evidence. |
+| `latency` | `{algorithm:nonempty,evidence:state<{kind:distribution|histogram|raw_samples,reference:ref}>,interval:lifecycle_interval,loss:state<{lost:u64,reason:nonempty}>,method:nonempty,population:u64,rounding:nonempty,unit:nanoseconds}`. Evidence is required for measured performance; explicit non-performance missing is permitted. Quantiles alone are invalid. |
+| `cpu` | Closed `{system:metric,user:metric,wall:metric}`; nanoseconds and declared process/thread scope. |
+| `allocations` | Closed `{bytes:metric,count:metric}`; units bytes and allocations. |
+| `memory` | Closed `{cache:metric,peak_resident:metric,resident:metric,virtual:metric}`; byte units and declared sampling scope. |
+| `io` | `[{bytes:metric,count:metric,layer:application|vfs|filesystem|block|device|other,operation:read|write}]`; displayed layer then operation order, every combination present or explicitly missing; methods distinguish requested/completed/failed. |
+| `synchronization` | `{completed:metric,failed:metric,group_scope:state<nonempty>,primitive:nonempty,requested:metric,wait:metric}`; counts use operations and wait uses nanoseconds. |
+| `amplification` | Closed `{read:metric,space:metric,write:metric}`; present values are ratios whose method fixes numerator, denominator, and scope; zero denominators are invalid. |
+| `resource_measurements` | `[counter]`, sorted by `(source_name,scope,unit)` with no duplicate; this recommended extension never substitutes for required metric members. |
+| `execution_observations` | Closed `{backpressure:metric,checkpoints:metric,compactions:metric,errors:metric,flushes:metric,partial_writes:metric,retries:metric,stalls:metric}`; units are events or nanoseconds as fixed by method and every category is present or explicitly missing. `background_work` is `[{count:u64,duration_ns:state<ns_u64>,kind:nonempty,source:source}]`, sorted by kind; `errors` has the same shape. |
+| `visibility` | `{first_visible_monotonic_ns:state<ns_u64>,probe:nonempty,status:not_observed|observed|unsupported}`; status and state agree. |
+| `fault_contract` | `state<{fault_plan_record_id:uuid,promised_fault_classes:[process_termination|kernel_crash|power_loss|resulting_condition|storage_error]}>`; enum order; present for fault phase. |
 | `phase` | `{name:setup|warm_up|measured|fault|recovery|cleanup,observation_role:warm_up|measured|non_performance}`. |
-| `sample_population` | `{included:u64,lost:u64,omission_reason:state<nonempty>,total:u64}`; included + lost = total. |
-| `operations` | `[operation]`, sorted by `workload_ordinal`, unique. Empty permitted only outside warm-up/measured/fault/recovery. |
-| `throughput_window` | `{accepted_operations:u64,ack_boundary:nonempty,bytes:state<bytes_u64>,end_monotonic_ns:ns_u64,start_monotonic_ns:ns_u64}`; end >= start; nonzero elapsed when accepted > 0. Rates are derived, never stored. |
-| `resource_counters` | `[counter]`, sorted by `(source_name,scope,unit)`; no duplicate. |
-| `background_work` / `errors` | Arrays of `{count:u64,duration_ns:state<ns_u64>,kind:nonempty,source:source}`, sorted by kind. Empty means observed none. |
+| `sample_population` | `{included:u64,lost:u64,omission_reason:state<nonempty>,total:u64}`; included + lost = total and equals latency population where latency is measured. |
+| `operations` | `[operation]`, sorted by `workload_ordinal`, unique. Empty only outside warm-up/measured/fault/recovery. |
 | `recovery` | `state<{classification:clean|damaged_tail|corrupt|unrecoverable,corrupt:u64,duplicates:u64,invented:u64,missing:u64,recovered:u64,replay_ns:ns_u64,scan_ns:ns_u64,time_to_ready_ns:ns_u64,uncertain:u64}>`; present for recovery cells. |
-| `correctness` | `{checks:[check],gate:pass|fail|inconclusive,oracle_artifact_id:uuid,oracle_version:nonempty}`; gate pass iff every required check passes. |
+| `correctness` | `{checks:[check],gate:pass|fail|inconclusive,oracle_artifact_id:uuid,oracle_version:nonempty}`; pass iff every required check passes. |
 | `equivalence` | `{classification:equivalent_candidate|conditionally_equivalent|diagnostic|non_equivalent,conditions:[nonempty],reasons:[nonempty]}`; arrays sorted and unique. |
-| `result_classification` | `{labels:[valid|invalid|failed|negative|inconclusive|diagnostic],reasons:[nonempty]}`; labels in displayed order, unique; reasons sorted. |
+| `result_classification` | `{labels:[valid|invalid|failed|negative|inconclusive|diagnostic],reasons:[nonempty]}`; labels in enum order, unique; reasons sorted. |
 | `deviations` | Same environment deviation object. |
-| `artifact_ids` | Sorted unique `[uuid]`; includes lifecycle ledger and all evidence referenced by the body. |
+| `artifacts` / `provenance` | `artifact_set` / `provenance_ref`. Together they make all logical artifacts and typed provenance edges immutable and substitution-detectable; no bare `artifact_ids` array is allowed. |
+| `validation` | `{findings:[nonempty],integrity:[{algorithm:sha256,artifact_id:uuid,outcome:pass|fail}],status:inconclusive|not_validated|pass|fail,validated_at_utc_ns:state<ns_i64>,validator_configuration_ref:state<ref>,validator_identity:state<nonempty>,validator_version:state<nonempty>}`. Findings sort; integrity sorts by artifact ID. Pass requires present validator fields, nonempty integrity, every outcome pass, and empty findings. |
 
-`operation` is the closed object `{acknowledgement,assigned_sequence,byte_accounts,d3,error,effective_time_ns,event_id,lifecycle,observation_time_ns,operation_id,producer_id,request_id,system_time_ns,thread_id,workload_ordinal,durability_time_ns}`.
+### Normative `benchmark-raw-result/v1` crosswalk
+
+This table is exhaustive. Physical members may not be inferred from `operations`, free-form counters, or bare IDs.
+
+| Logical field(s) | Exact physical location | Missing-state behavior |
+|---|---|---|
+| `schema.name`, `schema.version`, `result_id`, correction fields | envelope `record_kind`, `schema_version`, `record_id`, `supersedes_record_id`, `correction_reason` | Envelope states in section 1; never omitted. |
+| Experiment, hypothesis, requirement, subject/profile/baseline/series/repository | same-named body fields plus envelope `series_id` | Only `baseline_id` and patch admit their declared states. |
+| Environment, workload, adapter, configurations, platform, producer | `environment_ref`, `workload_ref`, `adapter_ref`, `configuration_refs`, `platform_contract_ref`, `producer_record` | Required digest-bearing references; no bare-ID or generic artifact substitute. |
+| Run/repetition/phase/sample and observation role | envelope `run_id`; body `repetition_id`, `phase`, `sample_id` | Required; run present for raw results. |
+| Durability/commit, operation and D3 coordinates | `d_mode`, `canonical_status`, `operations` | Conditional operation fields use their typed states. |
+| General interval, time meanings, lifecycle interval | `interval`, `time_meanings`, `lifecycle_interval` | Required structures; individual inapplicable time meanings are explicit. |
+| Operation counts | `operation_counts` eleven named members | Every count uses `state<u64>`; no omitted partition member. |
+| Logical, encoded, and physical bytes | `logical_bytes`, `encoded_bytes`, `physical_bytes` | Every domain has a typed state. |
+| Throughput and latency | `throughput`, `latency` | Rate/evidence values use typed states with retained method/population/loss metadata. |
+| CPU, allocations, memory, I/O, synchronization, amplification | same-named closed body members | Every required leaf uses `metric.value`; unsupported/uncollected/missing remains explicit. |
+| Resource measurements | `resource_measurements` | Empty means known none; never replaces required metrics. |
+| Execution observations | `execution_observations`, `background_work`, `errors` | Eight named categories required; empty arrays mean observed none. |
+| Correctness, faults, recovery, equivalence, result classification | same-named fields, with fault/oracle/D3 detail in referenced plan/evidence and operations | Conditional records use typed states; required classifications never omitted. |
+| Artifacts and provenance edges | `artifacts`, `provenance` | Manifest and edge artifact references are always digest-bearing. |
+| Validation status and integrity | `validation` | `not_validated`/`inconclusive` retain explicit absent-field reasons; pass/fail rules are closed above. |
+
+`operation` is the closed object `{acknowledgement,assigned_sequence,byte_accounts,d3,durability_time_ns,effective_time_ns,error,event_id,lifecycle,observation_time_ns,operation_id,producer_id,request_id,system_time_ns,thread_id,workload_ordinal}`.
 
 | Operation member | Type / rule |
 |---|---|
 | IDs/ordinal | `operation_id`, `request_id` are `uuid`; `event_id` is `state<uuid>`; `producer_id`, `thread_id` are nonempty; `workload_ordinal` is `u64`. |
 | Times | Effective/system/durability/observation are `state<ns_i64>` and retain distinct meanings. |
 | `assigned_sequence` | `state<u64>`; local replay sequence, not time. |
-| `lifecycle` | `[{point:validation_start|validation_end|construction_start|construction_end|sequence_reserved|persistence_submitted|synchronization_start|synchronization_end|canonical_commit|acknowledgement|visibility_probe,monotonic_ns:ns_u64}]`; displayed order, each at most once, nondecreasing. Missing applicable points make the result invalid and are not represented by omission: add an operation `error` and classify invalid. |
-| `acknowledgement` | `{boundary:nonempty,status:acknowledged|failed|uncertain,monotonic_ns:state<ns_u64>}`; present time iff acknowledged. |
+| `lifecycle` | `[{monotonic_ns:ns_u64,point:validation_start|validation_end|construction_start|construction_end|sequence_reserved|persistence_submitted|synchronization_start|synchronization_end|canonical_commit|acknowledgement|visibility_probe}]`; displayed point order, each at most once, nondecreasing. Missing applicable points add an operation error and make the result invalid rather than disappearing silently. |
+| `acknowledgement` | `{boundary:nonempty,monotonic_ns:state<ns_u64>,status:acknowledged|failed|uncertain}`; time is present iff acknowledged. |
 | `d3` | `state<{cut_reason:nonempty,eligible_member_ids:[uuid],group_id:uuid,member_ids:[uuid],shared_sync:pass|fail|uncertain,shared_sync_monotonic_ns:state<ns_u64>}>`; present iff D3; ID lists ascending and unique. |
-| `byte_accounts` | `[{domain:encoded|logical_envelope|logical_key|logical_payload|logical_value|physical_checkpoint|physical_compaction|physical_database|physical_manifest|physical_other|physical_read|physical_sst|physical_synchronized|physical_temporary|physical_wal|physical_written,bytes:state<bytes_u64>,method:nonempty}]`; displayed order; every domain required. |
+| `byte_accounts` | `[{bytes:state<bytes_u64>,domain:encoded|logical_envelope|logical_key|logical_payload|logical_value|physical_checkpoint|physical_compaction|physical_database|physical_manifest|physical_other|physical_read|physical_sst|physical_synchronized|physical_temporary|physical_wal|physical_written,method:nonempty}]`; displayed domain order; every domain required. |
 | `error` | `state<{code:nonempty,message:nonempty,retry_count:u64}>`. |
 
-`counter` is `{end_raw:state<u64>,enabled_ns:state<ns_u64>,initial_raw:state<u64>,method:nonempty,multiplexed:state<boolean>,running_ns:state<ns_u64>,scope:process|thread|cgroup|cpu|device,source_name:nonempty,unit:allocations|bytes|context_switches|cpu_cycles|events|faults|instructions|io_operations|joules_nano|nanoseconds|sync_operations}`. All counters are unsigned totals; deltas require end >= initial unless declared wrap evidence exists in a referenced artifact.
+`counter` is the closed object `{enabled_ns:state<ns_u64>,end_raw:state<u64>,initial_raw:state<u64>,method:nonempty,multiplexed:state<boolean>,running_ns:state<ns_u64>,scope:process|thread|cgroup|cpu|device,source_name:nonempty,unit:allocations|bytes|context_switches|cpu_cycles|events|faults|instructions|io_operations|joules_nano|nanoseconds|sync_operations}`. Counters are unsigned totals; deltas require end >= initial unless referenced wrap evidence exists.
 
 ## 5. Remaining four record bodies
 

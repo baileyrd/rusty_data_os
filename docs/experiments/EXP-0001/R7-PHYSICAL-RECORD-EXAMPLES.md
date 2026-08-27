@@ -2041,15 +2041,142 @@ This is a non-performance cleanup observation, so its empty operation population
       "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
       "uri": "file:/fictional/a93"
     },
-    "artifact_ids": [
-      "00000000-0000-4000-8000-000000000094"
-    ],
+    "allocations": {
+      "bytes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "count": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "allocations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "amplification": {
+      "read": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "space": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "write": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "artifacts": {
+      "artifacts": [
+        {
+          "artifact_id": "00000000-0000-4000-8000-000000000094",
+          "byte_length": "0",
+          "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+          "uri": "file:/fictional/a94"
+        }
+      ],
+      "manifest_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000096",
+        "byte_length": "0",
+        "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "uri": "file:/fictional/a96"
+      }
+    },
     "background_work": [],
     "baseline_id": {
       "state": "not_applicable"
     },
     "canonical_status": "provisional",
-    "configuration": [],
+    "configuration_refs": {
+      "artifacts": [
+        {
+          "artifact_id": "00000000-0000-4000-8000-000000000097",
+          "byte_length": "0",
+          "sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "uri": "file:/fictional/a97"
+        }
+      ],
+      "manifest_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000098",
+        "byte_length": "0",
+        "sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+        "uri": "file:/fictional/a98"
+      }
+    },
     "correctness": {
       "checks": [
         {
@@ -2068,8 +2195,97 @@ This is a non-performance cleanup observation, so its empty operation population
       "oracle_artifact_id": "00000000-0000-4000-8000-000000000094",
       "oracle_version": "fictional-1"
     },
-    "deviations": [],
+    "cpu": {
+      "system": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "user": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "wall": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
     "d_mode": "d0",
+    "deviations": [],
+    "encoded_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "complete_event",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "framing",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "integrity",
+        "method": "fictional cleanup observation"
+      }
+    ],
+    "environment_ref": {
+      "record_id": "00000000-0000-4000-8000-000000000001",
+      "record_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
     "equivalence": {
       "classification": "diagnostic",
       "conditions": [],
@@ -2077,8 +2293,161 @@ This is a non-performance cleanup observation, so its empty operation population
         "non-performance cleanup observation"
       ]
     },
-    "environment_record_id": "00000000-0000-4000-8000-000000000001",
     "errors": [],
+    "execution_observations": {
+      "backpressure": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "checkpoints": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "compactions": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "errors": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "flushes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "partial_writes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "retries": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "stalls": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
     "experiment_ref": "EXP-0001",
     "fault_contract": {
       "state": "not_applicable"
@@ -2086,11 +2455,919 @@ This is a non-performance cleanup observation, so its empty operation population
     "hypothesis_refs": [
       "HYP-0001"
     ],
+    "interval": {
+      "clock_id": "fictional-monotonic",
+      "elapsed_ns": "0",
+      "end": {
+        "state": "present",
+        "value": "0"
+      },
+      "method": "fictional cleanup endpoints",
+      "precision_ns": {
+        "state": "present",
+        "value": "1"
+      },
+      "source": {
+        "artifact_id": {
+          "state": "not_applicable"
+        },
+        "mechanism": "fictional manual capture",
+        "version": {
+          "state": "present",
+          "value": "1"
+        }
+      },
+      "start": {
+        "state": "present",
+        "value": "0"
+      },
+      "time_domain": "monotonic"
+    },
+    "io": [
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "application",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "application",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "vfs",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "vfs",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "filesystem",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "filesystem",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "block",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "block",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "device",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "device",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "other",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "other",
+        "operation": "write"
+      }
+    ],
+    "latency": {
+      "algorithm": "none for non-performance cleanup",
+      "evidence": {
+        "reason": "not measured in fictional cleanup",
+        "state": "not_collected"
+      },
+      "interval": {
+        "clock_id": "fictional-monotonic",
+        "elapsed_ns": "0",
+        "end": {
+          "state": "present",
+          "value": "0"
+        },
+        "method": "fictional cleanup endpoints",
+        "precision_ns": {
+          "state": "present",
+          "value": "1"
+        },
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "start": {
+          "state": "present",
+          "value": "0"
+        },
+        "time_domain": "monotonic"
+      },
+      "loss": {
+        "state": "present",
+        "value": {
+          "lost": "0",
+          "reason": "no samples expected"
+        }
+      },
+      "method": "fictional cleanup observation",
+      "population": "0",
+      "rounding": "no rounding performed",
+      "unit": "nanoseconds"
+    },
+    "lifecycle_interval": {
+      "clock_id": "fictional-monotonic",
+      "elapsed_ns": "0",
+      "end": {
+        "state": "present",
+        "value": "0"
+      },
+      "method": "fictional cleanup endpoints",
+      "precision_ns": {
+        "state": "present",
+        "value": "1"
+      },
+      "source": {
+        "artifact_id": {
+          "state": "not_applicable"
+        },
+        "mechanism": "fictional manual capture",
+        "version": {
+          "state": "present",
+          "value": "1"
+        }
+      },
+      "start": {
+        "state": "present",
+        "value": "0"
+      },
+      "time_domain": "monotonic"
+    },
+    "logical_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "envelope",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "key",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "payload",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "value",
+        "method": "fictional cleanup observation"
+      }
+    ],
+    "memory": {
+      "cache": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "peak_resident": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "resident": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "virtual": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "operation_counts": {
+      "accepted": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "acknowledged": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "attempted": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "committed": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "corrupt": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "failed": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "missing": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "provisional": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "recovered": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "rejected": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "uncertain": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      }
+    },
     "operations": [],
     "phase": {
       "name": "cleanup",
       "observation_role": "non_performance"
     },
+    "physical_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "checkpoint",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "compaction",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "database",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "manifest",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "other",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "read",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "requested_io",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "sst",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "synchronized",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "temporary",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "wal",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "written",
+        "method": "fictional cleanup observation"
+      }
+    ],
     "platform_contract_ref": {
       "artifact_id": "00000000-0000-4000-8000-000000000091",
       "byte_length": "0",
@@ -2104,6 +3381,26 @@ This is a non-performance cleanup observation, so its empty operation population
       "uri": "file:/fictional/a95"
     },
     "profile_id": "fictional-cleanup",
+    "provenance": {
+      "edge_artifact_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000099",
+        "byte_length": "0",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "uri": "file:/fictional/a99"
+      },
+      "endpoint_artifact_ids": [
+        "00000000-0000-4000-8000-000000000003",
+        "00000000-0000-4000-8000-000000000091",
+        "00000000-0000-4000-8000-000000000092",
+        "00000000-0000-4000-8000-000000000093",
+        "00000000-0000-4000-8000-000000000094",
+        "00000000-0000-4000-8000-000000000095",
+        "00000000-0000-4000-8000-000000000096",
+        "00000000-0000-4000-8000-000000000097",
+        "00000000-0000-4000-8000-000000000098",
+        "00000000-0000-4000-8000-000000000099"
+      ]
+    },
     "recovery": {
       "state": "not_applicable"
     },
@@ -2118,7 +3415,7 @@ This is a non-performance cleanup observation, so its empty operation population
     "requirement_refs": [
       "REQ-014"
     ],
-    "resource_counters": [],
+    "resource_measurements": [],
     "result_classification": {
       "labels": [
         "valid",
@@ -2128,6 +3425,7 @@ This is a non-performance cleanup observation, so its empty operation population
         "fictional cleanup only"
       ]
     },
+    "sample_id": "cleanup-sample-0",
     "sample_population": {
       "included": "0",
       "lost": "0",
@@ -2137,14 +3435,206 @@ This is a non-performance cleanup observation, so its empty operation population
       "total": "0"
     },
     "subject_id": "fictional-subject",
-    "throughput_window": {
-      "accepted_operations": "0",
-      "ack_boundary": "cleanup-none",
-      "bytes": {
+    "synchronization": {
+      "completed": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "failed": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "group_scope": {
         "state": "not_applicable"
       },
-      "end_monotonic_ns": "0",
-      "start_monotonic_ns": "0"
+      "primitive": "none for cleanup",
+      "requested": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "wait": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "throughput": {
+      "bytes": {
+        "denominator_ns": "0",
+        "interval": {
+          "clock_id": "fictional-monotonic",
+          "elapsed_ns": "0",
+          "end": {
+            "state": "present",
+            "value": "0"
+          },
+          "method": "fictional cleanup endpoints",
+          "precision_ns": {
+            "state": "present",
+            "value": "1"
+          },
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "start": {
+            "state": "present",
+            "value": "0"
+          },
+          "time_domain": "monotonic"
+        },
+        "method": "fictional non-performance rate",
+        "numerator": "0",
+        "unit": "bytes_per_second",
+        "value": {
+          "reason": "rate not applicable to cleanup",
+          "state": "not_collected"
+        }
+      },
+      "operations": {
+        "denominator_ns": "0",
+        "interval": {
+          "clock_id": "fictional-monotonic",
+          "elapsed_ns": "0",
+          "end": {
+            "state": "present",
+            "value": "0"
+          },
+          "method": "fictional cleanup endpoints",
+          "precision_ns": {
+            "state": "present",
+            "value": "1"
+          },
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "start": {
+            "state": "present",
+            "value": "0"
+          },
+          "time_domain": "monotonic"
+        },
+        "method": "fictional non-performance rate",
+        "numerator": "0",
+        "unit": "operations_per_second",
+        "value": {
+          "reason": "rate not applicable to cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "time_meanings": {
+      "durability": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "effective": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "observation": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "system_acceptance": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      }
+    },
+    "validation": {
+      "findings": [
+        "fictional example is not repository evidence"
+      ],
+      "integrity": [],
+      "status": "not_validated",
+      "validated_at_utc_ns": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_configuration_ref": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_identity": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_version": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      }
     },
     "visibility": {
       "first_visible_monotonic_ns": {
@@ -2153,7 +3643,12 @@ This is a non-performance cleanup observation, so its empty operation population
       "probe": "not applicable during cleanup",
       "status": "not_observed"
     },
-    "workload_manifest_artifact_id": "00000000-0000-4000-8000-000000000092"
+    "workload_ref": {
+      "artifact_id": "00000000-0000-4000-8000-000000000092",
+      "byte_length": "0",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "uri": "file:/fictional/a92"
+    }
   },
   "created_at_utc_ns": "1",
   "record_id": "00000000-0000-4000-8000-000000000003",
@@ -2199,15 +3694,142 @@ The following complete record corrects the preceding raw result. It has a new id
       "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
       "uri": "file:/fictional/a93"
     },
-    "artifact_ids": [
-      "00000000-0000-4000-8000-000000000094"
-    ],
+    "allocations": {
+      "bytes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "count": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "allocations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "amplification": {
+      "read": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "space": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "write": {
+        "method": "fictional cleanup observation",
+        "scope": "subject",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "ratio",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "artifacts": {
+      "artifacts": [
+        {
+          "artifact_id": "00000000-0000-4000-8000-000000000094",
+          "byte_length": "0",
+          "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+          "uri": "file:/fictional/a94"
+        }
+      ],
+      "manifest_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000096",
+        "byte_length": "0",
+        "sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+        "uri": "file:/fictional/a96"
+      }
+    },
     "background_work": [],
     "baseline_id": {
       "state": "not_applicable"
     },
     "canonical_status": "provisional",
-    "configuration": [],
+    "configuration_refs": {
+      "artifacts": [
+        {
+          "artifact_id": "00000000-0000-4000-8000-000000000097",
+          "byte_length": "0",
+          "sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+          "uri": "file:/fictional/a97"
+        }
+      ],
+      "manifest_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000098",
+        "byte_length": "0",
+        "sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+        "uri": "file:/fictional/a98"
+      }
+    },
     "correctness": {
       "checks": [
         {
@@ -2226,8 +3848,97 @@ The following complete record corrects the preceding raw result. It has a new id
       "oracle_artifact_id": "00000000-0000-4000-8000-000000000094",
       "oracle_version": "fictional-1"
     },
-    "deviations": [],
+    "cpu": {
+      "system": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "user": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "wall": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
     "d_mode": "d0",
+    "deviations": [],
+    "encoded_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "complete_event",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "framing",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "integrity",
+        "method": "fictional cleanup observation"
+      }
+    ],
+    "environment_ref": {
+      "record_id": "00000000-0000-4000-8000-000000000001",
+      "record_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
     "equivalence": {
       "classification": "diagnostic",
       "conditions": [],
@@ -2235,8 +3946,161 @@ The following complete record corrects the preceding raw result. It has a new id
         "non-performance cleanup observation"
       ]
     },
-    "environment_record_id": "00000000-0000-4000-8000-000000000001",
     "errors": [],
+    "execution_observations": {
+      "backpressure": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "checkpoints": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "compactions": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "errors": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "flushes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "partial_writes": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "retries": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "stalls": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "events",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
     "experiment_ref": "EXP-0001",
     "fault_contract": {
       "state": "not_applicable"
@@ -2244,11 +4108,919 @@ The following complete record corrects the preceding raw result. It has a new id
     "hypothesis_refs": [
       "HYP-0001"
     ],
+    "interval": {
+      "clock_id": "fictional-monotonic",
+      "elapsed_ns": "0",
+      "end": {
+        "state": "present",
+        "value": "0"
+      },
+      "method": "fictional cleanup endpoints",
+      "precision_ns": {
+        "state": "present",
+        "value": "1"
+      },
+      "source": {
+        "artifact_id": {
+          "state": "not_applicable"
+        },
+        "mechanism": "fictional manual capture",
+        "version": {
+          "state": "present",
+          "value": "1"
+        }
+      },
+      "start": {
+        "state": "present",
+        "value": "0"
+      },
+      "time_domain": "monotonic"
+    },
+    "io": [
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "application",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "application",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "application",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "vfs",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "vfs",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "vfs",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "filesystem",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "filesystem",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "filesystem",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "block",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "block",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "block",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "device",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "device",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "device",
+        "operation": "write"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "other",
+        "operation": "read"
+      },
+      {
+        "bytes": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "bytes",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "count": {
+          "method": "fictional cleanup observation",
+          "scope": "other",
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "unit": "operations",
+          "value": {
+            "reason": "not measured in fictional cleanup",
+            "state": "not_collected"
+          }
+        },
+        "layer": "other",
+        "operation": "write"
+      }
+    ],
+    "latency": {
+      "algorithm": "none for non-performance cleanup",
+      "evidence": {
+        "reason": "not measured in fictional cleanup",
+        "state": "not_collected"
+      },
+      "interval": {
+        "clock_id": "fictional-monotonic",
+        "elapsed_ns": "0",
+        "end": {
+          "state": "present",
+          "value": "0"
+        },
+        "method": "fictional cleanup endpoints",
+        "precision_ns": {
+          "state": "present",
+          "value": "1"
+        },
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "start": {
+          "state": "present",
+          "value": "0"
+        },
+        "time_domain": "monotonic"
+      },
+      "loss": {
+        "state": "present",
+        "value": {
+          "lost": "0",
+          "reason": "no samples expected"
+        }
+      },
+      "method": "fictional cleanup observation",
+      "population": "0",
+      "rounding": "no rounding performed",
+      "unit": "nanoseconds"
+    },
+    "lifecycle_interval": {
+      "clock_id": "fictional-monotonic",
+      "elapsed_ns": "0",
+      "end": {
+        "state": "present",
+        "value": "0"
+      },
+      "method": "fictional cleanup endpoints",
+      "precision_ns": {
+        "state": "present",
+        "value": "1"
+      },
+      "source": {
+        "artifact_id": {
+          "state": "not_applicable"
+        },
+        "mechanism": "fictional manual capture",
+        "version": {
+          "state": "present",
+          "value": "1"
+        }
+      },
+      "start": {
+        "state": "present",
+        "value": "0"
+      },
+      "time_domain": "monotonic"
+    },
+    "logical_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "envelope",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "key",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "payload",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "value",
+        "method": "fictional cleanup observation"
+      }
+    ],
+    "memory": {
+      "cache": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "peak_resident": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "resident": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "virtual": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "bytes",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "operation_counts": {
+      "accepted": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "acknowledged": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "attempted": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "committed": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "corrupt": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "failed": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "missing": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "provisional": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "recovered": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "rejected": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      },
+      "uncertain": {
+        "method": "fictional cleanup counter",
+        "unit": "operations",
+        "value": {
+          "state": "present",
+          "value": "0"
+        }
+      }
+    },
     "operations": [],
     "phase": {
       "name": "cleanup",
       "observation_role": "non_performance"
     },
+    "physical_bytes": [
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "checkpoint",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "compaction",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "database",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "manifest",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "other",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "read",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "requested_io",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "sst",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "synchronized",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "temporary",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "wal",
+        "method": "fictional cleanup observation"
+      },
+      {
+        "bytes": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        },
+        "domain": "written",
+        "method": "fictional cleanup observation"
+      }
+    ],
     "platform_contract_ref": {
       "artifact_id": "00000000-0000-4000-8000-000000000091",
       "byte_length": "0",
@@ -2262,6 +5034,26 @@ The following complete record corrects the preceding raw result. It has a new id
       "uri": "file:/fictional/a95"
     },
     "profile_id": "fictional-cleanup",
+    "provenance": {
+      "edge_artifact_ref": {
+        "artifact_id": "00000000-0000-4000-8000-000000000099",
+        "byte_length": "0",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "uri": "file:/fictional/a99"
+      },
+      "endpoint_artifact_ids": [
+        "00000000-0000-4000-8000-000000000005",
+        "00000000-0000-4000-8000-000000000091",
+        "00000000-0000-4000-8000-000000000092",
+        "00000000-0000-4000-8000-000000000093",
+        "00000000-0000-4000-8000-000000000094",
+        "00000000-0000-4000-8000-000000000095",
+        "00000000-0000-4000-8000-000000000096",
+        "00000000-0000-4000-8000-000000000097",
+        "00000000-0000-4000-8000-000000000098",
+        "00000000-0000-4000-8000-000000000099"
+      ]
+    },
     "recovery": {
       "state": "not_applicable"
     },
@@ -2276,7 +5068,7 @@ The following complete record corrects the preceding raw result. It has a new id
     "requirement_refs": [
       "REQ-014"
     ],
-    "resource_counters": [],
+    "resource_measurements": [],
     "result_classification": {
       "labels": [
         "valid",
@@ -2286,6 +5078,7 @@ The following complete record corrects the preceding raw result. It has a new id
         "corrected fictional classification note"
       ]
     },
+    "sample_id": "cleanup-sample-0",
     "sample_population": {
       "included": "0",
       "lost": "0",
@@ -2295,14 +5088,206 @@ The following complete record corrects the preceding raw result. It has a new id
       "total": "0"
     },
     "subject_id": "fictional-subject",
-    "throughput_window": {
-      "accepted_operations": "0",
-      "ack_boundary": "cleanup-none",
-      "bytes": {
+    "synchronization": {
+      "completed": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "failed": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "group_scope": {
         "state": "not_applicable"
       },
-      "end_monotonic_ns": "0",
-      "start_monotonic_ns": "0"
+      "primitive": "none for cleanup",
+      "requested": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "operations",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      },
+      "wait": {
+        "method": "fictional cleanup observation",
+        "scope": "process",
+        "source": {
+          "artifact_id": {
+            "state": "not_applicable"
+          },
+          "mechanism": "fictional manual capture",
+          "version": {
+            "state": "present",
+            "value": "1"
+          }
+        },
+        "unit": "nanoseconds",
+        "value": {
+          "reason": "not measured in fictional cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "throughput": {
+      "bytes": {
+        "denominator_ns": "0",
+        "interval": {
+          "clock_id": "fictional-monotonic",
+          "elapsed_ns": "0",
+          "end": {
+            "state": "present",
+            "value": "0"
+          },
+          "method": "fictional cleanup endpoints",
+          "precision_ns": {
+            "state": "present",
+            "value": "1"
+          },
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "start": {
+            "state": "present",
+            "value": "0"
+          },
+          "time_domain": "monotonic"
+        },
+        "method": "fictional non-performance rate",
+        "numerator": "0",
+        "unit": "bytes_per_second",
+        "value": {
+          "reason": "rate not applicable to cleanup",
+          "state": "not_collected"
+        }
+      },
+      "operations": {
+        "denominator_ns": "0",
+        "interval": {
+          "clock_id": "fictional-monotonic",
+          "elapsed_ns": "0",
+          "end": {
+            "state": "present",
+            "value": "0"
+          },
+          "method": "fictional cleanup endpoints",
+          "precision_ns": {
+            "state": "present",
+            "value": "1"
+          },
+          "source": {
+            "artifact_id": {
+              "state": "not_applicable"
+            },
+            "mechanism": "fictional manual capture",
+            "version": {
+              "state": "present",
+              "value": "1"
+            }
+          },
+          "start": {
+            "state": "present",
+            "value": "0"
+          },
+          "time_domain": "monotonic"
+        },
+        "method": "fictional non-performance rate",
+        "numerator": "0",
+        "unit": "operations_per_second",
+        "value": {
+          "reason": "rate not applicable to cleanup",
+          "state": "not_collected"
+        }
+      }
+    },
+    "time_meanings": {
+      "durability": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "effective": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "observation": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      },
+      "system_acceptance": {
+        "reason": "time meaning not applicable to cleanup",
+        "state": "not_collected"
+      }
+    },
+    "validation": {
+      "findings": [
+        "fictional example is not repository evidence"
+      ],
+      "integrity": [],
+      "status": "not_validated",
+      "validated_at_utc_ns": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_configuration_ref": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_identity": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      },
+      "validator_version": {
+        "reason": "fictional example not validated",
+        "state": "not_collected"
+      }
     },
     "visibility": {
       "first_visible_monotonic_ns": {
@@ -2311,7 +5296,12 @@ The following complete record corrects the preceding raw result. It has a new id
       "probe": "not applicable during cleanup",
       "status": "not_observed"
     },
-    "workload_manifest_artifact_id": "00000000-0000-4000-8000-000000000092"
+    "workload_ref": {
+      "artifact_id": "00000000-0000-4000-8000-000000000092",
+      "byte_length": "0",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "uri": "file:/fictional/a92"
+    }
   },
   "created_at_utc_ns": "2",
   "record_id": "00000000-0000-4000-8000-000000000005",
