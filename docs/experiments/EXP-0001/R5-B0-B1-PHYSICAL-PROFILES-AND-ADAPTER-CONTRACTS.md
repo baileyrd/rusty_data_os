@@ -1,150 +1,108 @@
 # R5 — B0/B1 Physical Profiles and Adapter Contracts
 
-**Status:** complete as documentation design; not implemented or empirically validated  
-**Scope:** EXP-0001 B0 and B1 only  
+**Status:** incomplete documentation design; not implemented or empirically validated
+**Scope:** EXP-0001 B0 and B1 only
 **Authority:** R1–R4, ADR-0002, and the EXP-0000 semantic, baseline, workload, recovery, environment, raw-result, interpretation, and methodology contracts
 
 ## 1. Decision boundary
 
-This record resolves BLK-016 and BLK-017 and the B0/B1 portions of BLK-019 at the design level. It does not close BLK-015, prove equivalence, authorize implementation or execution, or make a durability or survival claim. R6 documentation is the next readiness boundary.
+This record narrows BLK-016 and BLK-017 and documents the B0/B1 portions of BLK-019, but does **not** resolve them. Review exposed that an exact R3/R1-compliant B1 D2/D3 mapping cannot be completed until BLK-001 selects the physical encoding, durable request/event binding, reservation/high-water representation, and recoverable commit mechanism, and BLK-003 selects the integrity/finalization mechanism. The initial Linux append and synchronization API/error profile is fixed conditionally; the post-boundary finalization and recoverable-commit path is not. BLK-015 also remains open for final placement, protection, and empirical survival. R5 is therefore not complete and R6 is not authorized.
 
-Canonical history remains the sole authority. A canonical event is an accepted fact, never a command or provisional candidate. Effective, system, durability, observation, sequence/replay, and lifecycle times remain distinct. Derived memory, indexes, materializations, and checkpoints remain rebuildable.
+Canonical history remains the sole authority. The profiles do not select record framing, field layout, commit markers, side records, in-place updates, integrity/checksum algorithms, digest or identity serialization, or numeric grouping limits. In particular, the abstract operations below are obligations, not permission to assume that a second append, rewrite, sidecar, marker, or any other unreviewed mechanism satisfies them.
 
-The profiles deliberately do not select record encoding, framing, integrity/checksum algorithm, digest or identity serialization, numeric grouping limits, benchmark apparatus, final paths, or an execution series. SQLite and RocksDB are outside R5.
+## 2. Required lifecycle and physical evidence
 
-## 2. Common lifecycle and evidence vocabulary
+Every eligible adapter must map the following ordered lifecycle without collapsing an observation into a durable fact:
 
-For one already validated semantic candidate, the adapter records these ordered milestones without conflating them:
+1. **Stable request/event binding:** establish the R3 retry-stable request identity, one event identity, and normalized request relation in recoverable evidence before canonical commit.
+2. **Sequence reservation:** durably establish the assigned sequence and advance a recoverable reservation high-water mark. Failure may leave a permanent legal gap; restart must never reuse it.
+3. **Submission:** submit the event's provisional physical representation and record byte extents/outcomes. Submitted bytes are not yet a finalized canonical record.
+4. **Declared boundary:** complete every file-content and required namespace synchronization operation named by the selected platform contract for all evidence that must survive at this point.
+5. **Durability-time capture:** after that boundary succeeds, take **one exact clock sample per event**. D3 may share the boundary observation context, but must still perform and retain one sample for each event; one observation copied or “derived” into several event records does not satisfy R3.
+6. **Envelope/integrity finalization:** incorporate that event's sampled durability time and all other covered final values, then compute and freeze the BLK-003 integrity metadata. The finalized record is immutable under R1 §4.2.
+7. **Recoverable commit establishment:** durably establish the finalized record, its request/event binding, its assigned sequence/reservation state, and its canonical commit state under the eventual BLK-001 mechanism. This step requires the content and namespace synchronization necessary for recovery to distinguish committed from provisional bytes. It is not satisfied by the earlier boundary, because the durability-time value and finalized integrity did not yet exist then.
+8. **Canonical commit and visibility:** only after recoverable establishment succeeds may the adapter transition the event to canonical committed and publish it to canonical readers.
+9. **Acknowledgement:** acknowledge only after canonical commit. A lost acknowledgement after commit produces R3's uncertain caller outcome; it does not undo the fact.
+10. **Reconciliation:** lookup/retry and restart scanning must use the durable binding, reservation high-water mark, finalized integrity, and commit evidence to return the same event, preserve legal gaps, classify provisional residue, or fail closed without inventing or duplicating a fact.
 
-1. **Construction** produces the candidate's complete semantic fields and eventual physical bytes; it accepts no fact.
-2. **Insertion/submission** transfers the complete unit into the selected memory structure or through the complete B1 write loop.
-3. **Physical finalization** means the selected record bytes have been fully submitted; it is not a durability boundary.
-4. **Boundary success** is the successful return of the declared synchronization operation, if any.
-5. **Durability-time capture** occurs immediately after boundary success and before canonical commit. It records clock observation, not proof beyond the declared boundary.
-6. **Canonical commit** is the adapter's explicit per-event state transition after every cell-specific prerequisite succeeds.
-7. **Visibility** publishes only committed events to canonical readers; a separate provisional view may expose D0/D1 candidates while labeling them noncanonical.
-8. **Acknowledgement** reports the cell's declared outcome only after its required transition. An error or uncertain outcome never invents an accepted fact.
+Evidence must identify each operation and outcome, exact event/request/sequence, byte extents, boundary and namespace operations, the single per-event sample, finalization profile, recoverable-commit evidence, visibility/acknowledgement class, and reconciliation result. Because BLK-001/003 are open, R5 cannot name the exact write/synchronization sequence that realizes steps 1–7 and cannot claim D2/D3 equivalence.
 
-Each operation must expose outcome, errno where applicable, byte counts, offsets, boundary identity, group identity/membership where applicable, milestone timestamps, acknowledgement class, and accounting counters. Later byte survival cannot retroactively turn D0 or D1 into canonical history.
+## 3. B0 — provisional in-memory lower-bound candidate
 
-## 3. B0 — exact D0 in-memory lower bound
+B0 remains one process, one owning thread, and one preallocated growable contiguous vector. For a validated candidate it constructs an entry, reserves capacity, assigns the next **process-local** sequence, moves the entry once into the vector tail, publishes only to a provisional observer, and returns a provisional D0 acknowledgement. Allocation, capacity, construction, insertion, logical bytes, stage time, and outcome are accounted explicitly.
 
-### 3.1 Structure and operation
+This process-local counter is intentionally **not** R3's durable binding/reservation/high-water mechanism. Process loss destroys entries, request/event reconciliation state, and the counter; no gap or no-reuse promise survives restart. B0 therefore measures a lower bound only and must not be described as retaining the complete R3 lifecycle. It has no physical finalization, declared durability boundary, durability-time sample, integrity finalization, recoverable commit establishment, canonical visibility, or recovery.
 
-B0 is one process, one owning thread, and one preallocated growable contiguous vector of entries. Each entry contains the complete semantic candidate plus its sequence and lifecycle/accounting metadata. The measured operation is exactly:
+Validation, allocation, overflow, exhaustion, or resource failure rejects before publication. If insertion completion is uncertain, remove the candidate or fail the run closed without acknowledgement. Persistence, serialization solely for another baseline, background promotion, synchronization, recovery artifacts, indexes, materialization, and hidden durability work are excluded.
 
-1. validate the candidate against the frozen semantic envelope;
-2. construct one entry outside the vector;
-3. reserve capacity, if required, before assigning or publishing the sequence;
-4. assign the next process-local sequence without advancing it on failure;
-5. move the entry once into the vector tail; and
-6. publish its index only to the explicitly provisional observer and return a **provisional D0 acknowledgement**.
+## 4. B1 — conditional Linux raw-append substrate
 
-Construction includes semantic validation, field population, sequence assignment, and entry allocation/copying. Insertion includes capacity reservation, the single move into the tail, length publication, and provisional-index publication. Accounting includes elapsed lifecycle stages, allocation/capacity changes, bytes logically constructed and retained, one attempted outcome, and outcome class.
+### 4.1 Initial API, placement, and submission profile
 
-### 3.2 Semantics and exclusions
+Open the selected regular file relative to an opened parent directory with `O_WRONLY|O_APPEND|O_CLOEXEC|O_CREAT`; do not use `O_DIRECT`, `O_SYNC`, or `O_DSYNC`. One owning writer holds the descriptor. Bind `fstat`, `/proc/self/fd`, available `statx`, mount, filesystem, and block-stack identity to the run; symlinks, unexpected identity/placement, replacement, remount, configuration drift, or concurrent writers invalidate it.
 
-D0 has no physical finalization or durability boundary, captures no durability time, performs no canonical commit, and grants no canonical-reader visibility. Its acknowledgement means only that the process-local provisional entry was inserted. It provides no persistence or recovery; process loss loses every entry.
+Submit each provisional representation using `write(fd, remaining, remaining_len)` until complete. Positive short writes advance only by returned bytes; `EINTR` before progress retries; zero progress is terminal. No later record interleaves with an incomplete one. Logical offsets, byte counts, call outcomes, and provisional residue are retained for R1 scanning.
 
-No serialization performed solely for another baseline, file or synchronization call, background promotion, hidden flush, retry worker, index, materialization, checkpoint, recovery artifact, or durability work belongs in B0. Common semantic work required by all cells remains included and separately accounted.
+This fixes only the initial append API. It does not decide whether the durable binding/reservation, post-boundary finalized envelope, integrity value, or commit state lives in the record, a marker, a side structure, or another representation. Those are BLK-001/003 choices and may change the required write and synchronization sequence.
 
-Validation failure, allocation failure, capacity/size overflow, sequence exhaustion, or any resource limit returns a typed rejection before publication. If insertion cannot be proven complete, the candidate is removed or the whole B0 run fails closed; it receives no acknowledgement and no sequence is reusable as an accepted fact. Panics or process loss produce no recovery claim.
+### 4.2 D1
 
-## 4. B1 — conditional Linux raw append
+D1 stops after complete buffered submission. It has no declared synchronization boundary, durability-time sample, finalized canonical record, recoverable commit, canonical visibility, or recovery obligation. Its acknowledgement means only **complete OS-buffer submission, noncanonical**. Surviving bytes remain provisional.
 
-### 4.1 Placement, open, ownership, and descriptor lifecycle
+### 4.3 D2 and controlled D3
 
-Before a run, an operator-selected regular file must be beneath one of the R4 intended local placements. Open its parent directory with `open(..., O_RDONLY|O_DIRECTORY|O_CLOEXEC)` and the data file with `openat(parent_fd, name, O_WRONLY|O_APPEND|O_CLOEXEC|O_CREAT, mode)`. Do not use `O_DIRECT`, `O_SYNC`, or `O_DSYNC`; the declared boundaries below are explicit. Existing files require verified identity and an already validated R1 valid prefix before appending.
+A D2 candidate requires all ten steps in section 2, including one exact durability-time sample for that event after the declared pre-finalization boundary and a later recoverable establishment of its finalized envelope and commit state. Controlled D3 freezes observable membership and serial submission before a shared declared boundary, but then requires one exact post-boundary sample, finalization, recoverable commit establishment, canonical transition, visibility, and acknowledgement **for each member**. Formation wait is included. It remains a set of individual commits, not an atomic multi-event transaction.
 
-Immediately after opening, bind the descriptor to evidence from `fstat`, `/proc/self/fd/<fd>`, `statx` where available, and the applicable mount/block-stack observations required by R4. Record device/inode, resolved path, file type, mount identity/options, filesystem, and stack identity. A symlink, non-regular file, unexpected device/mount/stack, path escape, identity change, replacement, remount, or configuration drift invalidates the cell and stops it before acknowledgement. Recheck at series/run boundaries and after any namespace operation; execution design must add detection adequate to prevent silent placement changes.
+One `fsync(data_fd)` immediately followed by sampling and an in-memory commit cannot meet these requirements: the sampled durability time, finalized integrity, durable binding/reservation state, and commit evidence were not recoverable at that boundary. Likewise, one shared clock observation copied into member records is not one exact sample per event. R5 does not silently add a second append, rewrite, commit marker, side record, or synchronization call to repair that gap. Consequently B1 D2 and controlled D3 are incomplete and unsupported for equivalence until BLK-001/003 select a compliant realization and its exact boundary sequence is reviewed; BLK-015 and evidence gates would still remain afterward.
 
-Exactly one owning writer thread holds the descriptor. No process, thread, library, or background worker may append concurrently. `O_APPEND` prevents accidental explicit-offset placement but is not the concurrency model. The writer maintains the expected logical end offset from the validated prefix and verifies `fstat` size at controlled boundaries. The descriptor stays open for one run/segment and is closed only after all required synchronization and error checks. `close` errors are recorded; because `close` must not be retried, uncertainty fails the run closed.
+### 4.4 File content and namespace synchronization
 
-### 4.2 Complete record submission and errors
+Every declared boundary must enumerate the file-content and namespace facts it promises. For a newly created file, synchronize required file content before synchronizing its parent directory; an event cannot cross the relevant boundary until both succeed. Link, rename, replace, rotation, and deletion require synchronization of affected content and every affected parent directory, including both old and new parents when distinct. Unsupported directory synchronization makes that profile unsupported.
 
-For each as-yet-unselected complete encoded record, call `write(fd, remaining, remaining_len)` in a loop. Positive short writes advance the buffer pointer and expected offset and continue. `EINTR` before progress retries the remaining call. A zero return while bytes remain is zero progress and terminal for the run. No later record may interleave with an incomplete record.
+The post-boundary finalization and recoverable-commit mechanism may itself create or alter file or namespace state. Its required content and directory synchronization belongs to step 7, after the per-event sample and finalization, and cannot be credited to step 4. Exact operations remain unresolved with BLK-001/003. Namespace operations during a measured run are prohibited unless a later reviewed profile explicitly maps and accounts for them.
 
-`ENOSPC`, `EDQUOT`, `EROFS`, `EFBIG`, size/offset overflow, permission loss, or other permanent resource/configuration errors reject the candidate when no bytes were submitted; after any bytes were submitted they create provisional residue and terminate the run for R1 recovery. `EIO`, device disappearance/loss, filesystem shutdown, or an unexpected descriptor/path/stack condition is terminal. Delayed/writeback errors observed by later `write`, synchronization, or `close` are attributed to the affected run/boundary conservatively; all outcomes whose canonical status cannot be proven fail closed.
+### 4.5 Late and close errors
 
-The R1 scanner alone determines the valid prefix. An incomplete, malformed, integrity-failing, or otherwise unverifiable tail is terminal damage; bytes after it are not searched for valid records. Provisional residue may be truncated only by a separately controlled recovery action to the proven prefix. No unresolved encoding or integrity mechanism is selected here, and no successful syscall proves torn-write prevention or survival.
-
-### 4.3 D1 — buffered provisional append
-
-D1 ends after the complete write loop. Complete submission is physical finalization for accounting, but there is no synchronization call, declared durability-boundary success, durability time, or canonical commit. Only an explicitly provisional D1 view may observe the submitted candidate. Its acknowledgement says **complete OS-buffer submission, noncanonical**. It has no recovery obligation, even if bytes later survive and form a valid record. Fault observations are diagnostic only.
-
-### 4.4 D2 — conditional per-event boundary
-
-For each event, D2 performs the complete write loop and then exactly one `fsync(data_fd)`. `EINTR` retries `fsync`; any other failure, including `ENOSPC`, `EDQUOT`, `EROFS`, `EIO`, device loss, or delayed/writeback error, prevents boundary success and canonical commit and terminates the run when status is uncertain. No subsequent event begins before the outcome is known.
-
-After `fsync` returns success, capture durability time, transition that one event to canonical committed, publish it to canonical readers, and acknowledge it. The per-event acknowledgement therefore follows one per-event boundary. Physical finalization, successful `fsync`, durability-time observation, commit, visibility, and acknowledgement remain separate evidence fields.
-
-D2 is only conditionally eligible on the exact R4 Fedora/XFS/LVM/NVMe profile, intended placement, validated namespace state, and still-open BLK-015 prerequisites. `fsync` success expresses only the declared Linux boundary; it does not establish PLP, stable media, power-loss safety, atomic/torn-write prevention, or empirical recovery.
-
-### 4.5 Controlled D3 — conditional shared boundary
-
-Controlled D3 uses a single writer and a predeclared deterministic maximum member count **or** maximum formation interval, whose numeric value remains for a later freeze. A candidate may join only after complete semantic validation and before the earlier cut condition fires. The writer records membership and join time before writing. Once cut, membership is immutable; arrivals after the cut join the next group. Empty groups are forbidden.
-
-Members are written serially and contiguously with the complete write loop. After all members reach physical finalization, exactly one `fsync(data_fd)` is the shared boundary. On success, capture one post-boundary observation and derive distinct per-event durability-time records tied to that boundary, then commit, publish, and acknowledge every member individually in sequence order. Each event's latency includes formation wait. One shared outcome is recorded for the exact membership.
-
-Before shared boundary success, no member is canonical or acknowledged. A write or synchronization failure fails every uncommitted member closed and sends any partial/provisional tail to R1 recovery; none may be selectively acknowledged. This is a set of individual single-event commits sharing one boundary, **not** an atomic multi-event transaction: readers may observe individual publication order, and R5 promises no all-or-nothing application semantics. Strict D3 is conditionally equivalent only to that controlled grouping contract, never to opaque background group commit or a database transaction.
-
-### 4.6 File content versus namespace durability
-
-`fsync(data_fd)` is the selected file-content boundary. When a file is newly created, its parent directory must also receive `fsync(parent_fd)` before any event in it can pass a D2/D3 declared boundary; the file is synchronized first, then the parent directory. A parent-directory failure prevents commit.
-
-For link, rename, replace, rotation, or deletion, synchronize affected file content first when that content must survive, perform the namespace syscall, then `fsync` every affected parent directory (both old and new parents when distinct). Replacement/rotation synchronizes the new file before rename, then all affected parents; deletion synchronizes the containing parent after unlink. A newly created destination followed by rename does not inherit namespace durability from file `fsync`. R5 does not prescribe rotation/deletion during a measured run; if later allowed, each operation is an explicit boundary and invalidates results unless its work and failures are accounted. Directory synchronization unsupported by the selected filesystem makes the corresponding profile unsupported.
+Before canonical commit, a delayed/writeback, synchronization, namespace, or `close` error stops new acknowledgements, terminates the run, preserves evidence, and sends uncertain provisional outcomes to R1/R3 reconciliation. `close` is never retried. After recoverable commit and acknowledgement, a later error must **not** retroactively demote, delete, or relabel the accepted fact. It stops new acknowledgements and triggers reconciliation; if the already promised event cannot be recovered, the run/series is a correctness failure and its result is invalid under the existing recovery and interpretation authorities. Uncertainty is attached to affected pre-commit candidates or the caller's lost acknowledgement, never used to rewrite established canonical history.
 
 ## 5. Adapter/equivalence matrix
 
-“Conditionally equivalent” means the design can satisfy the EXP-0000 semantic cell after every prerequisite and correctness gate passes; it is not empirical proof.
+| Cell | Classification | Explicit mapping and evidence |
+|---|---|---|
+| **B0 × D0** | Conditional lower-bound candidate; incomplete against full R3 | Process-local request/event fields, capacity reservation, process-local sequence, vector insertion, provisional visibility/ack; no durable binding/reservation, boundary, sample, finalized commit, or reconciliation after loss. |
+| **B0 × D1** | Unsupported | No OS-buffer submission or D1 acknowledgement. |
+| **B0 × D2** | Unsupported | No durable reservation, synchronization boundary, durability-time sample, recoverable commit, or recovery. |
+| **B0 × D3** | Unsupported | No durable membership, shared boundary, per-event sample, or recoverable member commits. |
+| **B1 × D0** | Diagnostic only | Initial write-loop costs persistence work and can expose only provisional bytes. |
+| **B1 × D1** | Conditionally mapped, noncanonical | Complete initial `write` loop and provisional acknowledgement; offsets/errors are evidence, with no canonical recovery obligation. Exact framing still depends on BLK-001. |
+| **B1 × D2** | Incomplete; equivalence unsupported | Required section 2 mapping is known, but BLK-001/003 leave durable binding/reservation, post-boundary finalization, recoverable commit, and exact content/namespace synchronization operations unselected. |
+| **B1 × controlled D3** | Incomplete; equivalence unsupported | Observable membership/shared-boundary intent is known, but each member's exact sample, finalized integrity, recoverable commit, and reconciliation realization remains unselected under BLK-001/003. |
 
-| Cell | Classification | Physical mapping and acknowledgement | Visibility/recovery/fault/accounting | Preconditions, exclusions, invalidators |
-|---|---|---|---|---|
-| **B0 × D0** | Equivalent lower-bound design; empirically unproved | Vector-tail insert; provisional D0 acknowledgement | Provisional view only; no recovery; allocation/resource failures reject; semantic and memory work counted | One owner and exact structure; persistence, promotion, indexes and hidden work excluded; structure/allocator/path changes start a new profile |
-| **B0 × D1** | Unsupported | B0 performs no OS-buffer append | No D1 evidence or acknowledgement | Adding persistence ceases to be B0 |
-| **B0 × D2** | Unsupported | No synchronization boundary | No canonical visibility, recovery, or durability time | Cannot infer D2 from memory survival |
-| **B0 × D3** | Unsupported | No shared persistence boundary | No membership/boundary evidence | In-memory batching is not D3 |
-| **B1 × D0** | Diagnostic only | Complete write-loop cost may not be labeled D0 | Provisional only; R1 prefix diagnosis; write faults recorded | Persistence work makes it nonequivalent to B0 D0 |
-| **B1 × D1** | Conditionally equivalent | `write` loop through complete submission; provisional D1 acknowledgement | Provisional only; no recovery obligation; error paths and bytes/offsets counted | Exact descriptor, ownership and placement profile; any sync, concurrent writer, stack drift, or hidden flush invalidates |
-| **B1 × D2** | Conditionally equivalent | Complete write loop + one successful per-event `fsync`; post-success durability time, per-event commit/visibility/ack | Recover every canonically acknowledged event under R1 oracle; all write/sync faults fail closed; formation excluded | Exact R4 stack plus BLK-015, final placement, namespace and empirical gates; grouping/config drift invalidates |
-| **B1 × controlled D3** | Conditionally equivalent to controlled grouping only | Frozen join/cut membership, serial writes, one shared `fsync`, then per-event commit/visibility/ack | All members share boundary outcome; R1 recovery; formation wait and per-event work counted; no transaction atomicity | Exact D2 prerequisites plus frozen group policy and observable membership; opaque grouping, concurrent writers, policy/stack drift invalidates |
+Workload identity, semantic validation, and accounting obligations still apply to every exercised cell. They do not make unsupported cells equivalent or give B0 durable R3 semantics.
 
-All eight cells retain workload identity, semantic validation, request/event identities, sequence/replay rules, retry/uncertain-outcome rules, and accounting required by R1–R4 and EXP-0000. A configuration change creates a new profile/series; it cannot silently inherit equivalence.
-
-## 6. Error-path mapping review
+## 6. Required error-path dispositions
 
 | Required path | Required disposition |
 |---|---|
-| Short write | Advance only by returned bytes; continue the same record; count every call and byte. |
-| Zero progress | Terminal run failure with no acknowledgement; preserve provisional residue for recovery. |
-| `EINTR` | Retry the remaining write or synchronization without duplicating submitted bytes. |
-| `ENOSPC` | Reject before progress or terminate after progress; no uncertain canonical fact. |
-| `EDQUOT` (quota failure) | Same fail-closed resource disposition as `ENOSPC`. |
-| `EROFS` | Configuration failure; reject/terminate and invalidate the run. |
-| I/O/device loss | Terminal; stop appends, withhold commit/ack, invoke R1 recovery. |
-| Delayed/writeback error | Surface at later write/sync/close, conservatively invalidate affected outcomes, fail closed. |
-| Synchronization failure | No boundary success, durability time, commit, visibility, or acknowledgement. |
-| Namespace synchronization failure | No dependent D2/D3 commit; stop and retain evidence for controlled recovery. |
+| Short write | Advance only by returned bytes; continue the same provisional unit; record calls and bytes. |
+| Zero progress | Terminal run failure; stop acknowledgements and preserve residue for reconciliation. |
+| `EINTR` | Retry the remaining operation without duplicating submitted bytes. |
+| `ENOSPC` | Reject before progress or terminate after progress; reconcile any uncertain pre-commit residue. |
+| `EDQUOT` | Same fail-closed resource disposition as `ENOSPC`. |
+| `EROFS` | Configuration failure; reject or terminate and invalidate the run. |
+| I/O/device loss | Stop new acknowledgements, preserve evidence, and reconcile; unrecovered promised facts are correctness/result failures. |
+| Delayed/writeback error | Never retroactively demote a committed fact; stop new acknowledgements and classify violated recovery promises as correctness/result failures. |
+| Synchronization failure | No dependent boundary success or new commit; reconcile uncertain pre-commit outcomes. |
+| Namespace synchronization failure | No dependent boundary success or new commit; stop and reconcile. |
+| `close` error | Do not retry close or demote committed facts; stop acknowledgements, reconcile uncertainty, and fail correctness if promised recovery is violated. |
 
-## 7. Traceability and disposition
+## 7. Blocker disposition and continuation gate
 
-| Item | R5 disposition |
+| Item | Corrected R5 disposition |
 |---|---|
-| BLK-016 | Resolved at design level by section 3; implementation and validation remain gated. |
-| BLK-017 | Resolved at design level by section 4; BLK-015 and execution evidence remain open. |
-| BLK-019 | B0/B1 portions resolved at design level by section 5; B2/B3 remain for R6. |
-| REQ-001–REQ-006 | Canonical authority, accepted-fact boundary, order, time, identity/provenance, and explicit durability lifecycle preserved. |
-| REQ-009 | Opaque payload and unresolved physical encoding remain separate. |
-| REQ-013/REQ-014 | Recovery oracle, valid-prefix/terminal-damage rules, and explicit boundary evidence preserved. |
-| RQ-003 | Physical design is now specified; cost/correctness evidence remains unanswered. |
-| UNK-014 | B1 is bound conditionally to R4; final execution placement/provenance remain open. |
-| UNK-020 | B0/B1 mapping portion narrowed; implementations, versions, harness, and B2/B3 remain open. |
-| UNK-021 | B1 D2/D3 conditions are explicit; SQLite/RocksDB eligibility remains open. |
+| BLK-015 | Open: final placement, exact protection, and empirical survival remain unverified; the initial B1 API choice does not close the overall platform claim. |
+| BLK-016 | Narrowed, not resolved: the exact B0 lower-bound operations are described, but its process-local sequence is explicitly not R3 durable reservation/binding and implementation/evidence remain gated. |
+| BLK-017 | Narrowed, not resolved: initial append/error API is described; post-boundary finalization, recoverable commit, and their exact synchronization sequence depend on BLK-001/003. |
+| BLK-019 | Incomplete: B0/B1 mappings now identify their semantic gaps honestly; no D2/D3 equivalence is established, and B2/B3 remain unstarted. |
 
-This record depends on ADR-0002; EXP-0000 baseline, acknowledgement/visibility/durability, crash/recovery, workload, environment, raw-result, interpretation, and methodology contracts; and R1–R4. Those authorities prevail if a conflict is found.
-
-## 8. Eligibility, evidence, and prohibited claims
-
-R5 establishes design eligibility only. Equivalence becomes evidence only after implementation authorization, independent oracle validation, exact environment/series capture, applicable fault execution, retained raw results, and the descriptive or confirmatory gate. BLK-015 remains open, as do BLK-001/003 and every execution/evidence gate.
-
-No documentation statement or successful `write`, `fsync`, directory `fsync`, or `close` establishes stable-media residence, PLP/controller protection, power-loss safety, torn-write prevention, exactly-once behavior, atomic multi-event transactions, empirical survival, acceptable performance, or production readiness. No code, Cargo file, workflow, fixture, vector, validator, harness, adapter, instrumentation, benchmark, fault execution, machine change, evidence archive, or sensitive identifier is part of R5.
+R5 supplies a bounded negative design outcome: the proposed one-`fsync` D2/D3 path is insufficient, and the excluded encoding/integrity/commit choices are necessary to finish the mapping. R5 must remain incomplete, and R6 must not begin, until the governing blockers are resolved or the readiness plan explicitly reorders work through review. No implementation, execution, benchmark, fixture, capture, workflow, Cargo, durability, or performance claim is authorized.
