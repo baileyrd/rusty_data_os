@@ -3,6 +3,11 @@
 **Logical schema:** `benchmark-raw-result/v1`
 **Status:** EXP-0000 measurement contract; no measurements are recorded
 
+**EXP-0001 physical profile:** The fields below are serialized, validated,
+retained, and linked through provenance according to the documentation-only
+[R7 authority](../experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md).
+This remains the logical contract; R7 creates no schema, validator, result, or evidence.
+
 ## 1. Conformance and preservation
 
 This logical record preserves one observation or a bundle whose members remain individually identifiable. **R** is required, **C** conditionally required, and **M** recommended. Raw observations are immutable: corrections create a new `result_id`, cite `supersedes`, and retain the old record. Failed, negative, invalid, diagnostic, non-equivalent, and inconclusive runs remain preserved. Summaries reference raw identities and never replace raw evidence.

@@ -3,6 +3,11 @@
 **Logical schema:** `benchmark-environment/v1`
 **Status:** EXP-0000 measurement contract; no environment has been selected or recorded
 
+**EXP-0001 physical profile:** The fields below are serialized, validated,
+retained, and redacted according to the documentation-only
+[R7 authority](../experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md).
+This remains the logical contract; R7 creates no schema, validator, record, or evidence.
+
 ## 1. Conformance
 
 This versioned logical record identifies the execution context shared by a benchmark series. It is not evidence that a run occurred. **R** means required, **C** conditionally required when applicable, **M** recommended when obtainable and material, and **N** inapplicable only with a reason. `unknown`, `unavailable`, `unsupported`, and `inapplicable` each require a reason and are distinct from zero. Values must never be invented.
