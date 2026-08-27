@@ -1,14 +1,14 @@
 # R5 — B0/B1 Physical Profiles and Adapter Contracts
 
-**Status:** incomplete documentation design; not implemented or empirically validated
+**Status:** complete documentation design; not implemented or empirically validated
 **Scope:** EXP-0001 B0 and B1 only
 **Authority:** R1–R4, ADR-0002, and the EXP-0000 semantic, baseline, workload, recovery, environment, raw-result, interpretation, and methodology contracts
 
 ## 1. Decision boundary
 
-This record narrows BLK-016 and BLK-017 and documents the B0/B1 portions of BLK-019, but does **not** resolve them. Review exposed that an exact R3/R1-compliant B1 D2/D3 mapping cannot be completed until BLK-001 selects the physical encoding, durable request/event binding, reservation/high-water representation, and recoverable commit mechanism, and BLK-003 selects the integrity/finalization mechanism. The initial Linux append and synchronization API/error profile is fixed conditionally; the post-boundary finalization and recoverable-commit path is not. BLK-015 also remains open for final placement, protection, and empirical survival. R5 is therefore not complete and R6 is not authorized.
+The focused [physical-record, integrity, and recoverable-commit contract](R5-PHYSICAL-RECORD-INTEGRITY-AND-RECOVERABLE-COMMIT-CONTRACT.md) now resolves BLK-001 and BLK-003 together and supplies the exact R3/R1-compliant B1 D2/D3 mapping. BLK-016 and BLK-017 are resolved as design profiles, and the B0/B1 portion of BLK-019 is complete. BLK-015 remains open for final placement, protection, and empirical survival. R5 is complete as documentation design; R6 is authorized only as the next documentation increment.
 
-Canonical history remains the sole authority. The profiles do not select record framing, field layout, commit markers, side records, in-place updates, integrity/checksum algorithms, digest or identity serialization, or numeric grouping limits. In particular, the abstract operations below are obligations, not permission to assume that a second append, rewrite, sidecar, marker, or any other unreviewed mechanism satisfies them.
+Canonical history remains the sole authority. The continuation contract selects record framing, field layout, append-only commit records, CRC-32C, and numeric scan/group bounds strictly for EXP-0001 B1. It rejects in-place updates and side authorities. Digest, normalized-request, and complete semantic-envelope serialization outside the physical containment boundary remain governed by their later blockers; no unreviewed mechanism may substitute for the frozen sequence.
 
 ## 2. Required lifecycle and physical evidence
 
@@ -25,7 +25,7 @@ Every eligible adapter must map the following ordered lifecycle without collapsi
 9. **Acknowledgement:** acknowledge only after canonical commit. A lost acknowledgement after commit produces R3's uncertain caller outcome; it does not undo the fact.
 10. **Reconciliation:** lookup/retry and restart scanning must use the durable binding, reservation high-water mark, finalized integrity, and commit evidence to return the same event, preserve legal gaps, classify provisional residue, or fail closed without inventing or duplicating a fact.
 
-Evidence must identify each operation and outcome, exact event/request/sequence, byte extents, boundary and namespace operations, the single per-event sample, finalization profile, recoverable-commit evidence, visibility/acknowledgement class, and reconciliation result. Because BLK-001/003 are open, R5 cannot name the exact write/synchronization sequence that realizes steps 1–7 and cannot claim D2/D3 equivalence.
+Evidence must identify each operation and outcome, exact event/request/sequence, byte extents, boundary and namespace operations, the single per-event sample, finalization profile, recoverable-commit evidence, visibility/acknowledgement class, and reconciliation result. The continuation contract freezes the record types and exact write/synchronization sequence realizing steps 1–7. D2/D3 are design-mapped, while implementation, platform-survival evidence, and empirical equivalence remain absent.
 
 ## 3. B0 — provisional in-memory lower-bound candidate
 
@@ -43,7 +43,7 @@ Open the selected regular file relative to an opened parent directory with `O_WR
 
 Submit each provisional representation using `write(fd, remaining, remaining_len)` until complete. Positive short writes advance only by returned bytes; `EINTR` before progress retries; zero progress is terminal. No later record interleaves with an incomplete one. Logical offsets, byte counts, call outcomes, and provisional residue are retained for R1 scanning.
 
-This fixes only the initial append API. It does not decide whether the durable binding/reservation, post-boundary finalized envelope, integrity value, or commit state lives in the record, a marker, a side structure, or another representation. Those are BLK-001/003 choices and may change the required write and synchronization sequence.
+The continuation contract fixes durable binding, reservation, provisional, final-event, and commit records in this same append-only file. Its exact sequence supersedes the former unresolved mechanism boundary without changing this initial append API.
 
 ### 4.2 D1
 
@@ -53,13 +53,13 @@ D1 stops after complete buffered submission. It has no declared synchronization 
 
 A D2 candidate requires all ten steps in section 2, including one exact durability-time sample for that event after the declared pre-finalization boundary and a later recoverable establishment of its finalized envelope and commit state. Controlled D3 freezes observable membership and serial submission before a shared declared boundary, but then requires one exact post-boundary sample, finalization, recoverable commit establishment, canonical transition, visibility, and acknowledgement **for each member**. Formation wait is included. It remains a set of individual commits, not an atomic multi-event transaction.
 
-One `fsync(data_fd)` immediately followed by sampling and an in-memory commit cannot meet these requirements: the sampled durability time, finalized integrity, durable binding/reservation state, and commit evidence were not recoverable at that boundary. Likewise, one shared clock observation copied into member records is not one exact sample per event. R5 does not silently add a second append, rewrite, commit marker, side record, or synchronization call to repair that gap. Consequently B1 D2 and controlled D3 are incomplete and unsupported for equivalence until BLK-001/003 select a compliant realization and its exact boundary sequence is reviewed; BLK-015 and evidence gates would still remain afterward.
+One `fsync(data_fd)` immediately followed by sampling and an in-memory commit cannot meet these requirements: the sampled durability time, finalized integrity, durable binding/reservation state, and commit evidence were not recoverable at that boundary. Likewise, one shared clock observation copied into member records is not one exact sample per event. R5 does not silently add a second append, rewrite, commit marker, side record, or synchronization call to repair that gap. The continuation contract selects the required second append-and-`fsync` recoverable-commit phase and per-event samples. B1 D2 and controlled D3 are therefore completely mapped as documentation design; BLK-015 and implementation/evidence gates still prevent empirical equivalence or survival claims.
 
 ### 4.4 File content and namespace synchronization
 
 Every declared boundary must enumerate the file-content and namespace facts it promises. For a newly created file, synchronize required file content before synchronizing its parent directory; an event cannot cross the relevant boundary until both succeed. Link, rename, replace, rotation, and deletion require synchronization of affected content and every affected parent directory, including both old and new parents when distinct. Unsupported directory synchronization makes that profile unsupported.
 
-The post-boundary finalization and recoverable-commit mechanism may itself create or alter file or namespace state. Its required content and directory synchronization belongs to step 7, after the per-event sample and finalization, and cannot be credited to step 4. Exact operations remain unresolved with BLK-001/003. Namespace operations during a measured run are prohibited unless a later reviewed profile explicitly maps and accounts for them.
+The post-boundary finalization and recoverable-commit mechanism may itself create or alter file or namespace state. Its required content and directory synchronization belongs to step 7, after the per-event sample and finalization, and cannot be credited to step 4. Exact operations are frozen by the continuation contract. Namespace operations during a measured run are prohibited unless a later reviewed profile explicitly maps and accounts for them.
 
 ### 4.5 Late and close errors
 
@@ -74,9 +74,9 @@ Before canonical commit, a delayed/writeback, synchronization, namespace, or `cl
 | **B0 × D2** | Unsupported | No durable reservation, synchronization boundary, durability-time sample, recoverable commit, or recovery. |
 | **B0 × D3** | Unsupported | No durable membership, shared boundary, per-event sample, or recoverable member commits. |
 | **B1 × D0** | Diagnostic only | Initial write-loop costs persistence work and can expose only provisional bytes. |
-| **B1 × D1** | Conditionally mapped, noncanonical | Complete initial `write` loop and provisional acknowledgement; offsets/errors are evidence, with no canonical recovery obligation. Exact framing still depends on BLK-001. |
-| **B1 × D2** | Incomplete; equivalence unsupported | Required section 2 mapping is known, but BLK-001/003 leave durable binding/reservation, post-boundary finalization, recoverable commit, and exact content/namespace synchronization operations unselected. |
-| **B1 × controlled D3** | Incomplete; equivalence unsupported | Observable membership/shared-boundary intent is known, but each member's exact sample, finalized integrity, recoverable commit, and reconciliation realization remains unselected under BLK-001/003. |
+| **B1 × D1** | Conditionally mapped, noncanonical | Complete initial `write` loop and provisional acknowledgement; offsets/errors are evidence, with no canonical recovery obligation. Framing is fixed by the continuation contract. |
+| **B1 × D2** | Design-mapped; empirical equivalence unproven | The continuation contract fixes binding/reservation, pre-boundary submission, one sample, immutable final/commit pairs, and the post-finalization synchronization boundary. |
+| **B1 × controlled D3** | Design-mapped; empirical equivalence unproven | Type-4 membership freezes the shared boundary and each member receives its own sample and immutable final/commit pair; commits are individual, not transactional. |
 
 Workload identity, semantic validation, and accounting obligations still apply to every exercised cell. They do not make unsupported cells equivalent or give B0 durable R3 semantics.
 
@@ -98,11 +98,12 @@ Workload identity, semantic validation, and accounting obligations still apply t
 
 ## 7. Blocker disposition and continuation gate
 
-| Item | Corrected R5 disposition |
+| Item | Final R5 disposition |
 |---|---|
-| BLK-015 | Open: final placement, exact protection, and empirical survival remain unverified; the initial B1 API choice does not close the overall platform claim. |
-| BLK-016 | Narrowed, not resolved: the exact B0 lower-bound operations are described, but its process-local sequence is explicitly not R3 durable reservation/binding and implementation/evidence remain gated. |
-| BLK-017 | Narrowed, not resolved: initial append/error API is described; post-boundary finalization, recoverable commit, and their exact synchronization sequence depend on BLK-001/003. |
-| BLK-019 | Incomplete: B0/B1 mappings now identify their semantic gaps honestly; no D2/D3 equivalence is established, and B2/B3 remain unstarted. |
+| BLK-001 / BLK-003 | Resolved together by the versioned framing, CRC-32C profile, stable documentation vectors, and recoverable-commit sequence in the continuation contract. |
+| BLK-015 | Open: final placement, exact protection, and empirical survival remain unverified. |
+| BLK-016 | Resolved as B0 documentation design; implementation and evidence remain gated. |
+| BLK-017 | Resolved as B1 documentation design; exact append/error/synchronization/finalization/recovery operations are frozen, without empirical validation. |
+| BLK-019 | B0/B1 portion complete; B2/B3 remain R6 work. |
 
-R5 supplies a bounded negative design outcome: the proposed one-`fsync` D2/D3 path is insufficient, and the excluded encoding/integrity/commit choices are necessary to finish the mapping. R5 must remain incomplete, and R6 must not begin, until the governing blockers are resolved or the readiness plan explicitly reorders work through review. No implementation, execution, benchmark, fixture, capture, workflow, Cargo, durability, or performance claim is authorized.
+R5 is complete as the contracted documentation gate. R6 is now the one next documentation increment but no R6 content or implementation is authorized here. Parent #28 may close on this complete R5 gate.
