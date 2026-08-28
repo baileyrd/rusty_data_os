@@ -1,9 +1,9 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — implementation not authorized
+**Status:** Phase 1 planning/readiness — Slice A prospectively authorized after R9 merge
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `f9d9876cf6599345a2e2244223a530ada2b9a828`
+**Verified starting `main` checkpoint:** `6f7f67a` (PR #41 / R8)
 
 ## 1. Current facts
 
@@ -35,9 +35,9 @@ These are constraints on research and correctness, not evidence that the archite
 
 The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primary D1/D2/controlled D3), SQLite WAL, and RocksDB WAL. R5 freezes B0/B1 design profiles. The [R6 execution-profile authority](experiments/EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) now freezes SQLite 3.53.4 and RocksDB 11.8.1 source/build/API profiles, mappings, effective-setting evidence, equivalence classifications, and exclusions without installing, building, implementing, or claiming evidence. SQLite/RocksDB D2 remains conditional; strict D3 is unsupported and atomic multi-event transactions or opaque group commit remain diagnostic. The prospective owner-approved `EXP-0001-R8/thresholds-v1` values resolve UNK-008 for the R8 threshold decision; confirmatory execution remains blocked until the readiness plan freezes every remaining input and passes its separate gates.
 
-[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R7 are complete documentation inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision, R8 is complete as documentation design, and R9 is the next readiness increment without being authorized or begun. R7 resolves BLK-010/021/025 as design, partially resolves BLK-008, constrains BLK-020, and resolves only the process/offline-condition portions of BLK-022. Kernel-crash, physical reset/power-loss, and storage-error apparatus await BLK-015 and explicit owner approvals. BLK-015, BLK-026/027, implementation, effective validation, empirical equivalence, evidence, and execution remain open. Cargo bootstrap, fixtures, validators, adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
+[EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R9 are complete documentation inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision and R8 is complete as documentation design. The [R9 authority](experiments/EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) now freezes the Slice A-only workspace, harness boundary, exact Rust 1.89.0 toolchain, dependency-free build, tests, and CI plan. It resolves BLK-020/026 for Slice A and prospectively resolves BLK-027 when R9 is reviewed and merged. That merge authorizes only Slice A implementation; no implementation or evidence exists yet. Kernel-crash, physical reset/power-loss, storage-error apparatus, BLK-015, later-slice harness/toolchains, effective validation, empirical equivalence, evidence, and execution remain open. Adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
 
-Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not Phase 1 implementation. No Phase 1 evidence exists; Cargo or Rust work remains prohibited until the plan's explicit first-implementation authorization gate passes.
+Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not Phase 1 implementation. No Phase 1 evidence exists. R9 satisfies the explicit first-implementation gate prospectively: only after its merge may the expressly listed Slice A Cargo, Rust, fixture, test, and CI artifacts be created.
 
 ## 5. Decision policy
 
