@@ -397,12 +397,10 @@ controller, disposable block device, privilege/security decision, or destructive
 fault authority (BLK-015; UNK-014/015/021). Process termination and offline R5
 condition injection are exact documentation selections but unimplemented.
 
-BLK-020 remains constrained, not executable. BLK-009, BLK-015, BLK-023/024,
-BLK-026/027, implementation, effective validation, execution, and evidence stay
+BLK-020 remains constrained, not executable. BLK-009, BLK-015, BLK-026/027, implementation, effective validation, execution, and evidence stay
 open. UNK-022 is resolved as physical records, digest, artifact policy, and
 instrumentation design, but automated validation remains open. UNK-018/019 retain
-the generator/workload-manifest dependencies above. R8 subsequently froze its candidate matrix and analysis design but remains incomplete at its owner threshold-decision boundary; it may freeze
-only primary matrix/statistics/thresholds; it cannot authorize code or faults.
+the generator/workload-manifest dependencies above. R8 subsequently froze its candidate matrix, analysis design, and prospective owner-approved thresholds and is complete as documentation design; it cannot authorize code or faults.
 
 The owner must provide, in one reviewed future authority: final non-sensitive
 storage topology and placement; exact volatile-cache/PLP facts; named disposable
@@ -462,7 +460,7 @@ pinned Fedora kernel/userspace before execution.
 ## 11. Traceability and completion report
 
 This authority traces to BLK-008/010/015/020/021/022/025 and retained
-BLK-023/024/026/027; UNK-014/015/018/019/020/021/022; RQ-003; REQ-001–010 and
+BLK-026/027; resolved-by-R8 BLK-023/024; UNK-014/015/018/019/020/021/022; RQ-003; REQ-001–010 and
 REQ-012–014; ADR-0002; EXP-0000 record, durability, recovery, and interpretation
 contracts; benchmark methodology; and R1–R6. It changes project knowledge only
 as documentation design. It creates no schema, validator, harness, workflow,
