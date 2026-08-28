@@ -110,7 +110,7 @@ The EXP-0001 execution plan must freeze a versioned registry before any confirma
 | Compensation | Whether another named benefit may compensate, and its predeclared rule |
 | Governance | Owner, freeze time, immutable version/identity, and supersession link |
 
-There is no universal percentage threshold. An unresolved, unsupported, or post-observation entry blocks confirmatory interpretation for that cell; its results may be descriptive or exploratory only. [UNK-008](../ASSUMPTIONS-AND-UNKNOWNS.md) therefore remains open until justified numeric values are frozen. Freezing this framework does not resolve it.
+There is no universal percentage threshold. An unresolved, unsupported, or post-observation entry blocks confirmatory interpretation for that cell; its results may be descriptive or exploratory only. [UNK-008](../ASSUMPTIONS-AND-UNKNOWNS.md) remains open until justified numeric values are frozen; the later R8 owner approval resolves it for `EXP-0001-R8/thresholds-v1`, without changing this framework or classifying prior evidence.
 
 ## 7. Outcome classifications
 
