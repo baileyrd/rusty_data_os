@@ -1,0 +1,33 @@
+name: EXP-0001 Slice A
+on:
+  pull_request:
+  push:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_NET_OFFLINE: true
+      RUST_BACKTRACE: 1
+      RUSTFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install frozen Rust toolchain
+        run: |
+          rustup toolchain install 1.89.0 --profile minimal --component rustfmt,clippy --target x86_64-unknown-linux-gnu
+          rustup override set 1.89.0
+      - name: Show tool versions
+        run: |
+          rustc -Vv
+          cargo -V
+          rustfmt -V
+          cargo clippy -V
+      - name: Validate
+        run: |
+          git diff --check
+          python3 tools/validate_markdown_links.py
+          cargo fmt --manifest-path experiments/exp-0001/Cargo.toml --all -- --check
+          cargo clippy --manifest-path experiments/exp-0001/Cargo.toml --workspace --all-targets --locked --offline -- -D warnings
+          cargo test --manifest-path experiments/exp-0001/Cargo.toml --workspace --all-targets --locked --offline
