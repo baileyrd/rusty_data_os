@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; Slices A and B closed, BLK-006/007 documentation freeze prospectively authorized, execution unauthorized
+**Status:** Active staged plan; Slices A and B closed, BLK-006/007 frozen as documentation design, execution unauthorized
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -20,7 +20,7 @@ A documentation-complete experiment framework is not an executable experiment.
 |---|---|---|
 | Framework readiness | Complete | EXP-0000's seven reviewed contracts remain linked and internally consistent. |
 | Design-choice readiness | Incomplete | The physical and lifecycle choices required by the intended slice are resolved through R1–R8 as applicable. |
-| Implementation readiness | Slices A and B complete | R11 authorizes documentation only; every later implementation slice requires a separate authorization. |
+| Implementation readiness | Slices A and B complete | R12 completes the authorized BLK-006/007 documentation freeze only; every later implementation slice requires separate authorization. |
 | Correctness-validation readiness | Slices A and B passed only | Stable fixtures, oracle, recovery rules, fault mechanisms, and validation procedures must exist for every applicable measured mode. |
 | Descriptive execution readiness | Incomplete | A validated runnable cell, environment, stream, adapter, instrumentation, and result path pass the descriptive gate. |
 | Confirmatory execution readiness | Incomplete | The stricter frozen-design gate in section 7 passes; descriptive readiness alone is insufficient. |
@@ -37,8 +37,8 @@ other blocker IDs or the frozen semantic contracts (`SEM`). Unknowns refer to th
 | BLK-003 | Integrity/checksum algorithm | Resolved by [R5 physical contract](R5-PHYSICAL-RECORD-INTEGRITY-AND-RECOVERABLE-COMMIT-CONTRACT.md) | BLK-002, BLK-001 | UNK-012 | CRC-32C profile, exact coverage, limits, and documentation vectors | Integrity-enabled implementation prerequisite; implementation still gated |
 | BLK-004 | Request/event identity algorithms and assignment lifecycle | Resolved by [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) | SEM, BLK-012 | UNK-002, UNK-009, UNK-016 | Separate algorithms, authorities, collision/error rules, and capture points | Slice A; comparable streams |
 | BLK-005 | Timestamp representation, clocks, and capture points | Resolved by [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) | SEM, BLK-012 | UNK-003, UNK-010 | Representation, precision, clock and lifecycle rules | Slice A; records |
-| BLK-006 | Payload-content generator | Open; constrained by [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) | SEM | UNK-018 | Platform-independent algorithm and test vectors | Comparable stream |
-| BLK-007 | Identity/envelope/reference generator | Open; constrained by [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) and [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) | BLK-004, BLK-005, BLK-012 | UNK-013, UNK-018 | Deterministic generation specification and vectors | Slice A; comparable stream |
+| BLK-006 | Payload-content generator | Resolved as documentation design by [R12](R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md); implementation absent | SEM | UNK-018 | Platform-independent algorithm and test vectors | Comparable stream |
+| BLK-007 | Identity/envelope/reference generator | Resolved as documentation design by [R12](R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md), consistent with [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) and [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md); implementation absent | BLK-004, BLK-005, BLK-012 | UNK-013, UNK-018 | Deterministic generation specification and vectors | Slice A; comparable stream |
 | BLK-008 | Stream and artifact digest algorithm | Partially resolved by [R7](R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md): SHA-256, domains and record/artifact vectors are frozen; workload bytes await BLK-006/007 | BLK-006, BLK-007 | UNK-018, UNK-022 | Algorithm, canonical digest inputs, and vectors | Stream/artifact validation |
 | BLK-009 | Workload-manifest physical serialization | Open; constrained by [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) | BLK-006–BLK-008 | UNK-019 | Versioned serialization and validator rules | Descriptive execution |
 | BLK-010 | Benchmark-record physical serialization and validation | Resolved as documentation design by [R7](R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md); executable schema/validator remains gated | BLK-008, BLK-025 | UNK-022 | Versioned serialization, validation and correction rules | Result admissibility |
@@ -94,7 +94,7 @@ Each increment ends in its own review; none silently authorizes a later incremen
 | R10 — Slice A closure and Slice B authorization (**complete as prospective authorization**) | Did merged Slice A satisfy R9, and can the minimum B0 mechanism be implemented without unlocking execution? | [R10 authority](R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md): exact-head closure audit, generator-blocker disposition, and prospective D0-only Slice B boundary. | Workload generation, observations, executable harness/capture, persistence, and later slices. | **Authorizes bounded Slice B code only after R10 is reviewed and merged.** | Documentation/link checks; existing R9 Rust CI applies to the later implementation. | Any accounting ambiguity or workspace/dependency/toolchain/layout expansion. |
 | R11 — Slice B closure and next gate (**complete as prospective authorization**) | Did merged Slice B satisfy R10, and what is the smallest remaining prerequisite? | [R11 authority](R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md): exact-head B0 audit and BLK-006/007 prerequisite analysis. | Generator implementation, BLK-008/009 completion, Slice C, execution, persistence, and later work. | **Authorizes only the BLK-006/007 documentation/research freeze after R11 is reviewed and merged.** | Documentation/link checks plus unchanged R9 Rust validation. | Generator ambiguity, missing independent vectors, dependency need, or changed staged authority. |
 
-R9 and R10 authorized the now-merged Slice A and Slice B implementations. [R11](R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) records that Slice B passed its continuation gate as correctness-validation evidence only and prospectively authorizes only the BLK-006/007 documentation/research freeze. Slice C, execution, benchmark, persistence, fault, and durability work remains unauthorized.
+R9 and R10 authorized the now-merged Slice A and Slice B implementations. [R11](R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) records that Slice B passed its continuation gate as correctness-validation evidence only ; R12 completes that documentation freeze without authorizing implementation. Slice C, execution, benchmark, persistence, fault, and durability work remains unauthorized.
 
 ## 5. Conditional staged-implementation proposal
 
@@ -170,7 +170,7 @@ an untested performance candidate into validated architecture; empirical promoti
 
 Phase 0's documented exit criteria are now satisfied: EXP-0000 is complete, EXP-0001 has a reproducible semantic benchmark plan and
 correctness criteria, baseline families are identified, and target environments can be recorded consistently. The project therefore
-enters **Phase 1 planning/readiness**, not experimental execution. Slices A and B provide bounded implementation/correctness-validation evidence only. R11 prospectively authorizes only the BLK-006/007 documentation freeze after merge; EXP-0001 remains non-executable.
+enters **Phase 1 planning/readiness**, not experimental execution. Slices A and B provide bounded implementation/correctness-validation evidence only. R12 completes only that BLK-006/007 documentation freeze; EXP-0001 remains non-executable.
 
 R1 is complete through the [physical-record, integrity, and recovery requirements](R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md). It resolved BLK-002 and BLK-013 while leaving later decisions; R3 subsequently resolved BLK-011/012 and R5 resolved BLK-001/003 as documentation design. Platform evidence and concrete fault mechanisms remain open. [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) is complete as requirements/reference-vector planning and constrains BLK-006–009; those blockers remain open until concrete algorithms or serialization, rationale, and stable vectors are separately reviewed. [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) is complete: it resolves BLK-004/005/011/012 and further constrains open BLK-007.
 
