@@ -134,3 +134,8 @@ BLK-006–009, BLK-015, owner-dependent fault apparatus, executable R7 capture/r
 Revisit R9 before any listed configuration or boundary changes, before admitting any dependency or second package, upon a changed R5/R7 authority/vector, upon a toolchain target defect that affects semantics, or when a semantic ambiguity appears. Later slices require their own prospective authorization and prerequisites.
 
 R9 is complete as a bounded documentation/readiness increment. Once merged, the next permitted increment is **implementation of Slice A only** under this record. EXP-0001 remains proposed; benchmarking, persistence, fault execution, durability claims, and architecture promotion remain prohibited.
+
+
+## 11. Continuation synchronization
+
+R9 merged before Slice A and remains the historical authority for its exact workspace and implementation boundary. [R10](R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records the reviewed Slice A closure and the separate prospective Slice B authorization. R10 does not retroactively broaden R9 or turn validation into benchmark, persistence, durability, or performance evidence.
