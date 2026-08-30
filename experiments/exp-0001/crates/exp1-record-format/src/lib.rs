@@ -869,3 +869,325 @@ fn le_u64(b: &[u8], p: usize) -> u64 {
 fn le_i64(b: &[u8], p: usize) -> i64 {
     i64::from_le_bytes(b[p..p + 8].try_into().expect("fixed checked slice"))
 }
+
+/// The fixed semantic classification of every B0 surface in this module.
+///
+/// B0 state is destroyed with the process. It is never canonical history and
+/// provides no persistence, durability, recovery, or restart semantics.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct B0Classification {
+    pub durability_mode: B0DurabilityMode,
+    pub scope: B0Scope,
+    pub outcome: B0Outcome,
+    pub authority: B0Authority,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0DurabilityMode {
+    D0,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0Scope {
+    ProcessLocal,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0Outcome {
+    Provisional,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0Authority {
+    Noncanonical,
+}
+
+pub const B0_CLASSIFICATION: B0Classification = B0Classification {
+    durability_mode: B0DurabilityMode::D0,
+    scope: B0Scope::ProcessLocal,
+    outcome: B0Outcome::Provisional,
+    authority: B0Authority::Noncanonical,
+};
+
+/// Explicit, already-validated caller input. B0 does not generate or validate
+/// these identities or bytes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct B0Candidate {
+    pub request_id: Uuid,
+    pub event_id: Uuid,
+    pub information_id: Uuid,
+    pub content: Vec<u8>,
+    pub declared_logical_bytes: u64,
+}
+
+/// One D0, process-local, provisional, noncanonical vector entry.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct B0Entry {
+    pub classification: B0Classification,
+    pub sequence: u64,
+    pub candidate: B0Candidate,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0CapacityPath {
+    ExistingCapacity,
+    ReservedAdditionalCapacity,
+}
+
+/// Inspectable bookkeeping for one successful construction and insertion.
+/// This is correctness accounting, not benchmark instrumentation or evidence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct B0Accounting {
+    pub classification: B0Classification,
+    pub capacity_before: usize,
+    pub capacity_after_reservation: usize,
+    pub capacity_path: B0CapacityPath,
+    pub constructed_entries: u64,
+    pub inserted_entries: u64,
+    pub logical_bytes: u64,
+    pub cumulative_entries: u64,
+    pub cumulative_logical_bytes: u64,
+}
+
+/// The only B0 acknowledgement: D0, process-local, provisional, and
+/// noncanonical.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct B0Result {
+    pub classification: B0Classification,
+    pub sequence: u64,
+    pub accounting: B0Accounting,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum B0Error {
+    CapacityReservation,
+    EntryLimit,
+    SequenceExhausted,
+    AccountingOverflow,
+}
+
+/// Single-owner B0 state. The absence of synchronization types is deliberate:
+/// callers must keep this value on its one owning thread.
+#[derive(Debug)]
+pub struct B0Store {
+    entries: Vec<B0Entry>,
+    next_sequence: u64,
+    logical_bytes: u64,
+    entry_limit: usize,
+}
+
+impl B0Store {
+    /// Creates process-local state and preallocates its contiguous vector.
+    pub fn new(initial_capacity: usize, entry_limit: usize) -> Result<Self, B0Error> {
+        let mut entries = Vec::new();
+        entries
+            .try_reserve_exact(initial_capacity)
+            .map_err(|_| B0Error::CapacityReservation)?;
+        Ok(Self {
+            entries,
+            next_sequence: 0,
+            logical_bytes: 0,
+            entry_limit,
+        })
+    }
+
+    pub const fn classification(&self) -> B0Classification {
+        B0_CLASSIFICATION
+    }
+
+    pub fn entries(&self) -> &[B0Entry] {
+        &self.entries
+    }
+
+    /// Constructs and publishes exactly one entry, or leaves all observable
+    /// success state unchanged. Capacity and arithmetic checks precede sequence
+    /// assignment and vector publication.
+    pub fn accept(&mut self, candidate: B0Candidate) -> Result<B0Result, B0Error> {
+        let cumulative_entries = u64::try_from(self.entries.len())
+            .ok()
+            .and_then(|count| count.checked_add(1))
+            .ok_or(B0Error::AccountingOverflow)?;
+        if self.entries.len() >= self.entry_limit {
+            return Err(B0Error::EntryLimit);
+        }
+        let cumulative_logical_bytes = self
+            .logical_bytes
+            .checked_add(candidate.declared_logical_bytes)
+            .ok_or(B0Error::AccountingOverflow)?;
+        let sequence = self
+            .next_sequence
+            .checked_add(1)
+            .ok_or(B0Error::SequenceExhausted)?;
+
+        let entry = B0Entry {
+            classification: B0_CLASSIFICATION,
+            sequence,
+            candidate,
+        };
+        let capacity_before = self.entries.capacity();
+        self.entries
+            .try_reserve(1)
+            .map_err(|_| B0Error::CapacityReservation)?;
+        let capacity_after_reservation = self.entries.capacity();
+        let capacity_path = if capacity_after_reservation == capacity_before {
+            B0CapacityPath::ExistingCapacity
+        } else {
+            B0CapacityPath::ReservedAdditionalCapacity
+        };
+
+        self.next_sequence = sequence;
+        self.logical_bytes = cumulative_logical_bytes;
+        self.entries.push(entry);
+
+        let accounting = B0Accounting {
+            classification: B0_CLASSIFICATION,
+            capacity_before,
+            capacity_after_reservation,
+            capacity_path,
+            constructed_entries: 1,
+            inserted_entries: 1,
+            logical_bytes: self
+                .entries
+                .last()
+                .expect("entry was just inserted")
+                .candidate
+                .declared_logical_bytes,
+            cumulative_entries,
+            cumulative_logical_bytes,
+        };
+        Ok(B0Result {
+            classification: B0_CLASSIFICATION,
+            sequence,
+            accounting,
+        })
+    }
+}
+
+#[cfg(test)]
+mod b0_tests {
+    use super::*;
+
+    fn uuid(last: u8) -> Uuid {
+        let mut bytes = [0; 16];
+        bytes[6] = 0x40;
+        bytes[8] = 0x80;
+        bytes[15] = last;
+        Uuid(bytes)
+    }
+
+    fn candidate(n: u8, content: &[u8], logical_bytes: u64) -> B0Candidate {
+        B0Candidate {
+            request_id: uuid(n),
+            event_id: uuid(n + 10),
+            information_id: uuid(n + 20),
+            content: content.to_vec(),
+            declared_logical_bytes: logical_bytes,
+        }
+    }
+
+    #[test]
+    fn preserves_cardinality_identity_content_and_order() {
+        let mut store = B0Store::new(2, 4).unwrap();
+        let candidates = [candidate(1, b"literal-a", 9), candidate(2, b"literal-b", 9)];
+
+        let results: Vec<_> = candidates
+            .iter()
+            .cloned()
+            .map(|candidate| store.accept(candidate).unwrap())
+            .collect();
+
+        assert_eq!(results.len(), candidates.len());
+        assert_eq!(store.entries().len(), candidates.len());
+        assert_eq!(
+            results.iter().map(|r| r.sequence).collect::<Vec<_>>(),
+            [1, 2]
+        );
+        assert_eq!(
+            store
+                .entries()
+                .iter()
+                .map(|entry| &entry.candidate)
+                .collect::<Vec<_>>(),
+            candidates.iter().collect::<Vec<_>>()
+        );
+        assert!(
+            store
+                .entries()
+                .iter()
+                .all(|entry| entry.classification == B0_CLASSIFICATION)
+        );
+        assert!(
+            results
+                .iter()
+                .all(|result| result.classification == B0_CLASSIFICATION)
+        );
+    }
+
+    #[test]
+    fn accounts_construction_insertion_capacity_and_logical_bytes() {
+        let mut store = B0Store::new(1, 2).unwrap();
+        let first = store.accept(candidate(1, b"a", 7)).unwrap();
+        assert_eq!(
+            first.accounting.capacity_path,
+            B0CapacityPath::ExistingCapacity
+        );
+        assert_eq!(first.accounting.constructed_entries, 1);
+        assert_eq!(first.accounting.inserted_entries, 1);
+        assert_eq!(first.accounting.logical_bytes, 7);
+        assert_eq!(first.accounting.cumulative_entries, 1);
+        assert_eq!(first.accounting.cumulative_logical_bytes, 7);
+
+        let second = store.accept(candidate(2, b"b", 11)).unwrap();
+        assert_eq!(
+            second.accounting.capacity_path,
+            B0CapacityPath::ReservedAdditionalCapacity
+        );
+        assert_eq!(second.accounting.cumulative_entries, 2);
+        assert_eq!(second.accounting.cumulative_logical_bytes, 18);
+    }
+
+    #[test]
+    fn rejection_and_checked_overflow_do_not_publish_or_consume_sequence() {
+        let mut store = B0Store::new(1, 1).unwrap();
+        assert_eq!(
+            store.accept(candidate(1, b"accepted", 1)).unwrap().sequence,
+            1
+        );
+        assert_eq!(
+            store.accept(candidate(2, b"rejected", 1)),
+            Err(B0Error::EntryLimit)
+        );
+        assert_eq!(store.entries().len(), 1);
+        assert_eq!(store.next_sequence, 1);
+
+        store.entry_limit = 2;
+        store.next_sequence = u64::MAX;
+        assert_eq!(
+            store.accept(candidate(3, b"overflow", 1)),
+            Err(B0Error::SequenceExhausted)
+        );
+        assert_eq!(store.entries().len(), 1);
+        assert_eq!(store.next_sequence, u64::MAX);
+
+        store.next_sequence = 1;
+        store.logical_bytes = u64::MAX;
+        assert_eq!(
+            store.accept(candidate(4, b"accounting", 1)),
+            Err(B0Error::AccountingOverflow)
+        );
+        assert_eq!(store.entries().len(), 1);
+        assert_eq!(store.next_sequence, 1);
+    }
+
+    #[test]
+    fn new_store_is_a_new_noncanonical_process_lifetime() {
+        let mut first_process = B0Store::new(1, 1).unwrap();
+        first_process.accept(candidate(1, b"lost", 4)).unwrap();
+        drop(first_process);
+
+        let second_process = B0Store::new(1, 1).unwrap();
+        assert!(second_process.entries().is_empty());
+        assert_eq!(second_process.next_sequence, 0);
+        assert_eq!(second_process.classification(), B0_CLASSIFICATION);
+    }
+}
