@@ -90,4 +90,4 @@ When Rust code begins:
 
 ## 10. Current constraint
 
-The project remains planning/readiness-first; no engine architecture is final. R9 authorizes only the experiment-local Slice A/A1 workspace and validators. The corrective artifact-level scanner is an implementation candidate until its exact head is reviewed and merged; only then may A1 be recorded as implemented. Slice B and all persistence, execution, benchmark, fault, durability, production-crate, and later-slice work remain unauthorized. Run the exact R9 validation sequence and `git diff --check` from the repository root.
+The project remains planning/readiness-first; no engine architecture is final. Slice A/A1 is closed only as bounded implementation/correctness-validation evidence. R10 prospectively authorizes only the process-local, noncanonical, D0-only Slice B mechanism after R10 is reviewed and merged; it does not authorize workload generation or any execution. BLK-006/007, persistence, benchmark, fault, durability, production-crate, and later-slice work remain unauthorized. Run the unchanged R9 validation sequence and `git diff --check` from the repository root.
