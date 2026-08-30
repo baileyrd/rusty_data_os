@@ -86,3 +86,7 @@ This authorization does **not** include Slice C or later; B1 behavior; append, w
 | BLK-027 | Unchanged in substance: no bootstrap or workspace/CI expansion is authorized. This record permits use of the existing bootstrap only. |
 
 Slice B implementation is the sole next implementation increment after this record merges. Execution remains separately unauthorized.
+
+## 7. Continuation synchronization
+
+R10 remains the historical prospective authority for Slice B. [R11](R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) records the reviewed merged Slice B closure and the separate prospective BLK-006/007 documentation-freeze authorization. R11 does not retroactively broaden R10 or convert its validation into workload, benchmark, persistence, durability, recovery, or performance evidence.

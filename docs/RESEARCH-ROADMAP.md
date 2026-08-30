@@ -28,7 +28,7 @@ Phase 0 exited when EXP-0000 and these documentation criteria were completed. Th
 
 ## Phase 1 — Canonical event ingestion
 
-**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slice A is merged and closed as bounded implementation/correctness-validation evidence; it supplies no benchmark, persistence, durability, or performance evidence. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) prospectively authorizes only the D0, process-local, noncanonical Slice B mechanism after merge. BLK-006/007 and dependent workload inputs remain open and block observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
+**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A and B are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, persistence, durability, or performance evidence. [R11](experiments/EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) prospectively authorizes only a documentation/research freeze for BLK-006/007 after merge. BLK-006/007 and dependent workload inputs remain open and block observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
