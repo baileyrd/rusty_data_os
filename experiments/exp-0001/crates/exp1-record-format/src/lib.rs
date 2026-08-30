@@ -5,6 +5,9 @@
 
 pub const HEADER_LEN: usize = 32;
 pub const MAX_RECORD_LEN: usize = 16_777_216;
+pub const MAX_RECORDS: usize = 1_000_000;
+pub const MAX_SCAN_BYTES: u64 = 1_073_741_824;
+pub const MAX_DIAGNOSTIC_BYTES: usize = 67_108_864;
 const MAGIC: &[u8; 4] = b"RDE1";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -117,6 +120,198 @@ pub enum Error {
     FinalCrcMismatch,
     DuplicateFinal,
     DuplicateCommit,
+    RecordLimit,
+    ScanByteLimit,
+    DiagnosticLimit,
+    InteriorDamage,
+}
+
+/// Deterministic resource bounds for one artifact scan.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ScanLimits {
+    pub max_record_len: usize,
+    pub max_records: usize,
+    pub max_scan_bytes: u64,
+    pub max_diagnostic_bytes: usize,
+}
+
+impl Default for ScanLimits {
+    fn default() -> Self {
+        Self {
+            max_record_len: MAX_RECORD_LEN,
+            max_records: MAX_RECORDS,
+            max_scan_bytes: MAX_SCAN_BYTES,
+            max_diagnostic_bytes: MAX_DIAGNOSTIC_BYTES,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ScanTermination {
+    CleanEof,
+    TerminalTruncation { offset: u64 },
+    Failure { offset: u64, error: Error },
+}
+
+/// Artifact-level result. `records` contains only the fully validated prefix.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ScanOutcome {
+    pub records: Vec<Record>,
+    pub scanned_bytes: u64,
+    pub termination: ScanTermination,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorDisposition {
+    Valid,
+    TerminalTruncation,
+    MalformedLength,
+    Unsupported,
+    CoveredCorruption,
+    DuplicateOrOrderConflict,
+    AmbiguousOrInteriorDamage,
+}
+
+/// Executable coverage registry for the authoritative R5 V1--V10 vectors.
+pub const R5_VECTOR_DISPOSITIONS: [(&str, VectorDisposition); 10] = [
+    ("V1", VectorDisposition::Valid),
+    ("V2", VectorDisposition::Valid),
+    ("V3", VectorDisposition::Valid),
+    ("V4", VectorDisposition::Valid),
+    ("V5", VectorDisposition::TerminalTruncation),
+    ("V6", VectorDisposition::MalformedLength),
+    ("V7", VectorDisposition::Unsupported),
+    ("V8", VectorDisposition::CoveredCorruption),
+    ("V9", VectorDisposition::DuplicateOrOrderConflict),
+    ("V10", VectorDisposition::AmbiguousOrInteriorDamage),
+];
+
+pub fn scan(bytes: &[u8]) -> ScanOutcome {
+    scan_with_limits(bytes, ScanLimits::default())
+}
+
+/// Performs the R1/R5 required checked offset/length arithmetic.
+pub fn checked_extent(offset: u64, total_length: u64) -> Result<u64, Error> {
+    offset
+        .checked_add(total_length)
+        .ok_or(Error::LengthOverflow)
+}
+
+/// Scans concatenated records without seeking a new record boundary after failure.
+pub fn scan_with_limits(bytes: &[u8], limits: ScanLimits) -> ScanOutcome {
+    let mut records = Vec::new();
+    let mut offset = 0usize;
+    let mut retained = 0usize;
+    loop {
+        if offset == bytes.len() {
+            return scan_outcome(records, offset, ScanTermination::CleanEof);
+        }
+        if records.len() >= limits.max_records {
+            return scan_failure(records, offset, Error::RecordLimit);
+        }
+        let remaining = &bytes[offset..];
+        if remaining.len() < HEADER_LEN {
+            return scan_outcome(
+                records,
+                offset,
+                ScanTermination::TerminalTruncation {
+                    offset: offset as u64,
+                },
+            );
+        }
+
+        // Header identity is checked before either declared length is trusted.
+        if &remaining[..4] != MAGIC {
+            return scan_failure(records, offset, Error::BadMagic);
+        }
+        if le_u16(remaining, 4) != 1 {
+            return scan_failure(records, offset, Error::UnsupportedVersion);
+        }
+        if !(1..=6).contains(&remaining[6]) {
+            return scan_failure(records, offset, Error::UnknownKind);
+        }
+        if remaining[7] > 1 {
+            return scan_failure(records, offset, Error::UnsupportedIntegrity);
+        }
+        let total = le_u32(remaining, 8) as usize;
+        let body = le_u32(remaining, 12) as usize;
+        if total < HEADER_LEN {
+            return scan_failure(records, offset, Error::InvalidLength);
+        }
+        if total > MAX_RECORD_LEN || total > limits.max_record_len {
+            return scan_failure(records, offset, Error::Oversize);
+        }
+        if body.checked_add(HEADER_LEN) != Some(total) {
+            return scan_failure(records, offset, Error::InvalidLength);
+        }
+        let Ok(offset64) = u64::try_from(offset) else {
+            return scan_failure(records, offset, Error::LengthOverflow);
+        };
+        let Ok(total64) = u64::try_from(total) else {
+            return scan_failure(records, offset, Error::LengthOverflow);
+        };
+        let Ok(end64) = checked_extent(offset64, total64) else {
+            return scan_failure(records, offset, Error::LengthOverflow);
+        };
+        let Ok(end) = usize::try_from(end64) else {
+            return scan_failure(records, offset, Error::LengthOverflow);
+        };
+        if end64 > limits.max_scan_bytes {
+            return scan_failure(records, offset, Error::ScanByteLimit);
+        }
+        if end > bytes.len() {
+            let later_magic = remaining[HEADER_LEN..]
+                .windows(MAGIC.len())
+                .any(|window| window == MAGIC);
+            let termination = if later_magic {
+                ScanTermination::Failure {
+                    offset: offset as u64,
+                    error: Error::InteriorDamage,
+                }
+            } else {
+                ScanTermination::TerminalTruncation {
+                    offset: offset as u64,
+                }
+            };
+            return scan_outcome(records, offset, termination);
+        }
+        let record = match decode(&bytes[offset..end]) {
+            Ok(record) => record,
+            Err(error) => return scan_failure(records, offset, error),
+        };
+        let Some(next_retained) = retained.checked_add(total) else {
+            return scan_failure(records, offset, Error::LengthOverflow);
+        };
+        if next_retained > limits.max_diagnostic_bytes {
+            return scan_failure(records, offset, Error::DiagnosticLimit);
+        }
+        records.push(record);
+        if let Err(error) = validate_lifecycle(&records) {
+            records.pop();
+            return scan_failure(records, offset, error);
+        }
+        retained = next_retained;
+        offset = end;
+    }
+}
+
+fn scan_failure(records: Vec<Record>, offset: usize, error: Error) -> ScanOutcome {
+    scan_outcome(
+        records,
+        offset,
+        ScanTermination::Failure {
+            offset: offset as u64,
+            error,
+        },
+    )
+}
+
+fn scan_outcome(records: Vec<Record>, offset: usize, termination: ScanTermination) -> ScanOutcome {
+    ScanOutcome {
+        records,
+        scanned_bytes: offset as u64,
+        termination,
+    }
 }
 
 pub fn crc32c(bytes: &[u8]) -> u32 {

@@ -90,4 +90,4 @@ When Rust code begins:
 
 ## 10. Current constraint
 
-The project is currently documentation-first. No engine architecture is considered final. Documentation and measurement prerequisites, followed by `EXP-0000` (Experiment 0), must be completed before `EXP-0001` is ready to implement. Do not create Cargo files or prescribe Cargo validation commands until a Cargo project exists. During this documentation-only phase, run `git diff --check` from the repository root.
+The project remains planning/readiness-first; no engine architecture is final. R9 authorizes only the experiment-local Slice A/A1 workspace and validators. The corrective artifact-level scanner is an implementation candidate until its exact head is reviewed and merged; only then may A1 be recorded as implemented. Slice B and all persistence, execution, benchmark, fault, durability, production-crate, and later-slice work remain unauthorized. Run the exact R9 validation sequence and `git diff --check` from the repository root.
