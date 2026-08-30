@@ -1,8 +1,8 @@
 # R10 — Slice A Closure and Slice B Authorization
 
-**Record:** `EXP-0001-R10/slice-b-implementation-v1`  
-**Decision date:** 2026-08-30  
-**Authority base:** reviewed `main` at `b94b79f4b837e9992cd773ff12c1fe92052ebf66` (PR #45 / Slice A)  
+**Record:** `EXP-0001-R10/slice-b-implementation-v1`
+**Decision date:** 2026-08-30
+**Authority base:** reviewed `main` at `b94b79f4b837e9992cd773ff12c1fe92052ebf66` (PR #45 / Slice A)
 **Status:** complete documentation/governance decision; Slice B authorization is prospective and effective only when this record is reviewed and merged
 
 ## 1. Evidence boundary and exact-head verification
