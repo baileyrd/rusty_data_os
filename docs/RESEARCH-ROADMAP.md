@@ -166,3 +166,9 @@ Potential later topics:
 - failure-domain durability.
 
 This phase is explicitly non-committed. The project should not assume distribution is necessary until use cases and evidence justify the complexity.
+
+### Slice A2 conformance checkpoint
+
+R17 records dependency-free executable conformance for the frozen R12/R14/R16 contracts as
+bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
+or performance evidence and does not advance Slice C/B1 or authorize a subsequent increment.

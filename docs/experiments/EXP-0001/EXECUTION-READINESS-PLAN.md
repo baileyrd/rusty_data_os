@@ -180,3 +180,12 @@ enters **Phase 1 planning/readiness**, not experimental execution. Slices A and 
 R1 is complete through the [physical-record, integrity, and recovery requirements](R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md). It resolved BLK-002 and BLK-013 while leaving later decisions; R3 subsequently resolved BLK-011/012 and R5 resolved BLK-001/003 as documentation design. Platform evidence and concrete fault mechanisms remain open. [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) is complete as requirements/reference-vector planning and constrains BLK-006–009; BLK-006/007 are resolved by R12 and BLK-008 by R14 as documentation design; BLK-009 is resolved as documentation design by R16; implementation remains absent. [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) is complete: it resolves BLK-004/005/011/012 and further constrains open BLK-007.
 
 R4 is complete for conditional planning through the owner-approved [target and platform durability evidence boundary](R4-FEDORA-44-BOSGAME-M5-TARGET-AND-PLATFORM-DURABILITY-CONTRACT.md). BLK-014 is closed for that planning purpose; BLK-015 remains open for dependent claims and execution. R5 completes B0/B1 design and resolves BLK-001/003/016/017. [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) completes B2/B3 design, resolving BLK-018 and the remaining design portion of BLK-019 without empirical proof. R8 records the completed accountable-owner threshold decision. [R9](R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) authorized the reviewed Slice A implementation. [R10](R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) authorized the now-reviewed bounded Slice B implementation. R11 then authorized R12’s documentation freeze. R16 resolves the focused BLK-009 documentation freeze and authorizes no next increment. No generator or manifest implementation, capture, adapter, descriptive or confirmatory execution, benchmark, fault action, machine change, durability claim, or later slice is authorized.
+
+### Slice A2 closure (R17)
+
+GitHub issue #63 is the prospective approval for `EXP-0001-A2/workload-conformance-v1` against
+base `27e5141d48991ecce2770bfa1720d03ac4ae67da`. R17 records the bounded dependency-free
+implementation and correctness-vector closure. This extends BLK-020/026/027 only to the second
+conformance workspace member and implements BLK-006–009 only at the R12/R14/R16 contract boundary.
+It does not authorize Slice C/B1, execution, benchmark/capture, persistence, faults, durability,
+adapters, production code, or a later tranche.
