@@ -144,7 +144,7 @@ SHA-256(ASCII "rusty-data-os/exp1/workload-manifest/v1" || 00 || complete_manife
 ```
 
 `complete_manifest_bytes` is the complete canonical JCS byte sequence selected in section 1. The
-domain prefix is 42 octets including the final `00`. The digest is external to the manifest and
+domain prefix is 40 octets including the final `00`. The digest is external to the manifest and
 therefore cannot refer to itself: no digest member, placeholder, omitted-member transform, or
 second serialization participates. A publication descriptor carries the closed object
 `{algorithm,domain,manifest_ref,profile,value}`, where `algorithm` is
