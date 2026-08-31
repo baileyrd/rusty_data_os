@@ -1,9 +1,9 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slice A and Slice B correctness gates passed; R16 resolves BLK-009 only as documentation design and authorizes no next increment; BLK-009 implementation and later work remain unauthorized
+**Status:** Phase 1 planning/readiness — Slice A and Slice B correctness gates passed; bounded Slice A2 closure remains contingent on corrected exact-head review and CI; R17 prospectively closes only dependency-free workload conformance; later work remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified starting `main` checkpoint:** `d579453` (PR #56 / R13)
+**Verified Slice A2 authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)
 
 ## 1. Current facts
 
@@ -54,3 +54,12 @@ Governance and approved research constraints may be decided before empirical val
 Read [AGENTS.md](../AGENTS.md) and [CHATGPT_WORKFLOW.md](../CHATGPT_WORKFLOW.md) first, then the authorities in the order they prescribe. Supporting registries are the [glossary](GLOSSARY.md), [assumptions and unknowns](ASSUMPTIONS-AND-UNKNOWNS.md), [research questions](RESEARCH-QUESTIONS.md), [requirements](REQUIREMENTS.md), and [traceability registry](TRACEABILITY.md).
 
 The latest `main` branch is authoritative over conversation memory. The checkpoint above records the verified repository starting point for this continuity increment; it is not experiment evidence.
+
+## R17 / Slice A2 update
+
+Issue #63 prospectively authorized the single dependency-free Slice A2 workload-conformance crate.
+R17 prospectively closes that bounded implementation/correctness-validation tranche after corrected exact-head review and CI for reviewed R12/R14/R16
+vectors only. BLK-006–009 are executable only in this conformance subset; BLK-020/026/027 extend
+only to its existing workspace/CI boundary. BLK-015, Slice C/B1, execution, benchmarks, capture,
+persistence, faults, durability, adapters, production code, and architecture promotion remain
+open or unauthorized. No next increment is automatically authorized.
