@@ -28,7 +28,7 @@ Phase 0 exited when EXP-0000 and these documentation criteria were completed. Th
 
 ## Phase 1 — Canonical event ingestion
 
-**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A and B are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, persistence, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R15 closes R14 as documentation/governance evidence and prospectively authorizes only a focused BLK-009 documentation freeze. Generator and manifest implementation and BLK-009 completion remain open and block observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
+**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A and B are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, persistence, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 only as documentation design and authorizes no next increment. Generator and manifest implementation remain absent and block observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
