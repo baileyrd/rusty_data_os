@@ -90,9 +90,10 @@ When Rust code begins:
 
 ## 10. Current constraint
 
-The project remains planning/readiness-first; no engine architecture is final. Slice A/A1 and Slice
-B/B0 are closed only as bounded implementation/correctness-validation evidence. Slice A2 closure
-remains contingent on corrected exact-head review and CI; R17 prospectively implements the frozen R12/R14/R16 contracts only in the dependency-free conformance subset. It
-does not authorize generated workloads, Slice C/B1, execution, persistence, benchmarks, faults,
-durability, adapters, production crates, or a next increment. Run the unchanged R9 validation
-sequence and `git diff --check` from the repository root.
+The project remains planning/readiness-first; no engine architecture is final. Slice A/A1, Slice
+B/B0, and Slice A2 are closed only as bounded implementation/correctness-validation evidence. R18
+prospectively authorizes only the experiment-local Slice C/B1 raw D1 append plus reopen/replay
+correctness tranche under the existing dependency-free workspace policy. It does not authorize
+generated workloads, execution, benchmarks, D2/D3 durability, physical faults, adapters,
+production crates, or any later increment. Run the unchanged R9 validation sequence and
+`git diff --check` from the repository root.

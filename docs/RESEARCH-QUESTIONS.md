@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R1–R16 documentation inputs include the R16 BLK-009 documentation freeze, while owner-dependent fault apparatus, BLK-015, implementation, evidence, and execution remain open; Slices A and B are closed as correctness-validation evidence and no next increment is automatically authorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; Slices A, B/B0, and A2 are closed as bounded correctness-validation evidence; R18 authorizes only raw D1 append/reopen/replay correctness, while BLK-015, durability, execution, benchmarks, and later implementation remain open | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -16,3 +16,9 @@ RQ-002 completion records measurement readiness, not evidence. The [EXP-0001 rea
 Slice A2 answers only whether the covered frozen R12/R14/R16 vectors can be implemented together
 without dependencies: its correctness suite says yes. It does not answer performance, execution,
 storage, persistence, fault, durability, adapter, or production research questions.
+
+## R18 note
+
+R18 supplies no answer to RQ-003's cost question. It closes A2 correctness conformance and permits
+only a deterministic, non-durable raw D1 append/reopen/replay correctness implementation. Cost,
+performance, D2/D3, BLK-015, execution, benchmark, and production conclusions remain open.

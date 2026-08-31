@@ -37,10 +37,18 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-021 | R5 maps B1 D2/controlled D3, and R6 classifies SQLite/RocksDB D2 as conditional and strict D3 as unsupported. Empirical survival/equivalence and BLK-015 platform protection remain unresolved. |
 | UNK-022 | R7 resolves benchmark-record serialization/digests/artifact provenance/instrumentation as documentation design; R9 authorized only Slice A physical-record fixtures and validators; R10 and R11 do not expand executable benchmark records, capture, or analysis. Executable benchmark-record schemas/validators, effective validation, capture, and evidence remain open. |
 
-The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R16 are complete documentation/governance inputs. Slices A and B are closed as correctness-validation evidence; R16 resolves BLK-009 only as documentation design and authorizes no next increment; generator and manifest implementation, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
+The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R18 are complete documentation/governance inputs. Slices A, B/B0, and A2 are closed as correctness-validation evidence; R18 authorizes only bounded raw D1 append/replay correctness. Generated workloads, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
 
 ### R17 / A2 disposition
 
 The R12/R14/R16 contract subset now has dependency-free implementation/correctness evidence under
 issue #63. This does not resolve execution/capture unknowns, BLK-015, or any Slice C/B1,
 persistence, fault, durability, benchmark, adapter, or production uncertainty.
+
+### R18 disposition
+
+A2 is closed at the exact PR #64 reviewed and merge commits. M01 conformance does not resolve
+executable R7 publication/capture: full validation still needs matching caller-supplied referenced
+bytes and metadata. R18 narrows UNK-020 by authorizing the unchanged dependency-free Rust workspace
+for one raw D1 append/reopen/replay correctness member. It does not resolve UNK-014/015/021/022 or
+BLK-015; platform survival, D2/D3, physical faults, execution, capture, and benchmarks remain open.

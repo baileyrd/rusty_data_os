@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; Slices A and B closed; R12 resolves BLK-006/007 and R14 resolves BLK-008 as documentation design; R16 resolves BLK-009 only as documentation design and authorizes no next increment
+**Status:** Active staged plan; Slices A, B/B0, and A2 closed; R18 authorizes only bounded Slice C/B1 raw D1 append/replay correctness
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -20,7 +20,7 @@ A documentation-complete experiment framework is not an executable experiment.
 |---|---|---|
 | Framework readiness | Complete | EXP-0000's seven reviewed contracts remain linked and internally consistent. |
 | Design-choice readiness | Incomplete | The physical and lifecycle choices required by the intended slice are resolved through R1–R8 as applicable. |
-| Implementation readiness | Slices A and B complete | R16 resolves BLK-009 only as documentation design and authorizes no next increment; every executable or later increment requires separate authorization. |
+| Implementation readiness | Slices A, B/B0, and A2 complete | R18 authorizes only the frozen raw D1 append/reopen/replay correctness tranche; every execution or later increment requires separate authorization. |
 | Correctness-validation readiness | Slices A and B passed only | Stable fixtures, oracle, recovery rules, fault mechanisms, and validation procedures must exist for every applicable measured mode. |
 | Descriptive execution readiness | Incomplete | A validated runnable cell, environment, stream, adapter, instrumentation, and result path pass the descriptive gate. |
 | Confirmatory execution readiness | Incomplete | The stricter frozen-design gate in section 7 passes; descriptive readiness alone is insufficient. |
@@ -175,11 +175,11 @@ an untested performance candidate into validated architecture; empirical promoti
 
 Phase 0's documented exit criteria are now satisfied: EXP-0000 is complete, EXP-0001 has a reproducible semantic benchmark plan and
 correctness criteria, baseline families are identified, and target environments can be recorded consistently. The project therefore
-enters **Phase 1 planning/readiness**, not experimental execution. Slices A and B provide bounded implementation/correctness-validation evidence only. R16 resolves BLK-009 only as documentation design and authorizes no next increment; EXP-0001 remains non-executable.
+enters **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, and A2 provide bounded implementation/correctness-validation evidence only. R18 authorizes raw D1 append/replay correctness; EXP-0001 remains non-executable as a workload or benchmark.
 
 R1 is complete through the [physical-record, integrity, and recovery requirements](R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md). It resolved BLK-002 and BLK-013 while leaving later decisions; R3 subsequently resolved BLK-011/012 and R5 resolved BLK-001/003 as documentation design. Platform evidence and concrete fault mechanisms remain open. [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) is complete as requirements/reference-vector planning and constrains BLK-006–009; BLK-006/007 are resolved by R12 and BLK-008 by R14 as documentation design; BLK-009 is resolved as documentation design by R16; implementation remains absent. [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) is complete: it resolves BLK-004/005/011/012 and further constrains open BLK-007.
 
-R4 is complete for conditional planning through the owner-approved [target and platform durability evidence boundary](R4-FEDORA-44-BOSGAME-M5-TARGET-AND-PLATFORM-DURABILITY-CONTRACT.md). BLK-014 is closed for that planning purpose; BLK-015 remains open for dependent claims and execution. R5 completes B0/B1 design and resolves BLK-001/003/016/017. [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) completes B2/B3 design, resolving BLK-018 and the remaining design portion of BLK-019 without empirical proof. R8 records the completed accountable-owner threshold decision. [R9](R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) authorized the reviewed Slice A implementation. [R10](R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) authorized the now-reviewed bounded Slice B implementation. R11 then authorized R12’s documentation freeze. R16 resolves the focused BLK-009 documentation freeze and authorizes no next increment. No generator or manifest implementation, capture, adapter, descriptive or confirmatory execution, benchmark, fault action, machine change, durability claim, or later slice is authorized.
+R4 is complete for conditional planning through the owner-approved [target and platform durability evidence boundary](R4-FEDORA-44-BOSGAME-M5-TARGET-AND-PLATFORM-DURABILITY-CONTRACT.md). BLK-014 is closed for that planning purpose; BLK-015 remains open for dependent claims and execution. R5 completes B0/B1 design and resolves BLK-001/003/016/017. [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) completes B2/B3 design, resolving BLK-018 and the remaining design portion of BLK-019 without empirical proof. R8 records the completed accountable-owner threshold decision. [R9](R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) authorized the reviewed Slice A implementation. [R10](R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) authorized the now-reviewed bounded Slice B implementation. R11 then authorized R12’s documentation freeze. R16 resolves the focused BLK-009 documentation freeze. R18 then closes A2 and authorizes only bounded raw D1 append/replay correctness. No generated workload, capture, adapter, descriptive or confirmatory execution, benchmark, fault action, machine change, D2/D3 claim, or later slice is authorized.
 
 ### Slice A2 closure (R17)
 
@@ -189,3 +189,18 @@ implementation and correctness-vector closure. This extends BLK-020/026/027 only
 conformance workspace member and implements BLK-006–009 only at the R12/R14/R16 contract boundary.
 It does not authorize Slice C/B1, execution, benchmark/capture, persistence, faults, durability,
 adapters, production code, or a later tranche.
+
+### R18 — A2 closure and bounded Slice C/B1 readiness
+
+R18 records that PR #64 exact reviewed head `d2ee72aa4ff047d4cfcaa1df82d83f13566568f2`
+passed both required exact-head workflows and merged as
+`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`; Slice A2 is closed as bounded correctness evidence.
+It also freezes M01 as a valid conformance vector but not a complete accepted R7 publication
+fixture; matching caller-supplied referenced bytes and metadata remain mandatory.
+
+R18 prospectively authorizes only Slice C's raw D1 append plus reopen/replay correctness subset in a
+third dependency-free workspace member under the unchanged R9 toolchain and CI. This limited reuse
+extends BLK-017 implementation and BLK-020/026/027 only to that crate. It intentionally stays below
+BLK-015: no synchronization, canonical recovery, D2/D3, survival, fault, workload/benchmark
+execution, capture, performance, adapter, or production claim is authorized. The exact API,
+framing/integrity, accepted-prefix, fail-closed, test, and exclusion boundary is normative in R18.

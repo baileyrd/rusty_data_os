@@ -206,10 +206,16 @@ checkable manifest digest
 {"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-manifest/v1","manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","sha256":"8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178","uri":"https://example.invalid/exp-0001/m01.manifest.jcs"},"profile":"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1","value":"b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"}
 ```
 
-The example intentionally contains fictional publication identities, URIs, manifest-reference
-metadata, and no generated artifact. Those fictional external R7 values illustrate
-the closed binding shape; the literal manifest digest, R14 stream length, workload-stream digest,
-and exact stream-artifact digest are normative and independently reproducible.
+The example intentionally contains fictional publication identities, URIs, 4096-byte
+artifact-manifest reference, all-`1` referenced digest, and no generated artifact. M01 is a valid
+canonical serialization/conformance vector, and its literal manifest bytes and digest, R14 stream
+length and workload-stream digest, and exact stream-artifact digest are normative. It is **not** a
+complete accepted R7 publication fixture. Full R7 reference/publication validation requires
+caller-supplied referenced artifact-manifest bytes and metadata that actually match every declared
+length, digest, identity, URI, and provenance edge. Missing or mismatching referenced material
+fails with `reference`; no M01-only exemption, invented replacement, or weakened validation is
+permitted. [R18](R18-A2-CLOSURE-AND-SLICE-C-B1-READINESS.md) freezes this interpretation without
+changing the vector's normative conformance values.
 
 ### 4.2 Negative vectors
 

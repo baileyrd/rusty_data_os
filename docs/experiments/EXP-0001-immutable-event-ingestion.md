@@ -1,9 +1,9 @@
 # EXP-0001 — Immutable Event Ingestion
 
-**Status:** Proposed; EXP-0000 readiness framework complete, but implementation and confirmatory execution are not authorized
+**Status:** Proposed; bounded correctness implementations are staged, but workload/benchmark execution and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R16 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but the first-implementation, descriptive-execution, and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R18 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -138,3 +138,12 @@ R17 records issue #63's prospectively approved, dependency-free R12/R14/R16 work
 implementation as correctness evidence only. No workload was executed and no benchmark, storage,
 persistence, fault, durability, adapter, production, or architecture claim follows. BLK-015 and
 Slice C/B1 and execution gates remain unchanged; no next tranche is authorized.
+
+## R18 bounded Slice C/B1 authorization
+
+R18 closes A2 as bounded correctness evidence and clarifies that M01 is a serialization/conformance
+vector, not a complete accepted R7 publication fixture. After R18 merges, exactly one third,
+dependency-free experiment workspace library may implement raw D1 append and deterministic
+physical reopen/replay under R1/R5. This is correctness work only: no workload or benchmark is run,
+D1 remains provisional and noncanonical, and BLK-015, D2/D3, faults, adapters, production, execution,
+performance claims, and every subsequent tranche remain unauthorized.

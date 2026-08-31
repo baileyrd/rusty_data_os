@@ -1,9 +1,9 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slice A and Slice B correctness gates passed; bounded Slice A2 closure remains contingent on corrected exact-head review and CI; R17 prospectively closes only dependency-free workload conformance; later work remains unauthorized
+**Status:** Phase 1 planning/readiness — Slices A, B/B0, and A2 correctness gates passed; R18 prospectively authorizes only bounded Slice C/B1 raw D1 append/replay correctness; execution and later work remain unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
-**Verified Slice A2 authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)
+**Verified R18 authority base:** `9b5d89a36ed71d38420e9ae19f59d441a9d927aa` (PR #64 merge); exact reviewed A2 head `d2ee72aa4ff047d4cfcaa1df82d83f13566568f2`
 
 ## 1. Current facts
 
@@ -37,7 +37,7 @@ The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primar
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R16 are complete documentation/governance inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision and R8 is complete as documentation design. The [R9 authority](experiments/EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) now freezes the Slice A-only workspace, harness boundary, exact Rust 1.89.0 toolchain, dependency-free build, tests, and CI plan. It resolves BLK-020/026 for Slice A and prospectively resolves BLK-027 when R9 is reviewed and merged. That merge authorized only Slice A implementation. The reviewed Slice A implementation and its exact-head CI are bounded correctness-validation evidence. [R11](experiments/EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged minimum, process-local, noncanonical, D0-only Slice B implementation and prospectively authorizes only a documentation freeze for BLK-006/007. BLK-006/007 are resolved as documentation design only by R12. [R14](experiments/EXP-0001/R14-CANONICAL-WORKLOAD-STREAM-DIGEST.md) resolves BLK-008 as documentation design only. [R16](experiments/EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009/UNK-019 only as documentation design; implementation, workload observations, and descriptive and confirmatory execution remain unauthorized. Kernel-crash, physical reset/power-loss, storage-error apparatus, BLK-015, later-slice harness/toolchains, effective validation, empirical equivalence, evidence, and execution remain open. Adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
 
-Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A and B supply bounded implementation/correctness-validation evidence only. R16 resolves BLK-009 only as documentation design and authorizes no next increment; no implementation, execution, benchmark, persistence, durability, or performance evidence exists.
+Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, and A2 supply bounded implementation/correctness-validation evidence only. R18 authorizes the next raw D1 append/replay correctness implementation, but no workload execution, benchmark, D2/D3 durability, or performance evidence exists.
 
 ## 5. Decision policy
 
@@ -58,8 +58,19 @@ The latest `main` branch is authoritative over conversation memory. The checkpoi
 ## R17 / Slice A2 update
 
 Issue #63 prospectively authorized the single dependency-free Slice A2 workload-conformance crate.
-R17 prospectively closes that bounded implementation/correctness-validation tranche after corrected exact-head review and CI for reviewed R12/R14/R16
+R18 closes that bounded implementation/correctness-validation tranche after corrected exact-head review and CI for reviewed R12/R14/R16
 vectors only. BLK-006–009 are executable only in this conformance subset; BLK-020/026/027 extend
-only to its existing workspace/CI boundary. BLK-015, Slice C/B1, execution, benchmarks, capture,
-persistence, faults, durability, adapters, production code, and architecture promotion remain
-open or unauthorized. No next increment is automatically authorized.
+only to its existing workspace/CI boundary. Under R17 alone, BLK-015, Slice C/B1, execution,
+benchmarks, capture, persistence, faults, durability, adapters, production code, and architecture
+promotion remained open or unauthorized; R18 supplies the separate bounded next authorization.
+
+## R18 closure and next readiness boundary
+
+[R18](experiments/EXP-0001/R18-A2-CLOSURE-AND-SLICE-C-B1-READINESS.md) closes A2 at PR #64
+reviewed head `d2ee72aa4ff047d4cfcaa1df82d83f13566568f2` and merge
+`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`; both exact-head workflows passed. M01 remains a
+valid canonical conformance vector but not an accepted R7 publication fixture: caller-supplied
+referenced bytes and metadata must match, with no exemption. R18 prospectively authorizes one
+third, dependency-free experiment workspace member for raw D1 append and deterministic physical
+reopen/replay correctness. BLK-015 is not needed because no `fsync`, D2/D3, survival, canonical
+recovery, execution, benchmark, fault, adapter, production, or performance claim is permitted.
