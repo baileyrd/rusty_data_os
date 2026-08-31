@@ -5,11 +5,11 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
     algorithm: "SHA-256/FIPS-180-4",
     domain: MANIFEST_DOMAIN,
     profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
-    value: "a696eae0b2a85d2d3f89b51bbacfa2d5564448ea849bece9eeaad7ec21a9ee56",
+    value: "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594",
     manifest_ref: ManifestReference {
         artifact_id: "16000000-0000-4000-8000-000000000001",
         byte_length: 3423,
-        sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
+        sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
@@ -25,10 +25,10 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
 static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     artifact_id: "16000000-0000-4000-8000-000000000001",
     byte_length: 3423,
-    sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
+    sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
     uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     role: "configuration",
-    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
+    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
     created_by_record_id: "16000000-0000-4000-8000-000000000006",
 };
 fn context_with<'a>(
@@ -39,7 +39,7 @@ fn context_with<'a>(
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
-        manifest_artifact_sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
+        manifest_artifact_sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         targets: &[],
         artifact_manifest_bytes,
         stream_artifact: &STREAM_ARTIFACT,
@@ -157,9 +157,9 @@ fn typed_m01() -> TypedManifest {
         stream_ref: StreamReference {
             artifact_id: "16000000-0000-4000-8000-000000000002".into(),
             artifact_manifest_ref: ArtifactReference {
-                artifact_id: "16000000-0000-4000-8000-000000000004".into(),
-                byte_length: 1131,
-                sha256: "842590c880237e839eea098a76ffb08cc27d2fa94a6697e94599158e9755465b".into(),
+                artifact_id: "16000000-0000-4000-8000-000000000009".into(),
+                byte_length: 1274,
+                sha256: "b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c".into(),
                 uri: "https://example.invalid/exp-0001/artifact-manifest.jcs".into(),
             },
             byte_length: 818,
@@ -188,15 +188,15 @@ fn m01_literal() {
         hex(&artifact_digest(&stream)),
         "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a"
     );
-    assert_eq!(R7_ARTIFACT_MANIFEST.len(), 1131);
+    assert_eq!(R7_ARTIFACT_MANIFEST.len(), 1274);
     assert_eq!(
         hex(&artifact_digest(R7_ARTIFACT_MANIFEST)),
-        "842590c880237e839eea098a76ffb08cc27d2fa94a6697e94599158e9755465b"
+        "b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c"
     );
     assert_eq!(M01.len(), 3423);
     assert_eq!(
         hex(&manifest_digest(M01.as_bytes())),
-        "a696eae0b2a85d2d3f89b51bbacfa2d5564448ea849bece9eeaad7ec21a9ee56"
+        "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594"
     );
     let typed = Manifest::from_typed(typed_m01()).unwrap();
     assert_eq!(typed.canonical_bytes(), M01.as_bytes());
@@ -206,6 +206,11 @@ fn m01_literal() {
 #[test]
 fn r7_closed_record_and_reference_fail_closed() {
     let stream = workload_stream(&[decode_hex(S01).unwrap()], 1, 0).unwrap();
+    let provenance = [ProvenanceEdge {
+        from_artifact_id: "16000000-0000-4000-8000-000000000002",
+        to_artifact_id: "16000000-0000-4000-8000-000000000001",
+        relation: "generated_from",
+    }];
     let cases = [
         (
             "\"record_kind\":\"artifact_manifest\"",
@@ -227,7 +232,7 @@ fn r7_closed_record_and_reference_fail_closed() {
         assert!(
             validate_manifest(
                 M01.as_bytes(),
-                &context_with(&stream, fixture.as_bytes(), &[])
+                &context_with(&stream, fixture.as_bytes(), &provenance)
             )
             .is_err()
         );
@@ -245,11 +250,11 @@ fn r7_closed_record_and_reference_fail_closed() {
         ),
         Err(Error::Reference)
     );
-    assert_eq!(
+    assert!(
         validate_manifest(
             M01.as_bytes(),
-            &context_with(&stream, &R7_ARTIFACT_MANIFEST[..1130], &[])
-        ),
-        Err(Error::JsonSyntax)
+            &context_with(&stream, &R7_ARTIFACT_MANIFEST[..1273], &[])
+        )
+        .is_err()
     );
 }

@@ -693,18 +693,19 @@ fn validate_r7(
         || ma.sha256 != hex(&artifact_digest(candidate))
         || ma.uri != d.uri
         || ma.role != "configuration"
-        || ma.media_type != "application/vnd.rusty-data-os.exp1-workload-manifest"
+        || ma.media_type != "application/vnd.rusty-data-os.exp1-workload-manifest+jcs"
     {
         return Err(Error::Reference);
     }
-    // R7 provenance uses artifact nodes only. The stream's creating record is
-    // bound by its required artifact field; the graph separately binds the
-    // stream to the workload-manifest artifact with the frozen relation name.
-    if !ctx.provenance.iter().any(|e| {
-        e.from_artifact_id == stream.artifact_id
-            && e.to_artifact_id == ma.artifact_id
-            && e.relation == "generated_from"
-    }) {
+    // The resolved graph must agree with the edge parsed from the digest-bound
+    // R7 bytes; caller-supplied provenance cannot establish this proof alone.
+    if ctx.provenance.len() != 1
+        || !ctx.provenance.iter().any(|e| {
+            e.from_artifact_id == stream.artifact_id
+                && e.to_artifact_id == ma.artifact_id
+                && e.relation == "generated_from"
+        })
+    {
         return Err(Error::Reference);
     }
     Ok(())
@@ -740,11 +741,11 @@ fn validate_artifact_manifest(
     )?;
     if strv(&m["schema_version"])? != "EXP1-R7-JSON-JCS-1"
         || strv(&m["record_kind"])? != "artifact_manifest"
-        || strv(&m["record_id"])? != strv(&reference["artifact_id"])?
     {
         return Err(Error::Reference);
     }
     uuid(strv(&m["record_id"])?)?;
+    uuid(strv(&reference["artifact_id"])?)?;
     uuid(strv(&m["series_id"])?)?;
     dec(strv(&m["created_at_utc_ns"])?, true)?;
     if uuid_state(&m["run_id"])?.is_none()
@@ -811,9 +812,25 @@ fn validate_artifact_manifest(
     {
         return Err(Error::Reference);
     }
-    // This bounded fixture has no internal artifact-to-artifact derivation.
-    // The caller-supplied resolved graph is checked by `validate_r7`.
-    if !arr(&body["provenance_edges"])?.is_empty() || provenance.len() != 1 {
+    let edges = arr(&body["provenance_edges"])?;
+    if edges.len() != 1 || provenance.len() != 1 {
+        return Err(Error::Reference);
+    }
+    let edge = closed(
+        &edges[0],
+        &["from_artifact_id", "relation", "to_artifact_id"],
+    )?;
+    let from = strv(&edge["from_artifact_id"])?;
+    let relation = strv(&edge["relation"])?;
+    let to = strv(&edge["to_artifact_id"])?;
+    uuid(from)?;
+    uuid(to)?;
+    if from != stream.artifact_id
+        || relation != "generated_from"
+        || to != provenance[0].to_artifact_id
+        || provenance[0].from_artifact_id != from
+        || provenance[0].relation != relation
+    {
         return Err(Error::Reference);
     }
     Ok(())

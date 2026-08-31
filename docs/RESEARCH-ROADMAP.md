@@ -28,7 +28,7 @@ Phase 0 exited when EXP-0000 and these documentation criteria were completed. Th
 
 ## Phase 1 — Canonical event ingestion
 
-**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A and B are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, persistence, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 only as documentation design and authorizes no next increment. Generator and manifest implementation remain absent and block observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
+**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A and B are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, persistence, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 only as documentation design and authorizes no next increment. Generator and manifest implementation exist only in the dependency-free Slice A2 conformance subset and do not authorize observations; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
@@ -169,7 +169,7 @@ This phase is explicitly non-committed. The project should not assume distributi
 
 ### Slice A2 conformance checkpoint
 
-R17 prospectively records dependency-free executable conformance, contingent on corrected exact-head review and CI, for the frozen R12/R14/R16 contracts as
+R17 records closed dependency-free executable conformance after the corrective gate, for the frozen R12/R14/R16 contracts as
 bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
 or performance evidence and does not advance Slice C/B1 or authorize a subsequent increment.
 
