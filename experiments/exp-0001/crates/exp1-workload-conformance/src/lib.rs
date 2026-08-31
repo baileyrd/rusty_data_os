@@ -32,6 +32,8 @@ pub enum Error {
     Reference,
     SupersessionCycle,
     ImmutableState,
+    Ordering,
+    DuplicateOrConflict,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -274,6 +276,127 @@ pub fn logical_time(profile: Temporal, ordinal: u64, base: i64, unit: i64) -> Re
     i64::try_from(b + n * u).map_err(|_| Error::LogicalTimeOverflow)
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ReferenceSemantics {
+    None,
+    Causal,
+    Correction,
+    Retraction,
+}
+
+#[derive(Clone, Debug)]
+pub struct EnvelopeInput<'a> {
+    pub operation: &'a OperationInput,
+    pub semantic_version: &'a str,
+    pub fact_type: &'a str,
+    pub schema_id: [u8; 16],
+    pub schema_version: &'a str,
+    pub source: Option<&'a str>,
+    pub actor: Option<&'a str>,
+    pub request_id: [u8; 16],
+    pub event_id: [u8; 16],
+    pub information_id: [u8; 16],
+    pub effective_time: i64,
+    pub semantics: ReferenceSemantics,
+    pub references: &'a [[u8; 16]],
+}
+
+pub fn envelope_input(input: &EnvelopeInput<'_>) -> Result<Vec<u8>, Error> {
+    if input.semantic_version.is_empty()
+        || input.fact_type.is_empty()
+        || input.schema_version.is_empty()
+    {
+        return Err(Error::Tuple);
+    }
+    let applicable = match input.operation.envelope {
+        Envelope::Minimal => {
+            input.source.is_none()
+                && input.actor.is_none()
+                && input.semantics == ReferenceSemantics::None
+                && input.references.is_empty()
+        }
+        Envelope::Provenance => {
+            input.source.is_some_and(|x| !x.is_empty())
+                && input.actor.is_some_and(|x| !x.is_empty())
+                && input.semantics == ReferenceSemantics::None
+                && input.references.is_empty()
+        }
+        Envelope::Causal => {
+            input.semantics == ReferenceSemantics::Causal && !input.references.is_empty()
+        }
+        Envelope::CorrectionRetraction => {
+            matches!(
+                input.semantics,
+                ReferenceSemantics::Correction | ReferenceSemantics::Retraction
+            ) && !input.references.is_empty()
+        }
+    };
+    if !applicable {
+        return Err(Error::ProfileMismatch);
+    }
+    let option = |x: Option<&str>| {
+        let mut v = vec![u8::from(x.is_some())];
+        if let Some(x) = x {
+            v.extend(x.as_bytes())
+        }
+        v
+    };
+    let mut refs = Vec::new();
+    refs.extend(
+        u32::try_from(input.references.len())
+            .map_err(|_| Error::ResourceLimit)?
+            .to_be_bytes(),
+    );
+    for id in input.references {
+        refs.extend(id)
+    }
+    let mut f = Vec::new();
+    field(&mut f, 1, &input.operation.encode()?)?;
+    field(&mut f, 2, input.semantic_version.as_bytes())?;
+    field(&mut f, 3, input.fact_type.as_bytes())?;
+    field(&mut f, 4, &input.schema_id)?;
+    field(&mut f, 5, input.schema_version.as_bytes())?;
+    field(&mut f, 6, &option(input.source))?;
+    field(&mut f, 7, &option(input.actor))?;
+    field(&mut f, 8, &input.request_id)?;
+    field(&mut f, 9, &input.event_id)?;
+    field(&mut f, 10, &input.information_id)?;
+    field(&mut f, 11, &input.effective_time.to_be_bytes())?;
+    field(
+        &mut f,
+        12,
+        &[match input.semantics {
+            ReferenceSemantics::None => 0,
+            ReferenceSemantics::Causal => 1,
+            ReferenceSemantics::Correction => 2,
+            ReferenceSemantics::Retraction => 3,
+        }],
+    )?;
+    field(&mut f, 13, &refs)?;
+    Ok(record(b"RDOS-ENV1", 13, f))
+}
+
+/// Selects the frozen ascending suffix of ordinary prior EventIds.
+pub fn prior_events(
+    prior_ordinary: &[[u8; 16]],
+    ordinal: u64,
+    cardinality: u64,
+) -> Result<Vec<[u8; 16]>, Error> {
+    if cardinality == 0
+        || cardinality > ordinal
+        || usize::try_from(ordinal).ok() != Some(prior_ordinary.len())
+    {
+        return Err(Error::Reference);
+    }
+    let k = usize::try_from(cardinality).map_err(|_| Error::ResourceLimit)?;
+    let selected = prior_ordinary[prior_ordinary.len() - k..].to_vec();
+    let mut seen = BTreeSet::new();
+    if selected.iter().any(|x| !seen.insert(*x)) {
+        return Err(Error::DuplicateOrConflict);
+    }
+    Ok(selected)
+}
+
 #[derive(Clone, Debug)]
 pub struct SemanticOperation {
     pub op1: Vec<u8>,
@@ -346,6 +469,87 @@ pub fn validate_record(bytes: &[u8], magic: &[u8], count: u16) -> Result<(), Err
     Ok(())
 }
 
+fn fields<'a>(bytes: &'a [u8], magic: &[u8], count: u16) -> Result<Vec<&'a [u8]>, Error> {
+    validate_record(bytes, magic, count)?;
+    let mut p = magic.len() + 2;
+    let mut out = Vec::with_capacity(count as usize);
+    for expected in 1..=count {
+        if bytes[p] != expected as u8 {
+            return Err(Error::Encoding);
+        }
+        let n = u32::from_be_bytes(
+            bytes[p + 1..p + 5]
+                .try_into()
+                .map_err(|_| Error::Encoding)?,
+        ) as usize;
+        p += 5;
+        out.push(&bytes[p..p + n]);
+        p += n;
+    }
+    Ok(out)
+}
+
+/// Parses and semantically validates the complete frozen SOP1 profile.
+pub fn validate_semantic_operation(bytes: &[u8]) -> Result<(), Error> {
+    let f = fields(bytes, b"RDOS-SOP1", 13)?;
+    let op = fields(f[0], b"RDOS-OP1", 14)?;
+    if f[1] != b"EXP-0001-SHA256-CTR-v1"
+        && f[1] != b"EXP-0001-SHA256-MOTIF-v1"
+        && f[1] != b"EXP-0001-ZERO-v1"
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    if f[3] != b"EXP-0001-UUID4-SHA256-v1"
+        || f[7] != b"EXP-0001-ENVELOPE-INPUT-v1"
+        || f[9] != b"EXP-0001-PRIOR-EVENTS-v1"
+        || f[10] != b"EXP-0001-LOGICAL-TIME-v1"
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    if f[4].len() != 16
+        || f[5].len() != 16
+        || f[6].len() != 16
+        || f[11].len() != 8
+        || f[12].len() != 8
+    {
+        return Err(Error::Encoding);
+    }
+    let size = *op[5].first().ok_or(Error::Encoding)? as usize;
+    if op[5].len() != 1
+        || op[6].len() != 4
+        || usize::try_from(u32::from_be_bytes(
+            op[6].try_into().map_err(|_| Error::Encoding)?,
+        ))
+        .ok()
+            != Some(f[2].len())
+        || [0, 32, 256, 4096, 65536, 1048576].get(size).copied() != Some(f[2].len())
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    let content = op[7].first().copied().ok_or(Error::Encoding)?;
+    let expected = match content {
+        1 => b"EXP-0001-SHA256-CTR-v1".as_slice(),
+        2 => b"EXP-0001-SHA256-MOTIF-v1".as_slice(),
+        3 => b"EXP-0001-ZERO-v1".as_slice(),
+        _ => return Err(Error::Encoding),
+    };
+    if f[1] != expected {
+        return Err(Error::ProfileMismatch);
+    }
+    let env = fields(f[8], b"RDOS-ENV1", 13)?;
+    if env[0] != f[0] || env[7] != f[4] || env[8] != f[5] || env[9] != f[6] {
+        return Err(Error::ProfileMismatch);
+    }
+    if env[10].len() != 8 || env[12].len() != 4 {
+        return Err(Error::Encoding);
+    }
+    let unit = i64::from_be_bytes(f[12].try_into().map_err(|_| Error::Encoding)?);
+    if unit <= 0 {
+        return Err(Error::LogicalTimeParameter);
+    }
+    Ok(())
+}
+
 pub fn workload_stream(
     operations: &[Vec<u8>],
     warm_up: u64,
@@ -360,7 +564,7 @@ pub fn workload_stream(
     v.extend(warm_up.to_be_bytes());
     v.extend(measured.to_be_bytes());
     for op in operations {
-        validate_record(op, b"RDOS-SOP1", 13)?;
+        validate_semantic_operation(op)?;
         v.extend(
             u64::try_from(op.len())
                 .map_err(|_| Error::ResourceLimit)?
@@ -390,7 +594,7 @@ pub fn validate_stream(bytes: &[u8]) -> Result<(u64, u64, u64), Error> {
         if p > bytes.len() {
             return Err(Error::Encoding);
         }
-        validate_record(&bytes[p - z..p], b"RDOS-SOP1", 13)?;
+        validate_semantic_operation(&bytes[p - z..p])?;
     }
     if p != bytes.len() {
         return Err(Error::Encoding);
@@ -413,48 +617,11 @@ fn domain_digest(domain: &str, bytes: &[u8]) -> [u8; 32] {
     sha256(&v)
 }
 
-/// Validates the exact closed R16 profile at its canonical-byte boundary.
-/// `expected_canonical` is independently supplied authority serialization.
-pub fn validate_manifest(
-    candidate: &[u8],
-    expected_canonical: &[u8],
-    stream: &[u8],
-) -> Result<(), Error> {
-    std::str::from_utf8(candidate).map_err(|_| Error::JsonSyntax)?;
-    if candidate != expected_canonical {
-        return Err(Error::Noncanonical);
-    }
-    let s = std::str::from_utf8(candidate).map_err(|_| Error::JsonSyntax)?;
-    if !s.starts_with('{')
-        || !s.ends_with('}')
-        || s.contains("\n")
-        || s.contains("\r")
-        || s.contains("\t")
-    {
-        return Err(Error::Noncanonical);
-    }
-    for required in [
-        "\"schema_version\":\"EXP-0001-WORKLOAD-MANIFEST-JCS-v1\"",
-        "\"record_kind\":\"workload_manifest\"",
-        "\"stream_digest\"",
-        "\"stream_ref\"",
-        "\"authority_revisions\"",
-        "\"supersession\"",
-    ] {
-        if !s.contains(required) {
-            return Err(Error::MissingField);
-        }
-    }
-    let (_, _, _) = validate_stream(stream)?;
-    let digest = hex(&workload_digest(stream));
-    if !s.contains(&format!("\"value\":\"{digest}\"")) {
-        return Err(Error::Digest);
-    }
-    if !s.contains(&format!("\"byte_length\":\"{}\"", stream.len())) {
-        return Err(Error::Reference);
-    }
-    Ok(())
-}
+mod manifest;
+pub use manifest::{
+    Manifest, ManifestDigestDescriptor, ManifestReference, SupersessionTarget, ValidationContext,
+    validate_manifest,
+};
 
 pub fn validate_supersession(
     id: &str,

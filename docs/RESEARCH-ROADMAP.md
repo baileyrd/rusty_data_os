@@ -169,6 +169,6 @@ This phase is explicitly non-committed. The project should not assume distributi
 
 ### Slice A2 conformance checkpoint
 
-R17 records dependency-free executable conformance for the frozen R12/R14/R16 contracts as
+R17 prospectively records dependency-free executable conformance, contingent on corrected exact-head review and CI, for the frozen R12/R14/R16 contracts as
 bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
 or performance evidence and does not advance Slice C/B1 or authorize a subsequent increment.

@@ -1,8 +1,8 @@
 # R17 — Slice A2 workload-conformance authorization and closure
 
-**Approval:** GitHub issue #63, `EXP-0001-A2/workload-conformance-v1`  
-**Authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)  
-**Status:** implementation/correctness-validation closure, subject to exact-head PR review and CI
+**Approval:** GitHub issue #63, `EXP-0001-A2/workload-conformance-v1`
+**Authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)
+**Status:** prospective implementation/correctness-validation closure, contingent on corrected exact-head PR review and CI
 
 ## Boundary and result
 
@@ -23,10 +23,10 @@ expected values are authority-derived constants independent of code under test. 
 negative tables cover malformed/truncated streams, scalar rejection, canonical-byte rejection,
 and supersession conflicts without randomized tooling.
 
-BLK-006, BLK-007, BLK-008, and BLK-009 are now implemented only for this experiment-local
+After the corrected exact head passes review and CI, BLK-006, BLK-007, BLK-008, and BLK-009 are implemented only for this experiment-local
 conformance subset; their original documentation-design resolutions remain distinct from this
 correctness evidence. BLK-020, BLK-026, and BLK-027 extend only to this dependency-free A2 member
-under the existing harness and CI. Passing tests show that the reviewed contracts' covered vectors
+under the existing harness and CI. The closure gate must confirm that the reviewed contracts' covered vectors
 are executable and mutually consistent. They are not generated workload, execution, benchmark,
 persistence, durability, storage, or performance evidence.
 

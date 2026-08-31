@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slice A, Slice B, and bounded Slice A2 correctness gates passed; R17 closes only dependency-free workload conformance; later work remains unauthorized
+**Status:** Phase 1 planning/readiness — Slice A and Slice B correctness gates passed; bounded Slice A2 closure remains contingent on corrected exact-head review and CI; R17 prospectively closes only dependency-free workload conformance; later work remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified Slice A2 authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)
 
@@ -58,7 +58,7 @@ The latest `main` branch is authoritative over conversation memory. The checkpoi
 ## R17 / Slice A2 update
 
 Issue #63 prospectively authorized the single dependency-free Slice A2 workload-conformance crate.
-R17 closes that bounded implementation/correctness-validation tranche for reviewed R12/R14/R16
+R17 prospectively closes that bounded implementation/correctness-validation tranche after corrected exact-head review and CI for reviewed R12/R14/R16
 vectors only. BLK-006–009 are executable only in this conformance subset; BLK-020/026/027 extend
 only to its existing workspace/CI boundary. BLK-015, Slice C/B1, execution, benchmarks, capture,
 persistence, faults, durability, adapters, production code, and architecture promotion remain
