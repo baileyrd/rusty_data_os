@@ -831,8 +831,10 @@ fn domain_digest(domain: &str, bytes: &[u8]) -> [u8; 32] {
 
 mod manifest;
 pub use manifest::{
-    ArtifactMetadata, Manifest, ManifestDigestDescriptor, ManifestReference, ProvenanceEdge,
-    SupersessionTarget, ValidationContext, validate_manifest,
+    ArtifactMetadata, ArtifactReference, AuthorityRevision, DigestValue, Distribution,
+    GeneratorInputs, InputState, Manifest, ManifestCounts, ManifestDigestDescriptor,
+    ManifestProfiles, ManifestReference, ProvenanceEdge, RevisionKind, StreamReference,
+    Supersession, SupersessionTarget, TypedManifest, ValidationContext, validate_manifest,
 };
 
 pub fn validate_supersession(

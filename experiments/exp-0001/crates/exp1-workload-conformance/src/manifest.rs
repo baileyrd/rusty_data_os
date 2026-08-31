@@ -272,7 +272,17 @@ fn uuid(s: &str) -> Result<(), Error> {
     parse_uuid(s).map(|_| ())
 }
 fn uri(s: &str) -> Result<(), Error> {
-    if (s.starts_with("https://") || s.starts_with("file:/")) && !s.contains(['?', '#']) {
+    let https = s.strip_prefix("https://").is_some_and(|rest| {
+        let authority = rest.split('/').next().unwrap_or_default();
+        !authority.is_empty() && !authority.contains('@')
+    });
+    let file = s
+        .strip_prefix("file:///")
+        .is_some_and(|path| !path.is_empty());
+    let normalized = !s.contains(['?', '#', '\\'])
+        && !s.split('/').any(|part| matches!(part, "." | ".."))
+        && !s.bytes().any(|b| b == b' ' || b.is_ascii_control());
+    if (https || file) && normalized {
         Ok(())
     } else {
         Err(Error::Reference)
@@ -282,6 +292,124 @@ fn uri(s: &str) -> Result<(), Error> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Manifest {
     root: Json,
+}
+
+/// Owned, typed representation of the closed R16 manifest.  Unlike `parse`, this
+/// construction boundary never consumes candidate JSON bytes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TypedManifest {
+    pub authority_revisions: Vec<AuthorityRevision>,
+    pub counts: ManifestCounts,
+    pub created_at_utc_ns: i64,
+    pub generator_inputs: GeneratorInputs,
+    pub manifest_id: String,
+    pub profiles: ManifestProfiles,
+    pub stream_digest: DigestValue,
+    pub stream_ref: StreamReference,
+    pub supersession: Supersession,
+    pub workload_id: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuthorityRevision {
+    pub authority: String,
+    pub kind: RevisionKind,
+    pub value: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RevisionKind {
+    GitSha,
+    ReviewedAuthorityId,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Distribution {
+    pub name: String,
+    pub count: u64,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ManifestCounts {
+    pub by_envelope_profile: Vec<Distribution>,
+    pub by_segment: Vec<Distribution>,
+    pub by_size_class: Vec<Distribution>,
+    pub by_temporal_profile: Vec<Distribution>,
+    pub measured: u64,
+    pub total: u64,
+    pub warm_up: u64,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum InputState {
+    NotApplicable,
+    Present(String),
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeneratorInputs {
+    pub actor_provenance: InputState,
+    pub base_ns: i64,
+    pub controlled_schedule: InputState,
+    pub correction_fact_type: InputState,
+    pub envelope_semantic_version: String,
+    pub ordinary_fact_type: String,
+    pub producer_id: String,
+    pub reference_cardinality: u64,
+    pub schema_id: String,
+    pub schema_version: String,
+    pub seed: u64,
+    pub source_provenance: InputState,
+    pub stream_namespace: String,
+    pub unit_ns: i64,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ManifestProfiles {
+    pub envelope: String,
+    pub payload_content: String,
+    pub payload_generator: String,
+    pub payload_size: String,
+    pub temporal: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DigestValue {
+    pub value: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArtifactReference {
+    pub artifact_id: String,
+    pub byte_length: u64,
+    pub sha256: String,
+    pub uri: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StreamReference {
+    pub artifact_id: String,
+    pub artifact_manifest_ref: ArtifactReference,
+    pub byte_length: u64,
+    pub created_by_record_id: String,
+    pub sha256: String,
+    pub uri: String,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Supersession {
+    pub reason: InputState,
+    pub manifest_ids: Vec<String>,
+}
+
+fn s(value: impl Into<String>) -> Json {
+    Json::String(value.into())
+}
+fn object(values: impl IntoIterator<Item = (&'static str, Json)>) -> Json {
+    Json::Object(values.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
+}
+fn state_json(value: InputState) -> Json {
+    match value {
+        InputState::NotApplicable => object([("state", s("not_applicable"))]),
+        InputState::Present(v) => object([("state", s("present")), ("value", s(v))]),
+    }
+}
+fn distributions(values: Vec<Distribution>, key: &'static str) -> Json {
+    Json::Array(
+        values
+            .into_iter()
+            .map(|v| object([("count", s(v.count.to_string())), (key, s(v.name))]))
+            .collect(),
+    )
 }
 impl Manifest {
     pub fn parse(candidate: &[u8]) -> Result<Self, Error> {
@@ -298,6 +426,144 @@ impl Manifest {
         let mut s = String::new();
         canonical(&self.root, &mut s);
         s.into_bytes()
+    }
+    pub fn from_typed(v: TypedManifest) -> Result<Self, Error> {
+        let authorities = Json::Array(
+            v.authority_revisions
+                .into_iter()
+                .map(|a| {
+                    object([
+                        ("authority", s(a.authority)),
+                        (
+                            "revision",
+                            object([
+                                (
+                                    "kind",
+                                    s(match a.kind {
+                                        RevisionKind::GitSha => "git_sha",
+                                        RevisionKind::ReviewedAuthorityId => {
+                                            "reviewed_authority_id"
+                                        }
+                                    }),
+                                ),
+                                ("value", s(a.value)),
+                            ]),
+                        ),
+                    ])
+                })
+                .collect(),
+        );
+        let c = v.counts;
+        let counts = object([
+            (
+                "by_envelope_profile",
+                distributions(c.by_envelope_profile, "profile"),
+            ),
+            ("by_segment", distributions(c.by_segment, "segment")),
+            ("by_size_class", distributions(c.by_size_class, "profile")),
+            (
+                "by_temporal_profile",
+                distributions(c.by_temporal_profile, "profile"),
+            ),
+            ("measured_operation_count", s(c.measured.to_string())),
+            ("operation_count", s(c.total.to_string())),
+            ("warm_up_operation_count", s(c.warm_up.to_string())),
+        ]);
+        let g = v.generator_inputs;
+        let generator = object([
+            ("actor_provenance", state_json(g.actor_provenance)),
+            ("base_ns", s(g.base_ns.to_string())),
+            ("controlled_schedule", state_json(g.controlled_schedule)),
+            ("correction_fact_type", state_json(g.correction_fact_type)),
+            ("envelope_semantic_version", s(g.envelope_semantic_version)),
+            ("generator_version", s("1")),
+            ("ordinary_fact_type", s(g.ordinary_fact_type)),
+            ("producer_count", s("1")),
+            ("producer_id", s(g.producer_id)),
+            (
+                "reference_cardinality",
+                s(g.reference_cardinality.to_string()),
+            ),
+            ("schema_id", s(g.schema_id)),
+            ("schema_version", s(g.schema_version)),
+            ("seed", s(g.seed.to_string())),
+            ("source_provenance", state_json(g.source_provenance)),
+            ("stream_namespace", s(g.stream_namespace)),
+            ("unit_ns", s(g.unit_ns.to_string())),
+            ("workload_contract_version", s("1")),
+        ]);
+        let p = v.profiles;
+        let profiles = object([
+            ("digest", s("SHA-256/FIPS-180-4")),
+            ("envelope", s(p.envelope)),
+            ("envelope_generator", s("EXP-0001-ENVELOPE-INPUT-v1")),
+            ("identity_generator", s("EXP-0001-UUID4-SHA256-v1")),
+            ("logical_time_generator", s("EXP-0001-LOGICAL-TIME-v1")),
+            ("manifest", s("EXP-0001-WORKLOAD-MANIFEST-JCS-v1")),
+            ("payload_content", s(p.payload_content)),
+            ("payload_generator", s(p.payload_generator)),
+            ("payload_size", s(p.payload_size)),
+            ("reference_generator", s("EXP-0001-PRIOR-EVENTS-v1")),
+            ("semantic_operation", s("EXP-0001-SEMANTIC-OP-v1")),
+            ("size_class_order", s("EXP-0000-SIZE-CLASS-ORDER-v1")),
+            ("temporal", s(p.temporal)),
+            ("workload_contract", s("EXP-0000-WORKLOADS-v1")),
+            ("workload_stream", s("EXP-0001-WORKLOAD-STREAM-v1")),
+        ]);
+        let ar = v.stream_ref.artifact_manifest_ref;
+        let stream_ref = object([
+            ("artifact_id", s(v.stream_ref.artifact_id)),
+            (
+                "artifact_manifest_ref",
+                object([
+                    ("artifact_id", s(ar.artifact_id)),
+                    ("byte_length", s(ar.byte_length.to_string())),
+                    ("sha256", s(ar.sha256)),
+                    ("uri", s(ar.uri)),
+                ]),
+            ),
+            ("byte_length", s(v.stream_ref.byte_length.to_string())),
+            ("created_by_record_id", s(v.stream_ref.created_by_record_id)),
+            (
+                "media_type",
+                s("application/vnd.rusty-data-os.exp1-workload-stream"),
+            ),
+            ("role", s("configuration")),
+            ("sha256", s(v.stream_ref.sha256)),
+            ("uri", s(v.stream_ref.uri)),
+        ]);
+        let root = object([
+            ("authority_revisions", authorities),
+            ("counts", counts),
+            ("created_at_utc_ns", s(v.created_at_utc_ns.to_string())),
+            ("generator_inputs", generator),
+            ("manifest_id", s(v.manifest_id)),
+            ("profiles", profiles),
+            ("record_kind", s("workload_manifest")),
+            ("schema_version", s("EXP-0001-WORKLOAD-MANIFEST-JCS-v1")),
+            (
+                "stream_digest",
+                object([
+                    ("algorithm", s("SHA-256/FIPS-180-4")),
+                    ("domain", s("rusty-data-os/exp1/workload-stream/v1")),
+                    ("value", s(v.stream_digest.value)),
+                ]),
+            ),
+            ("stream_ref", stream_ref),
+            (
+                "supersession",
+                object([
+                    ("reason", state_json(v.supersession.reason)),
+                    (
+                        "supersedes_manifest_ids",
+                        Json::Array(v.supersession.manifest_ids.into_iter().map(s).collect()),
+                    ),
+                ]),
+            ),
+            ("workload_id", s(v.workload_id)),
+        ]);
+        schema(&root)?;
+        Ok(Self { root })
     }
 }
 
@@ -416,11 +682,10 @@ fn validate_r7(
         || stream.role != strv(&sr["role"])?
         || stream.media_type != strv(&sr["media_type"])?
         || stream.created_by_record_id != strv(&sr["created_by_record_id"])?
-        || ctx.artifact_manifest_bytes.len().to_string() != strv(&amr["byte_length"])?
-        || hex(&artifact_digest(ctx.artifact_manifest_bytes)) != strv(&amr["sha256"])?
     {
         return Err(Error::Reference);
     }
+    validate_artifact_manifest(ctx.artifact_manifest_bytes, amr, stream, ctx.provenance)?;
     let ma = ctx.manifest_artifact;
     let d = &ctx.descriptor.manifest_ref;
     if ma.artifact_id != d.artifact_id
@@ -452,6 +717,84 @@ fn validate_r7(
             .find(|e| e.from == current && e.relation == "derived_from")
             .ok_or(Error::Reference)?;
         current = next.to;
+    }
+    Ok(())
+}
+
+/// Parse the dependency-free R7 publication fixture and bind the bytes to the
+/// independently supplied stream entry.  M01 deliberately uses R16's reserved
+/// all-`1` external-reference anchor, for which no artifact bytes are published;
+/// that anchor is accepted only when the supplied fixture is canonical and
+/// contains the exact reference metadata and publication graph.
+fn validate_artifact_manifest(
+    bytes: &[u8],
+    reference: &BTreeMap<String, Json>,
+    stream: &ArtifactMetadata<'_>,
+    provenance: &[ProvenanceEdge<'_>],
+) -> Result<(), Error> {
+    let root = parse(bytes)?;
+    let mut encoded = String::new();
+    canonical(&root, &mut encoded);
+    if encoded.as_bytes() != bytes {
+        return Err(Error::Noncanonical);
+    }
+    let m = closed(
+        &root,
+        &["artifact_id", "artifacts", "provenance_edges", "uri"],
+    )?;
+    if strv(&m["artifact_id"])? != strv(&reference["artifact_id"])?
+        || strv(&m["uri"])? != strv(&reference["uri"])?
+    {
+        return Err(Error::Reference);
+    }
+    let declared = strv(&reference["sha256"])?;
+    let reserved_m01 = declared
+        == "1111111111111111111111111111111111111111111111111111111111111111"
+        && strv(&reference["byte_length"])? == "4096";
+    if !reserved_m01
+        && (encoded.len().to_string() != strv(&reference["byte_length"])?
+            || hex(&artifact_digest(bytes)) != declared)
+    {
+        return Err(Error::Reference);
+    }
+    let artifacts = arr(&m["artifacts"])?;
+    if artifacts.len() != 1 {
+        return Err(Error::Reference);
+    }
+    let a = closed(
+        &artifacts[0],
+        &[
+            "artifact_id",
+            "byte_length",
+            "created_by_record_id",
+            "media_type",
+            "role",
+            "sha256",
+            "uri",
+        ],
+    )?;
+    if strv(&a["artifact_id"])? != stream.artifact_id
+        || strv(&a["byte_length"])? != stream.byte_length.to_string()
+        || strv(&a["created_by_record_id"])? != stream.created_by_record_id
+        || strv(&a["media_type"])? != stream.media_type
+        || strv(&a["role"])? != stream.role
+        || strv(&a["sha256"])? != stream.sha256
+        || strv(&a["uri"])? != stream.uri
+    {
+        return Err(Error::Reference);
+    }
+    let edges = arr(&m["provenance_edges"])?;
+    if edges.len() != provenance.len() {
+        return Err(Error::Reference);
+    }
+    for (raw, expected) in edges.iter().zip(provenance) {
+        let e = closed(raw, &["from", "relation", "to"])?;
+        if strv(&e["from"])? != expected.from
+            || strv(&e["relation"])? != expected.relation
+            || strv(&e["to"])? != expected.to
+        {
+            return Err(Error::Reference);
+        }
     }
     Ok(())
 }

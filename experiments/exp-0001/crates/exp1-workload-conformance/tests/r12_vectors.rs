@@ -82,3 +82,55 @@ fn logical_vectors() {
         [1000, 1020, 1010, 1030]
     );
 }
+
+#[test]
+fn prior_event_and_controlled_schedule_boundaries() {
+    let ids = [[1; 16], [2; 16], [3; 16]];
+    assert_eq!(prior_events(&ids, 3, 2).unwrap(), [[2; 16], [3; 16]]);
+    for (ordinal, cardinality) in [(3, 0), (3, 4), (2, 1)] {
+        assert_eq!(
+            prior_events(&ids, ordinal, cardinality),
+            Err(Error::Reference)
+        );
+    }
+    assert_eq!(
+        prior_events(&[[1; 16], [1; 16]], 2, 2),
+        Err(Error::DuplicateOrConflict)
+    );
+    let mut scheduled = anchor(Content::High);
+    scheduled.controlled_schedule = Some([9; 16]);
+    assert!(scheduled.encode().is_ok());
+    scheduled.producer_ordinal = 1;
+    assert_eq!(scheduled.encode(), Err(Error::Tuple));
+}
+
+#[test]
+fn env1_profile_compatibility() {
+    let operation = anchor(Content::High);
+    let request = identity(&operation, IdentityKind::Request).unwrap();
+    let event = identity(&operation, IdentityKind::Event).unwrap();
+    let information = identity(&operation, IdentityKind::Information).unwrap();
+    let input = EnvelopeInput {
+        operation: &operation,
+        semantic_version: "1",
+        fact_type: "fact-A",
+        schema_id: parse_uuid("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee").unwrap(),
+        schema_version: "1",
+        source: None,
+        actor: None,
+        request_id: request,
+        event_id: event,
+        information_id: information,
+        effective_time: 1000,
+        semantics: ReferenceSemantics::None,
+        references: &[],
+    };
+    let encoded = envelope_input(&input).unwrap();
+    assert_eq!(encoded.len(), 313);
+    assert_eq!(validate_record(&encoded, b"RDOS-ENV1", 13), Ok(()));
+    let bad = EnvelopeInput {
+        source: Some("source-A"),
+        ..input
+    };
+    assert_eq!(envelope_input(&bad), Err(Error::ProfileMismatch));
+}
