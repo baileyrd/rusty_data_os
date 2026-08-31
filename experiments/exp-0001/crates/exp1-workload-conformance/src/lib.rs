@@ -93,6 +93,14 @@ impl OperationInput {
         if self.producer_ordinal != self.ordinal {
             return Err(Error::Tuple);
         }
+        if !valid_uuid_bytes(&self.stream_namespace)
+            || !valid_uuid_bytes(&self.producer_id)
+            || self
+                .controlled_schedule
+                .is_some_and(|id| !valid_uuid_bytes(&id))
+        {
+            return Err(Error::Type);
+        }
         let len = self.payload_len()?;
         let mut fields = Vec::new();
         field(&mut fields, 1, &1u16.to_be_bytes())?;
@@ -308,6 +316,20 @@ pub fn envelope_input(input: &EnvelopeInput<'_>) -> Result<Vec<u8>, Error> {
     {
         return Err(Error::Tuple);
     }
+    if !valid_uuid_bytes(&input.schema_id)
+        || !valid_uuid_bytes(&input.request_id)
+        || !valid_uuid_bytes(&input.event_id)
+        || !valid_uuid_bytes(&input.information_id)
+        || input.references.iter().any(|id| !valid_uuid_bytes(id))
+    {
+        return Err(Error::Type);
+    }
+    let mut seen = BTreeSet::new();
+    for id in input.references {
+        if !seen.insert(id) || id == &input.event_id {
+            return Err(Error::DuplicateOrConflict);
+        }
+    }
     let applicable = match input.operation.envelope {
         Envelope::Minimal => {
             input.source.is_none()
@@ -430,7 +452,9 @@ impl SemanticOperation {
         field(&mut f, 11, b"EXP-0001-LOGICAL-TIME-v1")?;
         field(&mut f, 12, &self.base_ns.to_be_bytes())?;
         field(&mut f, 13, &self.unit_ns.to_be_bytes())?;
-        Ok(record(b"RDOS-SOP1", 13, f))
+        let candidate = record(b"RDOS-SOP1", 13, f);
+        validate_semantic_operation(&candidate)?;
+        Ok(candidate)
     }
 }
 
@@ -477,7 +501,7 @@ fn validate_op1(bytes: &[u8]) -> Result<Vec<&[u8]>, Error> {
 }
 
 fn valid_uuid_bytes(v: &[u8]) -> bool {
-    v.len() == 16 && v.iter().any(|&x| x != 0) && (v[8] & 0xc0) == 0x80
+    v.len() == 16 && v.iter().any(|&x| x != 0) && (v[6] & 0xf0) == 0x40 && (v[8] & 0xc0) == 0x80
 }
 
 fn option_text(v: &[u8]) -> Result<Option<&[u8]>, Error> {
@@ -643,7 +667,7 @@ pub fn validate_semantic_operation(bytes: &[u8]) -> Result<(), Error> {
     if env[0] != f[0] || env[7] != f[4] || env[8] != f[5] || env[9] != f[6] {
         return Err(Error::ProfileMismatch);
     }
-    if env[10].len() != 8 || env[12].len() != 4 {
+    if env[10].len() != 8 {
         return Err(Error::Encoding);
     }
     let unit = i64::from_be_bytes(f[12].try_into().map_err(|_| Error::Encoding)?);

@@ -722,10 +722,7 @@ fn validate_r7(
 }
 
 /// Parse the dependency-free R7 publication fixture and bind the bytes to the
-/// independently supplied stream entry.  M01 deliberately uses R16's reserved
-/// all-`1` external-reference anchor, for which no artifact bytes are published;
-/// that anchor is accepted only when the supplied fixture is canonical and
-/// contains the exact reference metadata and publication graph.
+/// independently supplied stream entry.
 fn validate_artifact_manifest(
     bytes: &[u8],
     reference: &BTreeMap<String, Json>,
@@ -748,12 +745,8 @@ fn validate_artifact_manifest(
         return Err(Error::Reference);
     }
     let declared = strv(&reference["sha256"])?;
-    let reserved_m01 = declared
-        == "1111111111111111111111111111111111111111111111111111111111111111"
-        && strv(&reference["byte_length"])? == "4096";
-    if !reserved_m01
-        && (encoded.len().to_string() != strv(&reference["byte_length"])?
-            || hex(&artifact_digest(bytes)) != declared)
+    if encoded.len().to_string() != strv(&reference["byte_length"])?
+        || hex(&artifact_digest(bytes)) != declared
     {
         return Err(Error::Reference);
     }
@@ -1018,7 +1011,7 @@ fn schema(v: &Json) -> Result<(), Error> {
     digest(strv(&sd["value"])?)?;
     reference(&t["stream_ref"])?;
     let s = closed(&t["supersession"], &["reason", "supersedes_manifest_ids"])?;
-    state(&s["reason"])?;
+    string_state(&s["reason"])?;
     for x in arr(&s["supersedes_manifest_ids"])? {
         uuid(strv(x)?)?
     }
@@ -1065,7 +1058,14 @@ fn state(v: &Json) -> Result<(), Error> {
     let o = obj(v)?;
     match o.get("state").and_then(|x| strv(x).ok()) {
         Some("not_applicable") if o.len() == 1 => Ok(()),
-        Some("present") if o.len() == 2 && o.contains_key("value") => Ok(()),
+        Some("present")
+            if o.len() == 2
+                && o.contains_key("value")
+                && strv(&o["value"]).is_ok()
+                && strv(&o["value"]).is_ok_and(|text| !text.is_empty()) =>
+        {
+            Ok(())
+        }
         _ => Err(Error::Type),
     }
 }
@@ -1231,20 +1231,77 @@ fn validate_super(
     if strv(&reason["state"])? != "present" {
         return Err(Error::ImmutableState);
     }
+    string_state(&s["reason"])?;
+    let mut known = BTreeMap::new();
+    for target in targets {
+        if target.manifest_id == id || known.insert(target.manifest_id, target).is_some() {
+            return Err(Error::DuplicateOrConflict);
+        }
+        if target.workload_id != workload {
+            return Err(Error::Reference);
+        }
+    }
+    // Validate the entire caller-supplied immutable history, not just a direct
+    // back edge. Every edge must resolve and a walk must terminate.
+    fn visit<'a>(
+        node: &'a str,
+        candidate: &str,
+        known: &BTreeMap<&'a str, &'a SupersessionTarget<'a>>,
+        path: &mut BTreeSet<&'a str>,
+        done: &mut BTreeSet<&'a str>,
+    ) -> Result<(), Error> {
+        if done.contains(node) {
+            return Ok(());
+        }
+        if !path.insert(node) {
+            return Err(Error::SupersessionCycle);
+        }
+        let current = known.get(node).ok_or(Error::Reference)?;
+        for parent in current.supersedes {
+            if *parent == candidate {
+                return Err(Error::SupersessionCycle);
+            }
+            visit(parent, candidate, known, path, done)?;
+        }
+        path.remove(node);
+        done.insert(node);
+        Ok(())
+    }
+    let mut done = BTreeSet::new();
+    for target in targets {
+        visit(
+            target.manifest_id,
+            id,
+            &known,
+            &mut BTreeSet::new(),
+            &mut done,
+        )?;
+    }
     let mut prev = "";
+    let mut declared = BTreeSet::new();
     for x in ids {
         let x = strv(x)?;
         if x <= prev || x == id {
             return Err(Error::DuplicateOrConflict);
         }
-        let t = targets
-            .iter()
-            .find(|t| t.manifest_id == x)
-            .ok_or(Error::Reference)?;
-        if t.workload_id != workload || t.supersedes.contains(&id) {
-            return Err(Error::SupersessionCycle);
-        }
+        known.get(x).ok_or(Error::Reference)?;
+        declared.insert(x);
         prev = x
+    }
+    // Heads are published manifests not superseded by another published
+    // manifest. Naming every head is what resolves an existing fork; naming
+    // fewer creates or preserves an invalid fork.
+    let superseded: BTreeSet<&str> = targets
+        .iter()
+        .flat_map(|target| target.supersedes.iter().copied())
+        .collect();
+    let heads: BTreeSet<&str> = targets
+        .iter()
+        .map(|target| target.manifest_id)
+        .filter(|candidate| !superseded.contains(candidate))
+        .collect();
+    if declared != heads {
+        return Err(Error::DuplicateOrConflict);
     }
     Ok(())
 }

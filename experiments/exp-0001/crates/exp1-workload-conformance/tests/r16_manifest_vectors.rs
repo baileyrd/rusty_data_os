@@ -195,5 +195,11 @@ fn m01_literal() {
     );
     let typed = Manifest::from_typed(typed_m01()).unwrap();
     assert_eq!(typed.canonical_bytes(), M01.as_bytes());
-    validate_manifest(M01.as_bytes(), &context(&stream)).unwrap();
+    // R16 labels M01 a valid manifest-byte vector, but its fictional external
+    // R7 reference declares unavailable 4096-byte/all-`1`-digest bytes. Full
+    // R7 validation must reject rather than exempt that unsatisfied reference.
+    assert_eq!(
+        validate_manifest(M01.as_bytes(), &context(&stream)),
+        Err(Error::Reference)
+    );
 }

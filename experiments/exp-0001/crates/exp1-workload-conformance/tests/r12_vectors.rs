@@ -98,10 +98,26 @@ fn prior_event_and_controlled_schedule_boundaries() {
         Err(Error::DuplicateOrConflict)
     );
     let mut scheduled = anchor(Content::High);
-    scheduled.controlled_schedule = Some([9; 16]);
+    scheduled.controlled_schedule =
+        Some(parse_uuid("99999999-9999-4999-8999-999999999999").unwrap());
     assert!(scheduled.encode().is_ok());
     scheduled.producer_ordinal = 1;
     assert_eq!(scheduled.encode(), Err(Error::Tuple));
+}
+
+#[test]
+fn uuid_valued_generator_inputs_fail_closed() {
+    for invalid in [[0; 16], [9; 16], [0xff; 16]] {
+        let mut operation = anchor(Content::High);
+        operation.controlled_schedule = Some(invalid);
+        assert_eq!(operation.encode(), Err(Error::Type));
+    }
+    let mut operation = anchor(Content::High);
+    operation.stream_namespace = [0; 16];
+    assert_eq!(operation.encode(), Err(Error::Type));
+    let mut operation = anchor(Content::High);
+    operation.producer_id[8] = 0;
+    assert_eq!(operation.encode(), Err(Error::Type));
 }
 
 #[test]
