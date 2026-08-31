@@ -63,4 +63,4 @@ only to its existing workspace/CI boundary. BLK-015, Slice C/B1, execution, benc
 persistence, faults, durability, adapters, production code, and architecture promotion remain
 open or unauthorized. No next increment is automatically authorized.
 
-The reopened Slice A2 blocker is corrected by the owner-selected realizable-valid-M01 resolution: R16 now pins a real 1274-byte R7 artifact-manifest fixture, and R17 records only bounded conformance/correctness evidence after the corrective gate. The R14 stream is unchanged.
+The reopened Slice A2 blocker is corrected by the owner-selected realizable-valid-M01 resolution: R16 now pins a real 1274-byte R7 stream artifact-manifest fixture and a non-cyclic, independently digest-bound 1152-byte R7 workload-manifest artifact fixture. The combined graph resolves both `generated_from` endpoints through complete R7 artifact entries, and R17 records only bounded conformance/correctness evidence after the corrective gate. The R14 stream is unchanged.

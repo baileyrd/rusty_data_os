@@ -22,19 +22,17 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
     created_by_record_id: "16000000-0000-4000-8000-000000000005",
 };
-static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
-    artifact_id: "16000000-0000-4000-8000-000000000001",
-    byte_length: 3423,
-    sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
-    uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
-    role: "configuration",
-    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
-    created_by_record_id: "16000000-0000-4000-8000-000000000006",
+static WORKLOAD_ARTIFACT_MANIFEST_REF: ManifestReference<'static> = ManifestReference {
+    artifact_id: "16000000-0000-4000-8000-000000000011",
+    byte_length: 1152,
+    sha256: "d49627606be85859b5067962eb4b793a0c757774c5d9c32bf5f5658355d0418e",
+    uri: "https://example.invalid/exp-0001/workload-artifact-manifest.jcs",
 };
 fn context_with<'a>(
     stream: &'a [u8],
     artifact_manifest_bytes: &'a [u8],
-    provenance: &'a [ProvenanceEdge<'a>],
+    workload_artifact_manifest_bytes: &'a [u8],
+    workload_artifact_manifest_ref: &'a ManifestReference<'a>,
 ) -> ValidationContext<'a> {
     ValidationContext {
         stream,
@@ -42,19 +40,19 @@ fn context_with<'a>(
         manifest_artifact_sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         targets: &[],
         artifact_manifest_bytes,
+        workload_artifact_manifest_bytes,
+        workload_artifact_manifest_ref,
         stream_artifact: &STREAM_ARTIFACT,
-        manifest_artifact: &MANIFEST_ARTIFACT,
-        provenance,
     }
 }
 
 fn context(stream: &[u8]) -> ValidationContext<'_> {
-    static PROVENANCE: [ProvenanceEdge<'static>; 1] = [ProvenanceEdge {
-        from_artifact_id: "16000000-0000-4000-8000-000000000002",
-        to_artifact_id: "16000000-0000-4000-8000-000000000001",
-        relation: "generated_from",
-    }];
-    context_with(stream, R7_ARTIFACT_MANIFEST, &PROVENANCE)
+    context_with(
+        stream,
+        R7_ARTIFACT_MANIFEST,
+        R7_WORKLOAD_ARTIFACT_MANIFEST,
+        &WORKLOAD_ARTIFACT_MANIFEST_REF,
+    )
 }
 
 fn typed_m01() -> TypedManifest {
@@ -206,11 +204,6 @@ fn m01_literal() {
 #[test]
 fn r7_closed_record_and_reference_fail_closed() {
     let stream = workload_stream(&[decode_hex(S01).unwrap()], 1, 0).unwrap();
-    let provenance = [ProvenanceEdge {
-        from_artifact_id: "16000000-0000-4000-8000-000000000002",
-        to_artifact_id: "16000000-0000-4000-8000-000000000001",
-        relation: "generated_from",
-    }];
     let cases = [
         (
             "\"record_kind\":\"artifact_manifest\"",
@@ -232,28 +225,96 @@ fn r7_closed_record_and_reference_fail_closed() {
         assert!(
             validate_manifest(
                 M01.as_bytes(),
-                &context_with(&stream, fixture.as_bytes(), &provenance)
+                &context_with(
+                    &stream,
+                    fixture.as_bytes(),
+                    R7_WORKLOAD_ARTIFACT_MANIFEST,
+                    &WORKLOAD_ARTIFACT_MANIFEST_REF
+                )
             )
             .is_err()
         );
     }
 
-    let wrong_edge = [ProvenanceEdge {
-        from_artifact_id: "16000000-0000-4000-8000-000000000002",
-        to_artifact_id: "16000000-0000-4000-8000-000000000001",
-        relation: "interprets",
-    }];
-    assert_eq!(
-        validate_manifest(
-            M01.as_bytes(),
-            &context_with(&stream, R7_ARTIFACT_MANIFEST, &wrong_edge)
-        ),
-        Err(Error::Reference)
-    );
+    let mut missing_entry = String::from_utf8(R7_WORKLOAD_ARTIFACT_MANIFEST.to_vec()).unwrap();
+    let entry_start = missing_entry.find("\"artifacts\":[").unwrap() + "\"artifacts\":[".len();
+    let entry_end = missing_entry.find("],\"provenance_edges\"").unwrap();
+    missing_entry.replace_range(entry_start..entry_end, "");
+    let missing_digest = hex(&artifact_digest(missing_entry.as_bytes()));
+    let missing_reference = ManifestReference {
+        artifact_id: WORKLOAD_ARTIFACT_MANIFEST_REF.artifact_id,
+        byte_length: missing_entry.len() as u64,
+        sha256: &missing_digest,
+        uri: WORKLOAD_ARTIFACT_MANIFEST_REF.uri,
+    };
     assert!(
         validate_manifest(
             M01.as_bytes(),
-            &context_with(&stream, &R7_ARTIFACT_MANIFEST[..1273], &[])
+            &context_with(
+                &stream,
+                R7_ARTIFACT_MANIFEST,
+                missing_entry.as_bytes(),
+                &missing_reference
+            )
+        )
+        .is_err()
+    );
+
+    let workload_cases = [
+        ("000000000001\",", "000000000099\","),
+        ("\"byte_length\":\"3423\"", "\"byte_length\":\"3424\""),
+        (
+            "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
+            "aa4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
+        ),
+        ("m01.manifest.jcs", "wrong.manifest.jcs"),
+        ("workload_manifest\",", "configuration\","),
+        (
+            "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
+            "application/json",
+        ),
+        ("000000000006\",", "000000000099\","),
+        ("\"sensitivity\":\"public\"", "\"sensitivity\":\"secret\""),
+        (
+            "\"validation_report_ids\":[]",
+            "\"validation_report_ids\":[],\"unknown\":\"x\"",
+        ),
+    ];
+    for (old, new) in workload_cases {
+        let fixture = String::from_utf8(R7_WORKLOAD_ARTIFACT_MANIFEST.to_vec())
+            .unwrap()
+            .replacen(old, new, 1);
+        let digest = hex(&artifact_digest(fixture.as_bytes()));
+        let reference = ManifestReference {
+            artifact_id: WORKLOAD_ARTIFACT_MANIFEST_REF.artifact_id,
+            byte_length: fixture.len() as u64,
+            sha256: &digest,
+            uri: WORKLOAD_ARTIFACT_MANIFEST_REF.uri,
+        };
+        assert!(
+            validate_manifest(
+                M01.as_bytes(),
+                &context_with(
+                    &stream,
+                    R7_ARTIFACT_MANIFEST,
+                    fixture.as_bytes(),
+                    &reference
+                )
+            )
+            .is_err(),
+            "accepted workload artifact mutation: {old}"
+        );
+    }
+
+    assert!(
+        validate_manifest(
+            M01.as_bytes(),
+            &context_with(
+                &stream,
+                &R7_ARTIFACT_MANIFEST[..1273],
+                R7_WORKLOAD_ARTIFACT_MANIFEST,
+                &WORKLOAD_ARTIFACT_MANIFEST_REF,
+            )
         )
         .is_err()
     );

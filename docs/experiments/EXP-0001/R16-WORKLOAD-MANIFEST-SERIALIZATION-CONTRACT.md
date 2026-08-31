@@ -215,10 +215,10 @@ all-`1` reference is superseded by these repository-contained literal R7 record 
 {"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000002/configuration","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","retention_state":"published","role":"configuration","sensitivity":"public","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream","validation_report_ids":[]}],"provenance_edges":[{"from_artifact_id":"16000000-0000-4000-8000-000000000002","relation":"generated_from","to_artifact_id":"16000000-0000-4000-8000-000000000001"}],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000004","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}
 ```
 
-The fixture is exactly **1274 octets** and its R7 exact-artifact digest is
+The stream fixture is exactly **1274 octets** and its R7 exact-artifact digest is
 `b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c`. It uses the complete
 `EXP1-R7-JSON-JCS-1` envelope and closed run-scoped `artifact_manifest` body, including `scope`,
-`publication_state`, `series_freeze`, the full stream artifact entry, and the digest-bound internal provenance-edge array. The parsed edge and caller-supplied resolved R7 graph agree on the
+`publication_state`, `series_freeze`, the full stream artifact entry, and the digest-bound internal provenance-edge array. The parsed edge establishes the
 `generated_from` relation from stream artifact `...0002` to workload-manifest artifact `...0001`;
 `created_by_record_id` binds the stream entry to record `...0005`. The unchanged R14 stream remains
 818 octets with workload digest `0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09`
@@ -227,6 +227,22 @@ The resulting M01 values are 3423 octets, manifest digest
 `68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594`, and R7 exact-artifact
 digest `ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86`. These literals, not
 implementation-generated expectations, are the corrected oracle.
+
+The graph endpoint is resolved without a digest self-reference by this second, independently
+digest-bound canonical R7 `artifact_manifest` fixture. It contains the complete closed
+workload-manifest artifact entry rather than free-floating metadata:
+
+```json
+{"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","created_by_record_id":"16000000-0000-4000-8000-000000000006","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000001/workload_manifest","media_type":"application/vnd.rusty-data-os.exp1-workload-manifest+jcs","retention_state":"published","role":"workload_manifest","sensitivity":"public","sha256":"ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86","uri":"https://example.invalid/exp-0001/m01.manifest.jcs","validation_report_ids":[]}],"provenance_edges":[],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000010","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}
+```
+
+This endpoint fixture is exactly **1152 octets** and has R7 exact-artifact digest
+`d49627606be85859b5067962eb4b793a0c757774c5d9c32bf5f5658355d0418e`. Its artifact-reference
+identity is `16000000-0000-4000-8000-000000000011`, independently of envelope record identity
+`...0010`. The full entry binds M01 identity, 3423-octet length, exact-artifact digest, URI,
+`workload_manifest` role, exact `+jcs` media type, creating record `...0006`, logical path,
+published retention, public sensitivity, and empty validation-report set. Validation combines
+both immutable fixtures and rejects a missing or conflicting endpoint.
 
 The example retains non-production publication identities and URIs, but its manifest-reference
 metadata now binds the literal repository-contained R7 fixture above. The manifest and fixture
@@ -245,7 +261,7 @@ are normative and independently reproducible.
 | N06 | Pretty-print, append LF, exchange any two members, or escape a character differently from JCS. | `noncanonical`, even when the JSON value is otherwise equivalent. |
 | N07 | Give an original a reason, give a correction no target/reason, self-reference, form a cycle, or correct another workload ID. | `duplicate-or-conflict`, `supersession-cycle`, or `immutable-state`. |
 | N08 | Duplicate a JSON name, omit `seed`, use `null`, or use numeric `1` for a count. | `duplicate-member`, `missing-field`, or `type`. |
-| N09 | Omit/mismatch the stream role, media type, creating record, artifact-manifest reference, artifact entry, or required provenance edge. | `reference`; no stream or manifest is accepted. |
+| N09 | Omit/mismatch either artifact entry, a provenance endpoint, role, media type, creating record, artifact-manifest reference, identity, length, digest, URI, logical path, sensitivity, retention, validation-report IDs, or required provenance edge; add an unknown artifact-entry field. | `reference`, `unknown-field`, or the corresponding structural failure; no stream or manifest is accepted. |
 
 
 ## 5. Disposition and exclusions
