@@ -13,12 +13,34 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
+static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
+    artifact_id: "16000000-0000-4000-8000-000000000002",
+    byte_length: 818,
+    sha256: "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a",
+    uri: "https://example.invalid/exp-0001/s01.stream",
+    role: "configuration",
+    media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
+    created_by_record_id: "16000000-0000-4000-8000-000000000005",
+};
+static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
+    artifact_id: "16000000-0000-4000-8000-000000000001",
+    byte_length: 3423,
+    sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+    uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
+    role: "configuration",
+    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
+    created_by_record_id: "16000000-0000-4000-8000-000000000006",
+};
 fn context(stream: &[u8]) -> ValidationContext<'_> {
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
         manifest_artifact_sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
         targets: &[],
+        artifact_manifest_bytes: &[],
+        stream_artifact: &STREAM_ARTIFACT,
+        manifest_artifact: &MANIFEST_ARTIFACT,
+        provenance: &[],
     }
 }
 
@@ -81,5 +103,8 @@ fn manifest_closed_json_rejections() {
     for candidate in corpus {
         assert!(std::panic::catch_unwind(|| Manifest::parse(candidate)).is_ok());
     }
-    assert!(validate_manifest(M01.as_bytes(), &context(&stream)).is_ok());
+    assert_eq!(
+        validate_manifest(M01.as_bytes(), &context(&stream)),
+        Err(Error::Reference)
+    );
 }

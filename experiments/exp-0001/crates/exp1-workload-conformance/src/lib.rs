@@ -411,8 +411,8 @@ pub struct SemanticOperation {
 }
 impl SemanticOperation {
     pub fn encode(&self) -> Result<Vec<u8>, Error> {
-        validate_record(&self.op1, b"RDOS-OP1", 14)?;
-        validate_record(&self.env1, b"RDOS-ENV1", 13)?;
+        validate_op1(&self.op1)?;
+        validate_env1(&self.env1, &self.op1)?;
         if self.unit_ns <= 0 {
             return Err(Error::LogicalTimeParameter);
         }
@@ -432,6 +432,109 @@ impl SemanticOperation {
         field(&mut f, 13, &self.unit_ns.to_be_bytes())?;
         Ok(record(b"RDOS-SOP1", 13, f))
     }
+}
+
+fn one(f: &[u8], allowed: &[u8]) -> Result<u8, Error> {
+    if f.len() != 1 || !allowed.contains(&f[0]) {
+        Err(Error::Unsupported)
+    } else {
+        Ok(f[0])
+    }
+}
+
+fn validate_op1(bytes: &[u8]) -> Result<Vec<&[u8]>, Error> {
+    let f = fields(bytes, b"RDOS-OP1", 14)?;
+    if f[0] != 1u16.to_be_bytes() || f[1] != 1u16.to_be_bytes() {
+        return Err(Error::Unsupported);
+    }
+    one(f[2], &[0, 1])?;
+    if f[3].len() != 8
+        || f[4].len() != 8
+        || f[6].len() != 4
+        || f[10].len() != 16
+        || f[11].len() != 16
+        || f[12].len() != 8
+    {
+        return Err(Error::Encoding);
+    }
+    let size = one(f[5], &[0, 1, 2, 3, 4, 5])? as usize;
+    let declared = u32::from_be_bytes(f[6].try_into().map_err(|_| Error::Encoding)?) as usize;
+    if [0, 32, 256, 4096, 65536, 1048576][size] != declared {
+        return Err(Error::SizeClass);
+    }
+    one(f[7], &[1, 2, 3])?;
+    one(f[8], &[1, 2, 3, 4])?;
+    one(f[9], &[1, 2, 3, 4])?;
+    if f[12] != f[4] {
+        return Err(Error::Tuple);
+    }
+    match f[13] {
+        [0] => {}
+        [1, rest @ ..] if rest.len() == 16 => {}
+        _ => return Err(Error::Encoding),
+    }
+    Ok(f)
+}
+
+fn valid_uuid_bytes(v: &[u8]) -> bool {
+    v.len() == 16 && v.iter().any(|&x| x != 0) && (v[8] & 0xc0) == 0x80
+}
+
+fn option_text(v: &[u8]) -> Result<Option<&[u8]>, Error> {
+    match v {
+        [0] => Ok(None),
+        [1, rest @ ..] if !rest.is_empty() && std::str::from_utf8(rest).is_ok() => Ok(Some(rest)),
+        _ => Err(Error::Encoding),
+    }
+}
+
+fn validate_env1<'a>(bytes: &'a [u8], op_bytes: &[u8]) -> Result<Vec<&'a [u8]>, Error> {
+    let env = fields(bytes, b"RDOS-ENV1", 13)?;
+    if env[0] != op_bytes
+        || env[1].is_empty()
+        || env[2].is_empty()
+        || env[4].is_empty()
+        || !valid_uuid_bytes(env[3])
+        || !env[7..=9].iter().all(|x| valid_uuid_bytes(x))
+        || std::str::from_utf8(env[1]).is_err()
+        || std::str::from_utf8(env[2]).is_err()
+        || std::str::from_utf8(env[4]).is_err()
+        || env[10].len() != 8
+        || env[11].len() != 1
+        || env[12].len() < 4
+    {
+        return Err(Error::Encoding);
+    }
+    let source = option_text(env[5])?;
+    let actor = option_text(env[6])?;
+    let count = u32::from_be_bytes(env[12][..4].try_into().map_err(|_| Error::Encoding)?) as usize;
+    if env[12].len()
+        != 4usize
+            .checked_add(16usize.checked_mul(count).ok_or(Error::ResourceLimit)?)
+            .ok_or(Error::ResourceLimit)?
+    {
+        return Err(Error::Encoding);
+    }
+    let mut seen = BTreeSet::new();
+    for id in env[12][4..].chunks_exact(16) {
+        if !valid_uuid_bytes(id) || !seen.insert(id) {
+            return Err(Error::DuplicateOrConflict);
+        }
+    }
+    let op = validate_op1(op_bytes)?;
+    let profile = op[8][0];
+    let semantics = env[11][0];
+    let applicable = match profile {
+        1 => source.is_none() && actor.is_none() && semantics == 0 && count == 0,
+        2 => source.is_some() && actor.is_some() && semantics == 0 && count == 0,
+        3 => semantics == 1 && count > 0,
+        4 => (semantics == 2 || semantics == 3) && count > 0,
+        _ => false,
+    };
+    if !applicable {
+        return Err(Error::ProfileMismatch);
+    }
+    Ok(env)
 }
 
 pub fn validate_record(bytes: &[u8], magic: &[u8], count: u16) -> Result<(), Error> {
@@ -492,7 +595,7 @@ fn fields<'a>(bytes: &'a [u8], magic: &[u8], count: u16) -> Result<Vec<&'a [u8]>
 /// Parses and semantically validates the complete frozen SOP1 profile.
 pub fn validate_semantic_operation(bytes: &[u8]) -> Result<(), Error> {
     let f = fields(bytes, b"RDOS-SOP1", 13)?;
-    let op = fields(f[0], b"RDOS-OP1", 14)?;
+    let op = validate_op1(f[0])?;
     if f[1] != b"EXP-0001-SHA256-CTR-v1"
         && f[1] != b"EXP-0001-SHA256-MOTIF-v1"
         && f[1] != b"EXP-0001-ZERO-v1"
@@ -536,7 +639,7 @@ pub fn validate_semantic_operation(bytes: &[u8]) -> Result<(), Error> {
     if f[1] != expected {
         return Err(Error::ProfileMismatch);
     }
-    let env = fields(f[8], b"RDOS-ENV1", 13)?;
+    let env = validate_env1(f[8], f[0])?;
     if env[0] != f[0] || env[7] != f[4] || env[8] != f[5] || env[9] != f[6] {
         return Err(Error::ProfileMismatch);
     }
@@ -546,6 +649,51 @@ pub fn validate_semantic_operation(bytes: &[u8]) -> Result<(), Error> {
     let unit = i64::from_be_bytes(f[12].try_into().map_err(|_| Error::Encoding)?);
     if unit <= 0 {
         return Err(Error::LogicalTimeParameter);
+    }
+    let mut input = OperationInput {
+        segment: if op[2][0] == 0 {
+            Segment::WarmUp
+        } else {
+            Segment::Measured
+        },
+        seed: u64::from_be_bytes(op[3].try_into().map_err(|_| Error::Encoding)?),
+        ordinal: u64::from_be_bytes(op[4].try_into().map_err(|_| Error::Encoding)?),
+        size_class: op[5][0],
+        content: match op[7][0] {
+            1 => Content::High,
+            2 => Content::Low,
+            _ => Content::Zero,
+        },
+        envelope: match op[8][0] {
+            1 => Envelope::Minimal,
+            2 => Envelope::Provenance,
+            3 => Envelope::Causal,
+            _ => Envelope::CorrectionRetraction,
+        },
+        temporal: match op[9][0] {
+            1 => Temporal::Monotonic,
+            2 => Temporal::EqualBurst,
+            3 => Temporal::Late,
+            _ => Temporal::OutOfOrder,
+        },
+        stream_namespace: op[10].try_into().map_err(|_| Error::Encoding)?,
+        producer_id: op[11].try_into().map_err(|_| Error::Encoding)?,
+        producer_ordinal: u64::from_be_bytes(op[12].try_into().map_err(|_| Error::Encoding)?),
+        controlled_schedule: None,
+    };
+    if op[13][0] == 1 {
+        input.controlled_schedule = Some(op[13][1..].try_into().map_err(|_| Error::Encoding)?);
+    }
+    if f[2] != payload(&input)?
+        || f[4] != identity(&input, IdentityKind::Request)?
+        || f[5] != identity(&input, IdentityKind::Event)?
+        || f[6] != identity(&input, IdentityKind::Information)?
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    let base = i64::from_be_bytes(f[11].try_into().map_err(|_| Error::Encoding)?);
+    if env[10] != logical_time(input.temporal, input.ordinal, base, unit)?.to_be_bytes() {
+        return Err(Error::ProfileMismatch);
     }
     Ok(())
 }
@@ -572,7 +720,60 @@ pub fn workload_stream(
         );
         v.extend(op)
     }
+    validate_stream(&v)?;
     Ok(v)
+}
+
+#[derive(Default)]
+pub(crate) struct StreamBindings {
+    pub envelope: std::collections::BTreeMap<&'static str, u64>,
+    pub temporal: std::collections::BTreeMap<&'static str, u64>,
+    pub size: std::collections::BTreeMap<String, u64>,
+    pub schedule: Option<Option<[u8; 16]>>,
+}
+
+pub(crate) fn stream_bindings(bytes: &[u8]) -> Result<StreamBindings, Error> {
+    validate_stream(bytes)?;
+    let mut p = 55;
+    let mut result = StreamBindings::default();
+    while p < bytes.len() {
+        let z = usize::try_from(u64::from_be_bytes(
+            bytes[p..p + 8].try_into().map_err(|_| Error::Encoding)?,
+        ))
+        .map_err(|_| Error::ResourceLimit)?;
+        p += 8;
+        let sop = fields(&bytes[p..p + z], b"RDOS-SOP1", 13)?;
+        let op = validate_op1(sop[0])?;
+        p += z;
+        let envelope = [
+            "",
+            "envelope-minimal",
+            "envelope-provenance",
+            "envelope-causal-reference",
+            "envelope-correction-retraction-reference",
+        ][op[8][0] as usize];
+        let temporal = [
+            "",
+            "time-monotonic-effective",
+            "time-equal-burst-v1",
+            "time-late-arriving-v1",
+            "time-out-of-effective-order-v1",
+        ][op[9][0] as usize];
+        *result.envelope.entry(envelope).or_default() += 1;
+        *result.temporal.entry(temporal).or_default() += 1;
+        *result.size.entry(format!("P{}", op[5][0])).or_default() += 1;
+        let schedule = if op[13][0] == 0 {
+            None
+        } else {
+            Some(op[13][1..].try_into().map_err(|_| Error::Encoding)?)
+        };
+        match result.schedule {
+            None => result.schedule = Some(schedule),
+            Some(x) if x == schedule => {}
+            _ => return Err(Error::ProfileMismatch),
+        }
+    }
+    Ok(result)
 }
 pub fn validate_stream(bytes: &[u8]) -> Result<(u64, u64, u64), Error> {
     if bytes.len() < 55 || &bytes[..31] != b"RDOS-WS1EXP-0001-SEMANTIC-OP-v1" {
@@ -584,7 +785,7 @@ pub fn validate_stream(bytes: &[u8]) -> Result<(u64, u64, u64), Error> {
         return Err(Error::CountMismatch);
     }
     let mut p = 55;
-    for _ in 0..n {
+    for index in 0..n {
         if p + 8 > bytes.len() {
             return Err(Error::Encoding);
         }
@@ -594,7 +795,18 @@ pub fn validate_stream(bytes: &[u8]) -> Result<(u64, u64, u64), Error> {
         if p > bytes.len() {
             return Err(Error::Encoding);
         }
-        validate_semantic_operation(&bytes[p - z..p])?;
+        let sop = &bytes[p - z..p];
+        validate_semantic_operation(sop)?;
+        let sf = fields(sop, b"RDOS-SOP1", 13)?;
+        let op = validate_op1(sf[0])?;
+        let expected_segment = if index < w { 0 } else { 1 };
+        let expected_ordinal = if index < w { index } else { index - w };
+        if op[2][0] != expected_segment
+            || u64::from_be_bytes(op[4].try_into().map_err(|_| Error::Encoding)?)
+                != expected_ordinal
+        {
+            return Err(Error::Ordering);
+        }
     }
     if p != bytes.len() {
         return Err(Error::Encoding);
@@ -619,8 +831,8 @@ fn domain_digest(domain: &str, bytes: &[u8]) -> [u8; 32] {
 
 mod manifest;
 pub use manifest::{
-    Manifest, ManifestDigestDescriptor, ManifestReference, SupersessionTarget, ValidationContext,
-    validate_manifest,
+    ArtifactMetadata, Manifest, ManifestDigestDescriptor, ManifestReference, ProvenanceEdge,
+    SupersessionTarget, ValidationContext, validate_manifest,
 };
 
 pub fn validate_supersession(
