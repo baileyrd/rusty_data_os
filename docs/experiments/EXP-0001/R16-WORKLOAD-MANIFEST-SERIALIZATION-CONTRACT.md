@@ -229,10 +229,10 @@ The resulting M01 values are 3423 octets, manifest digest
 digest `49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc`. These literals, not
 implementation-generated expectations, are the corrected oracle.
 
-The example intentionally contains fictional publication identities, URIs, manifest-reference
-metadata, and no generated artifact. Those fictional external R7 values illustrate
-the closed binding shape; the literal manifest digest, R14 stream length, workload-stream digest,
-and exact stream-artifact digest are normative and independently reproducible.
+The example retains non-production publication identities and URIs, but its manifest-reference
+metadata now binds the literal repository-contained R7 fixture above. The manifest and fixture
+lengths and digests, R14 stream length, workload-stream digest, and exact stream-artifact digest
+are normative and independently reproducible.
 
 ### 4.2 Negative vectors
 
