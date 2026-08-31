@@ -38,3 +38,12 @@ This registry links intent to planned validation without inventing evidence.
 | ADR-0002 | REQ-001 through REQ-014 and terminology | Accepted research constraints; no empirical validation claim |
 
 No listed link represents completed experiment evidence.
+
+## R17 / Slice A2 trace
+
+| Approval | Implementation | Authorities exercised | Evidence | Retained boundary |
+|---|---|---|---|---|
+| Issue #63, `EXP-0001-A2/workload-conformance-v1` | `experiments/exp-0001/crates/exp1-workload-conformance` | R12 / BLK-006–007; R14 / BLK-008; R16 / BLK-009 | literal-vector implementation/correctness validation | BLK-015; Slice C/B1; execution; benchmark/capture; persistence; faults; durability; adapters; production |
+
+BLK-020/026/027 apply to A2 only through the existing dependency-free workspace, Rust 1.89.0,
+and unchanged exact-head CI gate. R17 grants no later-slice authority.

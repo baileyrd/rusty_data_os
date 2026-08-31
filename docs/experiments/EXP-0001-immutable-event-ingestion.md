@@ -131,3 +131,10 @@ The experiment is complete when:
 - B0–B3 applicable profiles are run under the baseline contract, with every conditionally equivalent or diagnostic classification preserved and no excluded semantic form presented like-for-like;
 - an immutable interpretation record identifies supported, refuted, constrained, and unresolved claims under the frozen criteria and threshold versions;
 - HYP-0001 or follow-on hypotheses are updated without overstating evidence.
+
+## Slice A2 conformance closure
+
+R17 records issue #63's prospectively approved, dependency-free R12/R14/R16 workload-conformance
+implementation as correctness evidence only. No workload was executed and no benchmark, storage,
+persistence, fault, durability, adapter, production, or architecture claim follows. BLK-015 and
+Slice C/B1 and execution gates remain unchanged; no next tranche is authorized.

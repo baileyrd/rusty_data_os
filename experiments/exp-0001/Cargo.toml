@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/exp1-record-format"]
-default-members = ["crates/exp1-record-format"]
+members = ["crates/exp1-record-format", "crates/exp1-workload-conformance"]
+default-members = ["crates/exp1-record-format", "crates/exp1-workload-conformance"]
 resolver = "3"
 
 [workspace.package]
