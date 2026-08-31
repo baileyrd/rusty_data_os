@@ -195,23 +195,61 @@ possessing it. The following single line is the **exact canonical JCS text and U
 no trailing newline:
 
 ```json
-{"authority_revisions":[{"authority":"EXP-0000-WORKLOADS","revision":{"kind":"git_sha","value":"70a29efd46dd3aee9ea9cb0831d0285b83cdd70a"}},{"authority":"EXP-0001-R12","revision":{"kind":"git_sha","value":"e39551e64d9a799a3d15bf75aa70a323c8e40ca8"}},{"authority":"EXP-0001-R14","revision":{"kind":"git_sha","value":"78b8b35e4efda44a8097db05f396679a1265a239"}},{"authority":"EXP-0001-R16","revision":{"kind":"reviewed_authority_id","value":"documentation-vector-v1"}},{"authority":"EXP-0001-R2","revision":{"kind":"git_sha","value":"2659fb34caf054a7742a854d69d17cdd59bd2040"}},{"authority":"EXP-0001-R7","revision":{"kind":"git_sha","value":"f9d9876cf6599345a2e2244223a530ada2b9a828"}}],"counts":{"by_envelope_profile":[{"count":"1","profile":"envelope-minimal"}],"by_segment":[{"count":"1","segment":"warm_up"},{"count":"0","segment":"measured"}],"by_size_class":[{"count":"1","profile":"P1"}],"by_temporal_profile":[{"count":"1","profile":"time-monotonic-effective"}],"measured_operation_count":"0","operation_count":"1","warm_up_operation_count":"1"},"created_at_utc_ns":"1788134400000000000","generator_inputs":{"actor_provenance":{"state":"not_applicable"},"base_ns":"1000","controlled_schedule":{"state":"not_applicable"},"correction_fact_type":{"state":"not_applicable"},"envelope_semantic_version":"1","generator_version":"1","ordinary_fact_type":"fact-A","producer_count":"1","producer_id":"10213243-5465-4768-899a-abbccddeef00","reference_cardinality":"0","schema_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","schema_version":"1","seed":"0","source_provenance":{"state":"not_applicable"},"stream_namespace":"00112233-4455-4677-8899-aabbccddeeff","unit_ns":"10","workload_contract_version":"1"},"manifest_id":"16000000-0000-4000-8000-000000000001","profiles":{"digest":"SHA-256/FIPS-180-4","envelope":"envelope-minimal","envelope_generator":"EXP-0001-ENVELOPE-INPUT-v1","identity_generator":"EXP-0001-UUID4-SHA256-v1","logical_time_generator":"EXP-0001-LOGICAL-TIME-v1","manifest":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","payload_content":"deterministic-high-variation","payload_generator":"EXP-0001-SHA256-CTR-v1","payload_size":"fixed-P1","reference_generator":"EXP-0001-PRIOR-EVENTS-v1","semantic_operation":"EXP-0001-SEMANTIC-OP-v1","size_class_order":"EXP-0000-SIZE-CLASS-ORDER-v1","temporal":"time-monotonic-effective","workload_contract":"EXP-0000-WORKLOADS-v1","workload_stream":"EXP-0001-WORKLOAD-STREAM-v1"},"record_kind":"workload_manifest","schema_version":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","stream_digest":{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-stream/v1","value":"0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09"},"stream_ref":{"artifact_id":"16000000-0000-4000-8000-000000000002","artifact_manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000004","byte_length":"4096","sha256":"1111111111111111111111111111111111111111111111111111111111111111","uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"},"byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"},"supersession":{"reason":{"state":"not_applicable"},"supersedes_manifest_ids":[]},"workload_id":"16000000-0000-4000-8000-000000000003"}
+{"authority_revisions":[{"authority":"EXP-0000-WORKLOADS","revision":{"kind":"git_sha","value":"70a29efd46dd3aee9ea9cb0831d0285b83cdd70a"}},{"authority":"EXP-0001-R12","revision":{"kind":"git_sha","value":"e39551e64d9a799a3d15bf75aa70a323c8e40ca8"}},{"authority":"EXP-0001-R14","revision":{"kind":"git_sha","value":"78b8b35e4efda44a8097db05f396679a1265a239"}},{"authority":"EXP-0001-R16","revision":{"kind":"reviewed_authority_id","value":"documentation-vector-v1"}},{"authority":"EXP-0001-R2","revision":{"kind":"git_sha","value":"2659fb34caf054a7742a854d69d17cdd59bd2040"}},{"authority":"EXP-0001-R7","revision":{"kind":"git_sha","value":"f9d9876cf6599345a2e2244223a530ada2b9a828"}}],"counts":{"by_envelope_profile":[{"count":"1","profile":"envelope-minimal"}],"by_segment":[{"count":"1","segment":"warm_up"},{"count":"0","segment":"measured"}],"by_size_class":[{"count":"1","profile":"P1"}],"by_temporal_profile":[{"count":"1","profile":"time-monotonic-effective"}],"measured_operation_count":"0","operation_count":"1","warm_up_operation_count":"1"},"created_at_utc_ns":"1788134400000000000","generator_inputs":{"actor_provenance":{"state":"not_applicable"},"base_ns":"1000","controlled_schedule":{"state":"not_applicable"},"correction_fact_type":{"state":"not_applicable"},"envelope_semantic_version":"1","generator_version":"1","ordinary_fact_type":"fact-A","producer_count":"1","producer_id":"10213243-5465-4768-899a-abbccddeef00","reference_cardinality":"0","schema_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","schema_version":"1","seed":"0","source_provenance":{"state":"not_applicable"},"stream_namespace":"00112233-4455-4677-8899-aabbccddeeff","unit_ns":"10","workload_contract_version":"1"},"manifest_id":"16000000-0000-4000-8000-000000000001","profiles":{"digest":"SHA-256/FIPS-180-4","envelope":"envelope-minimal","envelope_generator":"EXP-0001-ENVELOPE-INPUT-v1","identity_generator":"EXP-0001-UUID4-SHA256-v1","logical_time_generator":"EXP-0001-LOGICAL-TIME-v1","manifest":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","payload_content":"deterministic-high-variation","payload_generator":"EXP-0001-SHA256-CTR-v1","payload_size":"fixed-P1","reference_generator":"EXP-0001-PRIOR-EVENTS-v1","semantic_operation":"EXP-0001-SEMANTIC-OP-v1","size_class_order":"EXP-0000-SIZE-CLASS-ORDER-v1","temporal":"time-monotonic-effective","workload_contract":"EXP-0000-WORKLOADS-v1","workload_stream":"EXP-0001-WORKLOAD-STREAM-v1"},"record_kind":"workload_manifest","schema_version":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","stream_digest":{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-stream/v1","value":"0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09"},"stream_ref":{"artifact_id":"16000000-0000-4000-8000-000000000002","artifact_manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000009","byte_length":"1274","sha256":"b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c","uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"},"byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"},"supersession":{"reason":{"state":"not_applicable"},"supersedes_manifest_ids":[]},"workload_id":"16000000-0000-4000-8000-000000000003"}
 ```
 
 M01 is 3423 octets. Applying section 2.6 to those literal bytes yields the independently
 checkable manifest digest
-`b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9`. Its external descriptor is therefore:
+`68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594`. Its external descriptor is therefore:
 
 ```json
-{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-manifest/v1","manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","sha256":"8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178","uri":"https://example.invalid/exp-0001/m01.manifest.jcs"},"profile":"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1","value":"b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"}
+{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-manifest/v1","manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","sha256":"ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86","uri":"https://example.invalid/exp-0001/m01.manifest.jcs"},"profile":"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1","value":"68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594"}
 ```
 
-The example intentionally contains fictional publication identities, URIs, manifest-reference
-metadata, and no generated artifact. Those fictional external R7 values illustrate
-the closed binding shape; the literal manifest digest, R14 stream length, workload-stream digest,
-and exact stream-artifact digest are normative and independently reproducible.
+### 4.2 Realizable immutable R7 fixture correction
 
-### 4.2 Negative vectors
+The owner selected M01 as the canonical positively valid vector. The prior synthetic 4096-octet,
+all-`1` reference is superseded by these repository-contained literal R7 record bytes:
+
+```json
+{"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000002/configuration","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","retention_state":"published","role":"configuration","sensitivity":"public","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream","validation_report_ids":[]}],"provenance_edges":[{"from_artifact_id":"16000000-0000-4000-8000-000000000002","relation":"generated_from","to_artifact_id":"16000000-0000-4000-8000-000000000001"}],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000004","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}
+```
+
+The stream fixture is exactly **1274 octets** and its R7 exact-artifact digest is
+`b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c`. It uses the complete
+`EXP1-R7-JSON-JCS-1` envelope and closed run-scoped `artifact_manifest` body, including `scope`,
+`publication_state`, `series_freeze`, the full stream artifact entry, and the digest-bound internal provenance-edge array. The parsed edge establishes the
+`generated_from` relation from stream artifact `...0002` to workload-manifest artifact `...0001`;
+`created_by_record_id` binds the stream entry to record `...0005`. The unchanged R14 stream remains
+818 octets with workload digest `0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09`
+and exact-artifact digest `789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a`.
+The resulting M01 values are 3423 octets, manifest digest
+`68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594`, and R7 exact-artifact
+digest `ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86`. These literals, not
+implementation-generated expectations, are the corrected oracle.
+
+The graph endpoint is resolved without a digest self-reference by this second, independently
+digest-bound canonical R7 `artifact_manifest` fixture. It contains the complete closed
+workload-manifest artifact entry rather than free-floating metadata:
+
+```json
+{"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","created_by_record_id":"16000000-0000-4000-8000-000000000006","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000001/workload_manifest","media_type":"application/vnd.rusty-data-os.exp1-workload-manifest+jcs","retention_state":"published","role":"workload_manifest","sensitivity":"public","sha256":"ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86","uri":"https://example.invalid/exp-0001/m01.manifest.jcs","validation_report_ids":[]}],"provenance_edges":[],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000010","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}
+```
+
+This endpoint fixture is exactly **1152 octets** and has R7 exact-artifact digest
+`d49627606be85859b5067962eb4b793a0c757774c5d9c32bf5f5658355d0418e`. Its artifact-reference
+identity is `16000000-0000-4000-8000-000000000011`, independently of envelope record identity
+`...0010`. The full entry binds M01 identity, 3423-octet length, exact-artifact digest, URI,
+`workload_manifest` role, exact `+jcs` media type, creating record `...0006`, logical path,
+published retention, public sensitivity, and empty validation-report set. Validation combines
+both immutable fixtures and rejects a missing or conflicting endpoint.
+
+The example retains non-production publication identities and URIs, but its manifest-reference
+metadata now binds the literal repository-contained R7 fixture above. The manifest and fixture
+lengths and digests, R14 stream length, workload-stream digest, and exact stream-artifact digest
+are normative and independently reproducible.
+
+### 4.3 Negative vectors
 
 | Vector | Mutation of M01 | Required disposition |
 |---|---|---|
@@ -223,7 +261,7 @@ and exact stream-artifact digest are normative and independently reproducible.
 | N06 | Pretty-print, append LF, exchange any two members, or escape a character differently from JCS. | `noncanonical`, even when the JSON value is otherwise equivalent. |
 | N07 | Give an original a reason, give a correction no target/reason, self-reference, form a cycle, or correct another workload ID. | `duplicate-or-conflict`, `supersession-cycle`, or `immutable-state`. |
 | N08 | Duplicate a JSON name, omit `seed`, use `null`, or use numeric `1` for a count. | `duplicate-member`, `missing-field`, or `type`. |
-| N09 | Omit/mismatch the stream role, media type, creating record, artifact-manifest reference, artifact entry, or required provenance edge. | `reference`; no stream or manifest is accepted. |
+| N09 | Omit/mismatch either artifact entry, a provenance endpoint, role, media type, creating record, artifact-manifest reference, identity, length, digest, URI, logical path, sensitivity, retention, validation-report IDs, or required provenance edge; add an unknown artifact-entry field. | `reference`, `unknown-field`, or the corresponding structural failure; no stream or manifest is accepted. |
 
 
 ## 5. Disposition and exclusions

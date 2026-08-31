@@ -5,11 +5,11 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
     algorithm: "SHA-256/FIPS-180-4",
     domain: MANIFEST_DOMAIN,
     profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
-    value: "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9",
+    value: "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594",
     manifest_ref: ManifestReference {
         artifact_id: "16000000-0000-4000-8000-000000000001",
         byte_length: 3423,
-        sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
@@ -22,25 +22,22 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
     created_by_record_id: "16000000-0000-4000-8000-000000000005",
 };
-static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
-    artifact_id: "16000000-0000-4000-8000-000000000001",
-    byte_length: 3423,
-    sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
-    uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
-    role: "configuration",
-    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
-    created_by_record_id: "16000000-0000-4000-8000-000000000006",
+static WORKLOAD_ARTIFACT_MANIFEST_REF: ManifestReference<'static> = ManifestReference {
+    artifact_id: "16000000-0000-4000-8000-000000000011",
+    byte_length: 1152,
+    sha256: "d49627606be85859b5067962eb4b793a0c757774c5d9c32bf5f5658355d0418e",
+    uri: "https://example.invalid/exp-0001/workload-artifact-manifest.jcs",
 };
 fn context(stream: &[u8]) -> ValidationContext<'_> {
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
-        manifest_artifact_sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        manifest_artifact_sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         targets: &[],
         artifact_manifest_bytes: &[],
         stream_artifact: &STREAM_ARTIFACT,
-        manifest_artifact: &MANIFEST_ARTIFACT,
-        provenance: &[],
+        workload_artifact_manifest_bytes: R7_WORKLOAD_ARTIFACT_MANIFEST,
+        workload_artifact_manifest_ref: &WORKLOAD_ARTIFACT_MANIFEST_REF,
     }
 }
 

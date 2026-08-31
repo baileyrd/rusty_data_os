@@ -44,3 +44,5 @@ The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS
 The R12/R14/R16 contract subset now has dependency-free implementation/correctness evidence under
 issue #63. This does not resolve execution/capture unknowns, BLK-015, or any Slice C/B1,
 persistence, fault, durability, benchmark, adapter, or production uncertainty.
+
+The reopened M01 realizability unknown is resolved by the owner-selected real R7 fixture. This restores only the A2 conformance claim after its exact-head gate; it does not resolve execution, persistence, benchmark, fault, durability, or later-slice unknowns.

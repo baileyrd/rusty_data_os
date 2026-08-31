@@ -189,3 +189,5 @@ implementation and correctness-vector closure. This extends BLK-020/026/027 only
 conformance workspace member and implements BLK-006–009 only at the R12/R14/R16 contract boundary.
 It does not authorize Slice C/B1, execution, benchmark/capture, persistence, faults, durability,
 adapters, production code, or a later tranche.
+
+The owner-selected A2 correction replaces M01’s synthetic reference with the literal closed R7 record and restores the bounded R17 conformance gate only after exact-head review and CI. It does not satisfy any execution or later-slice gate.

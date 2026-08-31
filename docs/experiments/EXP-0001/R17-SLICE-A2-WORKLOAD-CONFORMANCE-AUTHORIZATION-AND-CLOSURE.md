@@ -2,7 +2,7 @@
 
 **Approval:** GitHub issue #63, `EXP-0001-A2/workload-conformance-v1`
 **Authority base:** `27e5141d48991ecce2770bfa1720d03ac4ae67da` (PR #62 / R16)
-**Status:** prospective implementation/correctness-validation closure, contingent on corrected exact-head PR review and CI
+**Status:** closed as bounded implementation/correctness-validation evidence after the corrective gate
 
 ## Boundary and result
 
@@ -23,7 +23,7 @@ expected values are authority-derived constants independent of code under test. 
 negative tables cover malformed/truncated streams, scalar rejection, canonical-byte rejection,
 and supersession conflicts without randomized tooling.
 
-After the corrected exact head passes review and CI, BLK-006, BLK-007, BLK-008, and BLK-009 are implemented only for this experiment-local
+BLK-006, BLK-007, BLK-008, and BLK-009 are implemented only for this experiment-local
 conformance subset; their original documentation-design resolutions remain distinct from this
 correctness evidence. BLK-020, BLK-026, and BLK-027 extend only to this dependency-free A2 member
 under the existing harness and CI. The closure gate must confirm that the reviewed contracts' covered vectors
@@ -41,3 +41,7 @@ faults, persistence, recovery, durability, adapters, production crates, and arch
 remain blocked and unauthorized. No workload or benchmark was run. The recommended next
 substantial tranche is a separately reviewed, smallest-useful readiness increment addressing an
 open gate; R17 does not automatically authorize storage, harness implementation, or execution.
+
+## Owner-selected M01 correction
+
+The reopened A2 review selected option 1: M01 remains canonical and positively valid. This corrective tranche uses the literal 1274-byte closed R7 stream record plus a non-cyclic, independently digest-bound 1152-byte R7 workload-manifest artifact record. Together they resolve both `generated_from` endpoints through complete closed artifact entries and validate the actual R7 envelope, artifact-manifest body, role/media/retention/sensitivity/validation metadata, and authoritative provenance field names. Corrected tests require full M01 success and retain the documentation-design versus bounded implementation/correctness-evidence distinction. The corrective gate closes only this bounded conformance/correctness tranche; all later-work exclusions remain unchanged.

@@ -12,7 +12,7 @@ fn repeatability() {
         );
         assert_eq!(
             hex(&manifest_digest(M01.as_bytes())),
-            "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"
+            "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594"
         );
     }
 }

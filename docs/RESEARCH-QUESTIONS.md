@@ -16,3 +16,5 @@ RQ-002 completion records measurement readiness, not evidence. The [EXP-0001 rea
 Slice A2 answers only whether the covered frozen R12/R14/R16 vectors can be implemented together
 without dependencies: its correctness suite says yes. It does not answer performance, execution,
 storage, persistence, fault, durability, adapter, or production research questions.
+
+The corrected M01/R7 fixture supports only the RQ-003 sub-question that the frozen contracts are mutually executable; it is not ingestion execution or performance evidence.

@@ -5,11 +5,11 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
     algorithm: "SHA-256/FIPS-180-4",
     domain: MANIFEST_DOMAIN,
     profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
-    value: "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9",
+    value: "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594",
     manifest_ref: ManifestReference {
         artifact_id: "16000000-0000-4000-8000-000000000001",
         byte_length: 3423,
-        sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
@@ -22,39 +22,37 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
     created_by_record_id: "16000000-0000-4000-8000-000000000005",
 };
-static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
-    artifact_id: "16000000-0000-4000-8000-000000000001",
-    byte_length: 3423,
-    sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
-    uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
-    role: "configuration",
-    media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
-    created_by_record_id: "16000000-0000-4000-8000-000000000006",
+static WORKLOAD_ARTIFACT_MANIFEST_REF: ManifestReference<'static> = ManifestReference {
+    artifact_id: "16000000-0000-4000-8000-000000000011",
+    byte_length: 1152,
+    sha256: "d49627606be85859b5067962eb4b793a0c757774c5d9c32bf5f5658355d0418e",
+    uri: "https://example.invalid/exp-0001/workload-artifact-manifest.jcs",
 };
-fn context(stream: &[u8]) -> ValidationContext<'_> {
-    static ARTIFACT_MANIFEST: &[u8] = br#"{"artifact_id":"16000000-0000-4000-8000-000000000004","artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"}],"provenance_edges":[{"from":"16000000-0000-4000-8000-000000000002","relation":"created_by","to":"16000000-0000-4000-8000-000000000005"},{"from":"16000000-0000-4000-8000-000000000005","relation":"derived_from","to":"16000000-0000-4000-8000-000000000001"}],"uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"}"#;
-    static PROVENANCE: [ProvenanceEdge<'static>; 2] = [
-        ProvenanceEdge {
-            from: "16000000-0000-4000-8000-000000000002",
-            to: "16000000-0000-4000-8000-000000000005",
-            relation: "created_by",
-        },
-        ProvenanceEdge {
-            from: "16000000-0000-4000-8000-000000000005",
-            to: "16000000-0000-4000-8000-000000000001",
-            relation: "derived_from",
-        },
-    ];
+fn context_with<'a>(
+    stream: &'a [u8],
+    artifact_manifest_bytes: &'a [u8],
+    workload_artifact_manifest_bytes: &'a [u8],
+    workload_artifact_manifest_ref: &'a ManifestReference<'a>,
+) -> ValidationContext<'a> {
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
-        manifest_artifact_sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        manifest_artifact_sha256: "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
         targets: &[],
-        artifact_manifest_bytes: ARTIFACT_MANIFEST,
+        artifact_manifest_bytes,
+        workload_artifact_manifest_bytes,
+        workload_artifact_manifest_ref,
         stream_artifact: &STREAM_ARTIFACT,
-        manifest_artifact: &MANIFEST_ARTIFACT,
-        provenance: &PROVENANCE,
     }
+}
+
+fn context(stream: &[u8]) -> ValidationContext<'_> {
+    context_with(
+        stream,
+        R7_ARTIFACT_MANIFEST,
+        R7_WORKLOAD_ARTIFACT_MANIFEST,
+        &WORKLOAD_ARTIFACT_MANIFEST_REF,
+    )
 }
 
 fn typed_m01() -> TypedManifest {
@@ -157,9 +155,9 @@ fn typed_m01() -> TypedManifest {
         stream_ref: StreamReference {
             artifact_id: "16000000-0000-4000-8000-000000000002".into(),
             artifact_manifest_ref: ArtifactReference {
-                artifact_id: "16000000-0000-4000-8000-000000000004".into(),
-                byte_length: 4096,
-                sha256: "1111111111111111111111111111111111111111111111111111111111111111".into(),
+                artifact_id: "16000000-0000-4000-8000-000000000009".into(),
+                byte_length: 1274,
+                sha256: "b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c".into(),
                 uri: "https://example.invalid/exp-0001/artifact-manifest.jcs".into(),
             },
             byte_length: 818,
@@ -188,18 +186,136 @@ fn m01_literal() {
         hex(&artifact_digest(&stream)),
         "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a"
     );
+    assert_eq!(R7_ARTIFACT_MANIFEST.len(), 1274);
+    assert_eq!(
+        hex(&artifact_digest(R7_ARTIFACT_MANIFEST)),
+        "b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c"
+    );
     assert_eq!(M01.len(), 3423);
     assert_eq!(
         hex(&manifest_digest(M01.as_bytes())),
-        "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"
+        "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594"
     );
     let typed = Manifest::from_typed(typed_m01()).unwrap();
     assert_eq!(typed.canonical_bytes(), M01.as_bytes());
-    // R16 labels M01 a valid manifest-byte vector, but its fictional external
-    // R7 reference declares unavailable 4096-byte/all-`1`-digest bytes. Full
-    // R7 validation must reject rather than exempt that unsatisfied reference.
-    assert_eq!(
-        validate_manifest(M01.as_bytes(), &context(&stream)),
-        Err(Error::Reference)
+    assert!(validate_manifest(M01.as_bytes(), &context(&stream)).is_ok());
+}
+
+#[test]
+fn r7_closed_record_and_reference_fail_closed() {
+    let stream = workload_stream(&[decode_hex(S01).unwrap()], 1, 0).unwrap();
+    let cases = [
+        (
+            "\"record_kind\":\"artifact_manifest\"",
+            "\"record_kind\":\"environment\"",
+        ),
+        ("\"scope\":\"run\"", "\"scope\":\"series\""),
+        (
+            "\"publication_state\":\"published\"",
+            "\"publication_state\":\"staged\"",
+        ),
+        ("\"logical_path\":", "\"unknown\":\"x\",\"logical_path\":"),
+        ("\"sensitivity\":\"public\",", ""),
+        ("\"from_artifact_id\"", "\"from\""),
+    ];
+    for (old, new) in cases {
+        let fixture = String::from_utf8(R7_ARTIFACT_MANIFEST.to_vec())
+            .unwrap()
+            .replacen(old, new, 1);
+        assert!(
+            validate_manifest(
+                M01.as_bytes(),
+                &context_with(
+                    &stream,
+                    fixture.as_bytes(),
+                    R7_WORKLOAD_ARTIFACT_MANIFEST,
+                    &WORKLOAD_ARTIFACT_MANIFEST_REF
+                )
+            )
+            .is_err()
+        );
+    }
+
+    let mut missing_entry = String::from_utf8(R7_WORKLOAD_ARTIFACT_MANIFEST.to_vec()).unwrap();
+    let entry_start = missing_entry.find("\"artifacts\":[").unwrap() + "\"artifacts\":[".len();
+    let entry_end = missing_entry.find("],\"provenance_edges\"").unwrap();
+    missing_entry.replace_range(entry_start..entry_end, "");
+    let missing_digest = hex(&artifact_digest(missing_entry.as_bytes()));
+    let missing_reference = ManifestReference {
+        artifact_id: WORKLOAD_ARTIFACT_MANIFEST_REF.artifact_id,
+        byte_length: missing_entry.len() as u64,
+        sha256: &missing_digest,
+        uri: WORKLOAD_ARTIFACT_MANIFEST_REF.uri,
+    };
+    assert!(
+        validate_manifest(
+            M01.as_bytes(),
+            &context_with(
+                &stream,
+                R7_ARTIFACT_MANIFEST,
+                missing_entry.as_bytes(),
+                &missing_reference
+            )
+        )
+        .is_err()
+    );
+
+    let workload_cases = [
+        ("000000000001\",", "000000000099\","),
+        ("\"byte_length\":\"3423\"", "\"byte_length\":\"3424\""),
+        (
+            "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
+            "aa4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
+        ),
+        ("m01.manifest.jcs", "wrong.manifest.jcs"),
+        ("workload_manifest\",", "configuration\","),
+        (
+            "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
+            "application/json",
+        ),
+        ("000000000006\",", "000000000099\","),
+        ("\"sensitivity\":\"public\"", "\"sensitivity\":\"secret\""),
+        (
+            "\"validation_report_ids\":[]",
+            "\"validation_report_ids\":[],\"unknown\":\"x\"",
+        ),
+    ];
+    for (old, new) in workload_cases {
+        let fixture = String::from_utf8(R7_WORKLOAD_ARTIFACT_MANIFEST.to_vec())
+            .unwrap()
+            .replacen(old, new, 1);
+        let digest = hex(&artifact_digest(fixture.as_bytes()));
+        let reference = ManifestReference {
+            artifact_id: WORKLOAD_ARTIFACT_MANIFEST_REF.artifact_id,
+            byte_length: fixture.len() as u64,
+            sha256: &digest,
+            uri: WORKLOAD_ARTIFACT_MANIFEST_REF.uri,
+        };
+        assert!(
+            validate_manifest(
+                M01.as_bytes(),
+                &context_with(
+                    &stream,
+                    R7_ARTIFACT_MANIFEST,
+                    fixture.as_bytes(),
+                    &reference
+                )
+            )
+            .is_err(),
+            "accepted workload artifact mutation: {old}"
+        );
+    }
+
+    assert!(
+        validate_manifest(
+            M01.as_bytes(),
+            &context_with(
+                &stream,
+                &R7_ARTIFACT_MANIFEST[..1273],
+                R7_WORKLOAD_ARTIFACT_MANIFEST,
+                &WORKLOAD_ARTIFACT_MANIFEST_REF,
+            )
+        )
+        .is_err()
     );
 }

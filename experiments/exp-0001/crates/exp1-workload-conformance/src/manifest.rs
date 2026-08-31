@@ -600,8 +600,8 @@ pub struct ArtifactMetadata<'a> {
 }
 #[derive(Clone, Debug)]
 pub struct ProvenanceEdge<'a> {
-    pub from: &'a str,
-    pub to: &'a str,
+    pub from_artifact_id: &'a str,
+    pub to_artifact_id: &'a str,
     pub relation: &'a str,
 }
 #[derive(Clone, Debug)]
@@ -611,9 +611,9 @@ pub struct ValidationContext<'a> {
     pub manifest_artifact_sha256: &'a str,
     pub targets: &'a [SupersessionTarget<'a>],
     pub artifact_manifest_bytes: &'a [u8],
+    pub workload_artifact_manifest_bytes: &'a [u8],
+    pub workload_artifact_manifest_ref: &'a ManifestReference<'a>,
     pub stream_artifact: &'a ArtifactMetadata<'a>,
-    pub manifest_artifact: &'a ArtifactMetadata<'a>,
-    pub provenance: &'a [ProvenanceEdge<'a>],
 }
 
 pub fn validate_manifest(candidate: &[u8], ctx: &ValidationContext<'_>) -> Result<Manifest, Error> {
@@ -685,40 +685,51 @@ fn validate_r7(
     {
         return Err(Error::Reference);
     }
-    validate_artifact_manifest(ctx.artifact_manifest_bytes, amr, stream, ctx.provenance)?;
-    let ma = ctx.manifest_artifact;
+    let edge_target = validate_artifact_manifest(
+        ctx.artifact_manifest_bytes,
+        amr,
+        stream,
+        "exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000002/configuration",
+        Some(stream.artifact_id),
+    )?;
     let d = &ctx.descriptor.manifest_ref;
-    if ma.artifact_id != d.artifact_id
-        || ma.byte_length as usize != candidate.len()
-        || ma.sha256 != hex(&artifact_digest(candidate))
-        || ma.uri != d.uri
-        || ma.role != "configuration"
-        || ma.media_type != "application/vnd.rusty-data-os.exp1-workload-manifest"
+    let manifest = ArtifactMetadata {
+        artifact_id: d.artifact_id,
+        byte_length: d.byte_length,
+        sha256: d.sha256,
+        uri: d.uri,
+        role: "workload_manifest",
+        media_type: "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
+        created_by_record_id: "16000000-0000-4000-8000-000000000006",
+    };
+    if manifest.byte_length as usize != candidate.len()
+        || manifest.sha256 != hex(&artifact_digest(candidate))
+        || edge_target.as_deref() != Some(manifest.artifact_id)
     {
         return Err(Error::Reference);
     }
-    let created = stream.created_by_record_id;
-    if !ctx
-        .provenance
-        .iter()
-        .any(|e| e.from == stream.artifact_id && e.to == created && e.relation == "created_by")
-    {
+    let manifest_edges = validate_artifact_manifest(
+        ctx.workload_artifact_manifest_bytes,
+        &reference_json(ctx.workload_artifact_manifest_ref),
+        &manifest,
+        "exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000001/workload_manifest",
+        None,
+    )?;
+    if manifest_edges.is_some() {
         return Err(Error::Reference);
-    }
-    let mut current = created;
-    let mut seen = BTreeSet::new();
-    while current != ma.artifact_id {
-        if !seen.insert(current) {
-            return Err(Error::Reference);
-        }
-        let next = ctx
-            .provenance
-            .iter()
-            .find(|e| e.from == current && e.relation == "derived_from")
-            .ok_or(Error::Reference)?;
-        current = next.to;
     }
     Ok(())
+}
+
+fn reference_json(reference: &ManifestReference<'_>) -> BTreeMap<String, Json> {
+    [
+        ("artifact_id".into(), s(reference.artifact_id)),
+        ("byte_length".into(), s(reference.byte_length.to_string())),
+        ("sha256".into(), s(reference.sha256)),
+        ("uri".into(), s(reference.uri)),
+    ]
+    .into_iter()
+    .collect()
 }
 
 /// Parse the dependency-free R7 publication fixture and bind the bytes to the
@@ -727,8 +738,9 @@ fn validate_artifact_manifest(
     bytes: &[u8],
     reference: &BTreeMap<String, Json>,
     stream: &ArtifactMetadata<'_>,
-    provenance: &[ProvenanceEdge<'_>],
-) -> Result<(), Error> {
+    logical_path: &str,
+    edge_from: Option<&str>,
+) -> Result<Option<String>, Error> {
     let root = parse(bytes)?;
     let mut encoded = String::new();
     canonical(&root, &mut encoded);
@@ -737,20 +749,57 @@ fn validate_artifact_manifest(
     }
     let m = closed(
         &root,
-        &["artifact_id", "artifacts", "provenance_edges", "uri"],
+        &[
+            "body",
+            "correction_reason",
+            "created_at_utc_ns",
+            "record_id",
+            "record_kind",
+            "run_id",
+            "schema_version",
+            "series_id",
+            "supersedes_record_id",
+        ],
     )?;
-    if strv(&m["artifact_id"])? != strv(&reference["artifact_id"])?
-        || strv(&m["uri"])? != strv(&reference["uri"])?
+    if strv(&m["schema_version"])? != "EXP1-R7-JSON-JCS-1"
+        || strv(&m["record_kind"])? != "artifact_manifest"
+    {
+        return Err(Error::Reference);
+    }
+    uuid(strv(&m["record_id"])?)?;
+    uuid(strv(&reference["artifact_id"])?)?;
+    uuid(strv(&m["series_id"])?)?;
+    dec(strv(&m["created_at_utc_ns"])?, true)?;
+    if uuid_state(&m["run_id"])?.is_none()
+        || uuid_state(&m["supersedes_record_id"])?.is_some()
+        || string_state(&m["correction_reason"])?.is_some()
     {
         return Err(Error::Reference);
     }
     let declared = strv(&reference["sha256"])?;
     if encoded.len().to_string() != strv(&reference["byte_length"])?
         || hex(&artifact_digest(bytes)) != declared
+        || uri(strv(&reference["uri"])?).is_err()
     {
         return Err(Error::Reference);
     }
-    let artifacts = arr(&m["artifacts"])?;
+    let body = closed(
+        &m["body"],
+        &[
+            "artifacts",
+            "provenance_edges",
+            "publication_state",
+            "scope",
+            "series_freeze",
+        ],
+    )?;
+    if strv(&body["scope"])? != "run"
+        || strv(&body["publication_state"])? != "published"
+        || uuid_state(&body["series_freeze"])?.is_some()
+    {
+        return Err(Error::Reference);
+    }
+    let artifacts = arr(&body["artifacts"])?;
     if artifacts.len() != 1 {
         return Err(Error::Reference);
     }
@@ -760,36 +809,54 @@ fn validate_artifact_manifest(
             "artifact_id",
             "byte_length",
             "created_by_record_id",
+            "logical_path",
             "media_type",
+            "retention_state",
             "role",
+            "sensitivity",
             "sha256",
             "uri",
+            "validation_report_ids",
         ],
     )?;
     if strv(&a["artifact_id"])? != stream.artifact_id
         || strv(&a["byte_length"])? != stream.byte_length.to_string()
         || strv(&a["created_by_record_id"])? != stream.created_by_record_id
+        || strv(&a["logical_path"])? != logical_path
         || strv(&a["media_type"])? != stream.media_type
+        || strv(&a["retention_state"])? != "published"
         || strv(&a["role"])? != stream.role
+        || strv(&a["sensitivity"])? != "public"
         || strv(&a["sha256"])? != stream.sha256
         || strv(&a["uri"])? != stream.uri
+        || !arr(&a["validation_report_ids"])?.is_empty()
     {
         return Err(Error::Reference);
     }
-    let edges = arr(&m["provenance_edges"])?;
-    if edges.len() != provenance.len() {
+    let edges = arr(&body["provenance_edges"])?;
+    if edge_from.is_none() {
+        return if edges.is_empty() {
+            Ok(None)
+        } else {
+            Err(Error::Reference)
+        };
+    }
+    if edges.len() != 1 {
         return Err(Error::Reference);
     }
-    for (raw, expected) in edges.iter().zip(provenance) {
-        let e = closed(raw, &["from", "relation", "to"])?;
-        if strv(&e["from"])? != expected.from
-            || strv(&e["relation"])? != expected.relation
-            || strv(&e["to"])? != expected.to
-        {
-            return Err(Error::Reference);
-        }
+    let edge = closed(
+        &edges[0],
+        &["from_artifact_id", "relation", "to_artifact_id"],
+    )?;
+    let from = strv(&edge["from_artifact_id"])?;
+    let relation = strv(&edge["relation"])?;
+    let to = strv(&edge["to_artifact_id"])?;
+    uuid(from)?;
+    uuid(to)?;
+    if Some(from) != edge_from || relation != "generated_from" || to == from {
+        return Err(Error::Reference);
     }
-    Ok(())
+    Ok(Some(to.to_owned()))
 }
 
 fn schema(v: &Json) -> Result<(), Error> {
