@@ -1,34 +1,31 @@
 # R18 — Slice A2 closure and bounded Slice C/B1 readiness
 
-**Approval:** GitHub issue #65, `EXP-0001-R18/a2-closure-b1-readiness-v1`  
-**Authority base:** live `main` at PR #64 merge `9b5d89a36ed71d38420e9ae19f59d441a9d927aa`  
+**Approval:** GitHub issue #65, `EXP-0001-R18/a2-closure-b1-readiness-v1`
+**Authority base:** live `main` at PR #68 merge `79cbd64a436b104835a4279c07ba2777fb06cddb`
 **Status:** A2 closed; one bounded Slice C/B1 implementation prospectively authorized after this record is reviewed and merged  
 **Evidence classification:** governance/readiness decision; the referenced A2 result is implementation/correctness-validation evidence only
 
 ## 1. A2 closure
 
-PR #64's exact reviewed implementation head was
-`d2ee72aa4ff047d4cfcaa1df82d83f13566568f2`; it entered `main` through merge commit
-`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`. Both required exact-head workflows,
-**Documentation validation** and **EXP-0001 Slice A**, passed. The R17 gate is therefore satisfied
-and Slice A2 is closed. Its result is bounded implementation/correctness-validation evidence for
-the dependency-free R12/R14/R16 conformance subset. It is not generated-workload, execution,
-storage, recovery, benchmark, durability, performance, or production evidence.
+PR #64's historical implementation head
+`d2ee72aa4ff047d4cfcaa1df82d83f13566568f2` entered `main` through merge commit
+`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`. Final A2 closure additionally required corrective
+PR #68 at exact reviewed head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`. Its required exact-head
+**Documentation validation** and **EXP-0001 Slice A** workflows both passed, and it entered `main`
+through merge commit `79cbd64a436b104835a4279c07ba2777fb06cddb`. The corrected R17 gate is
+therefore satisfied and Slice A2 is closed. Its result is bounded implementation/conformance and
+correctness-validation evidence for the dependency-free R12/R14/R16 subset. It is not
+generated-workload execution, storage, recovery, benchmark, durability, performance, or production
+evidence.
 
 ## 2. M01 and R7 publication boundary
 
-R16 M01 is a valid canonical serialization/conformance vector. Its normative values are its exact
-3423 manifest bytes, workload-manifest digest, R14 stream length and workload-stream digest, and
-exact stream-artifact digest. M01 is **not** a complete accepted R7 publication fixture: its
-publication identities, URIs, 4096-byte artifact-manifest reference, and all-`1` digest are
-fictional, and no referenced artifact-manifest bytes or generated publication artifact exists.
-
-A full R7 reference/publication validator MUST receive the referenced artifact-manifest bytes and
-metadata from its caller and MUST verify their byte length, digest, identity, URI, and required
-provenance edges against the declaration. Missing or mismatching bytes or metadata fail with
-`reference`; validation MUST NOT infer them from M01, invent replacements, or waive checks because
-the containing manifest is M01. This clarification narrows no R7 rule and changes none of M01's
-normative conformance values.
+The corrected live R16 authority is unchanged by R18. M01 is the canonical, positively valid
+R7-backed serialization/conformance vector. Its references bind the real 1,274-byte stream
+artifact-manifest fixture and the independently supplied 1,152-byte workload-manifest artifact
+fixture; their exact bytes, lengths, identities, metadata, provenance, and digests remain
+authoritative. R18 neither restores any pre-correction literal nor weakens full caller-supplied
+reference validation.
 
 ## 3. Readiness determination
 
