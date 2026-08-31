@@ -172,3 +172,5 @@ This phase is explicitly non-committed. The project should not assume distributi
 R17 prospectively records dependency-free executable conformance, contingent on corrected exact-head review and CI, for the frozen R12/R14/R16 contracts as
 bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
 or performance evidence and does not advance Slice C/B1 or authorize a subsequent increment.
+
+The A2 corrective tranche makes R16 M01 positively valid against the complete frozen R7 artifact-manifest record profile; it does not advance the phase or authorize Slice C/B1.

@@ -5,11 +5,11 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
     algorithm: "SHA-256/FIPS-180-4",
     domain: MANIFEST_DOMAIN,
     profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
-    value: "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9",
+    value: "a696eae0b2a85d2d3f89b51bbacfa2d5564448ea849bece9eeaad7ec21a9ee56",
     manifest_ref: ManifestReference {
         artifact_id: "16000000-0000-4000-8000-000000000001",
         byte_length: 3423,
-        sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
@@ -25,7 +25,7 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
 static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     artifact_id: "16000000-0000-4000-8000-000000000001",
     byte_length: 3423,
-    sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+    sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
     uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     role: "configuration",
     media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
@@ -35,7 +35,7 @@ fn context(stream: &[u8]) -> ValidationContext<'_> {
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
-        manifest_artifact_sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        manifest_artifact_sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
         targets: &[],
         artifact_manifest_bytes: &[],
         stream_artifact: &STREAM_ARTIFACT,

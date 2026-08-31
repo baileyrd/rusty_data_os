@@ -5,11 +5,11 @@ static DESCRIPTOR: ManifestDigestDescriptor<'static> = ManifestDigestDescriptor 
     algorithm: "SHA-256/FIPS-180-4",
     domain: MANIFEST_DOMAIN,
     profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
-    value: "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9",
+    value: "a696eae0b2a85d2d3f89b51bbacfa2d5564448ea849bece9eeaad7ec21a9ee56",
     manifest_ref: ManifestReference {
         artifact_id: "16000000-0000-4000-8000-000000000001",
         byte_length: 3423,
-        sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
         uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     },
 };
@@ -25,36 +25,36 @@ static STREAM_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
 static MANIFEST_ARTIFACT: ArtifactMetadata<'static> = ArtifactMetadata {
     artifact_id: "16000000-0000-4000-8000-000000000001",
     byte_length: 3423,
-    sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+    sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
     uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
     role: "configuration",
     media_type: "application/vnd.rusty-data-os.exp1-workload-manifest",
     created_by_record_id: "16000000-0000-4000-8000-000000000006",
 };
-fn context(stream: &[u8]) -> ValidationContext<'_> {
-    static ARTIFACT_MANIFEST: &[u8] = br#"{"artifact_id":"16000000-0000-4000-8000-000000000004","artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"}],"provenance_edges":[{"from":"16000000-0000-4000-8000-000000000002","relation":"created_by","to":"16000000-0000-4000-8000-000000000005"},{"from":"16000000-0000-4000-8000-000000000005","relation":"derived_from","to":"16000000-0000-4000-8000-000000000001"}],"uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"}"#;
-    static PROVENANCE: [ProvenanceEdge<'static>; 2] = [
-        ProvenanceEdge {
-            from: "16000000-0000-4000-8000-000000000002",
-            to: "16000000-0000-4000-8000-000000000005",
-            relation: "created_by",
-        },
-        ProvenanceEdge {
-            from: "16000000-0000-4000-8000-000000000005",
-            to: "16000000-0000-4000-8000-000000000001",
-            relation: "derived_from",
-        },
-    ];
+fn context_with<'a>(
+    stream: &'a [u8],
+    artifact_manifest_bytes: &'a [u8],
+    provenance: &'a [ProvenanceEdge<'a>],
+) -> ValidationContext<'a> {
     ValidationContext {
         stream,
         descriptor: &DESCRIPTOR,
-        manifest_artifact_sha256: "8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178",
+        manifest_artifact_sha256: "49a268d8b9f84bedb7ccb5253d384ab2083fb56fbf38a15fe85cfc88ae0c01dc",
         targets: &[],
-        artifact_manifest_bytes: ARTIFACT_MANIFEST,
+        artifact_manifest_bytes,
         stream_artifact: &STREAM_ARTIFACT,
         manifest_artifact: &MANIFEST_ARTIFACT,
-        provenance: &PROVENANCE,
+        provenance,
     }
+}
+
+fn context(stream: &[u8]) -> ValidationContext<'_> {
+    static PROVENANCE: [ProvenanceEdge<'static>; 1] = [ProvenanceEdge {
+        from_artifact_id: "16000000-0000-4000-8000-000000000002",
+        to_artifact_id: "16000000-0000-4000-8000-000000000001",
+        relation: "generated_from",
+    }];
+    context_with(stream, R7_ARTIFACT_MANIFEST, &PROVENANCE)
 }
 
 fn typed_m01() -> TypedManifest {
@@ -158,8 +158,8 @@ fn typed_m01() -> TypedManifest {
             artifact_id: "16000000-0000-4000-8000-000000000002".into(),
             artifact_manifest_ref: ArtifactReference {
                 artifact_id: "16000000-0000-4000-8000-000000000004".into(),
-                byte_length: 4096,
-                sha256: "1111111111111111111111111111111111111111111111111111111111111111".into(),
+                byte_length: 1131,
+                sha256: "842590c880237e839eea098a76ffb08cc27d2fa94a6697e94599158e9755465b".into(),
                 uri: "https://example.invalid/exp-0001/artifact-manifest.jcs".into(),
             },
             byte_length: 818,
@@ -188,18 +188,68 @@ fn m01_literal() {
         hex(&artifact_digest(&stream)),
         "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a"
     );
+    assert_eq!(R7_ARTIFACT_MANIFEST.len(), 1131);
+    assert_eq!(
+        hex(&artifact_digest(R7_ARTIFACT_MANIFEST)),
+        "842590c880237e839eea098a76ffb08cc27d2fa94a6697e94599158e9755465b"
+    );
     assert_eq!(M01.len(), 3423);
     assert_eq!(
         hex(&manifest_digest(M01.as_bytes())),
-        "b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"
+        "a696eae0b2a85d2d3f89b51bbacfa2d5564448ea849bece9eeaad7ec21a9ee56"
     );
     let typed = Manifest::from_typed(typed_m01()).unwrap();
     assert_eq!(typed.canonical_bytes(), M01.as_bytes());
-    // R16 labels M01 a valid manifest-byte vector, but its fictional external
-    // R7 reference declares unavailable 4096-byte/all-`1`-digest bytes. Full
-    // R7 validation must reject rather than exempt that unsatisfied reference.
+    assert!(validate_manifest(M01.as_bytes(), &context(&stream)).is_ok());
+}
+
+#[test]
+fn r7_closed_record_and_reference_fail_closed() {
+    let stream = workload_stream(&[decode_hex(S01).unwrap()], 1, 0).unwrap();
+    let cases = [
+        (
+            "\"record_kind\":\"artifact_manifest\"",
+            "\"record_kind\":\"environment\"",
+        ),
+        ("\"scope\":\"run\"", "\"scope\":\"series\""),
+        (
+            "\"publication_state\":\"published\"",
+            "\"publication_state\":\"staged\"",
+        ),
+        ("\"logical_path\":", "\"unknown\":\"x\",\"logical_path\":"),
+        ("\"sensitivity\":\"public\",", ""),
+        ("\"from_artifact_id\"", "\"from\""),
+    ];
+    for (old, new) in cases {
+        let fixture = String::from_utf8(R7_ARTIFACT_MANIFEST.to_vec())
+            .unwrap()
+            .replacen(old, new, 1);
+        assert!(
+            validate_manifest(
+                M01.as_bytes(),
+                &context_with(&stream, fixture.as_bytes(), &[])
+            )
+            .is_err()
+        );
+    }
+
+    let wrong_edge = [ProvenanceEdge {
+        from_artifact_id: "16000000-0000-4000-8000-000000000002",
+        to_artifact_id: "16000000-0000-4000-8000-000000000001",
+        relation: "interprets",
+    }];
     assert_eq!(
-        validate_manifest(M01.as_bytes(), &context(&stream)),
+        validate_manifest(
+            M01.as_bytes(),
+            &context_with(&stream, R7_ARTIFACT_MANIFEST, &wrong_edge)
+        ),
         Err(Error::Reference)
+    );
+    assert_eq!(
+        validate_manifest(
+            M01.as_bytes(),
+            &context_with(&stream, &R7_ARTIFACT_MANIFEST[..1130], &[])
+        ),
+        Err(Error::JsonSyntax)
     );
 }

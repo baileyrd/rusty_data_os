@@ -138,3 +138,5 @@ R17 records issue #63's prospectively approved, dependency-free R12/R14/R16 work
 implementation as correctness evidence only. No workload was executed and no benchmark, storage,
 persistence, fault, durability, adapter, production, or architecture claim follows. BLK-015 and
 Slice C/B1 and execution gates remain unchanged; no next tranche is authorized.
+
+The reopened A2 blocker is resolved prospectively by the owner-selected realizable-valid-M01 correction: a literal complete R7 record replaces the synthetic reference, while all experiment execution and later work remain unauthorized.

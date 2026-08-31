@@ -47,3 +47,5 @@ No listed link represents completed experiment evidence.
 
 BLK-020/026/027 apply to A2 only through the existing dependency-free workspace, Rust 1.89.0,
 and unchanged exact-head CI gate. R17 grants no later-slice authority.
+
+The owner-selected A2 correction traces R16 M01 to a literal 1131-byte R7 record and R17 tests to full positive validation of that record plus fail-closed structural, digest, length, envelope, body, and provenance cases.

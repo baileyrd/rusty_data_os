@@ -63,3 +63,5 @@ vectors only. BLK-006–009 are executable only in this conformance subset; BLK-
 only to its existing workspace/CI boundary. BLK-015, Slice C/B1, execution, benchmarks, capture,
 persistence, faults, durability, adapters, production code, and architecture promotion remain
 open or unauthorized. No next increment is automatically authorized.
+
+The reopened Slice A2 blocker is corrected by the owner-selected realizable-valid-M01 resolution: R16 now pins a real 1131-byte R7 artifact-manifest fixture, and R17 restores only bounded conformance evidence after corrected exact-head review and CI. The R14 stream is unchanged.

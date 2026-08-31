@@ -41,3 +41,7 @@ faults, persistence, recovery, durability, adapters, production crates, and arch
 remain blocked and unauthorized. No workload or benchmark was run. The recommended next
 substantial tranche is a separately reviewed, smallest-useful readiness increment addressing an
 open gate; R17 does not automatically authorize storage, harness implementation, or execution.
+
+## Owner-selected M01 correction
+
+The reopened A2 review selected option 1: M01 remains canonical and positively valid. This corrective tranche replaces its synthetic R7 reference with the literal 1131-byte closed R7 record and validates the actual R7 envelope, artifact-manifest body, full artifact entries, and authoritative provenance field names. Corrected tests require full M01 success and retain the documentation-design versus bounded implementation/correctness-evidence distinction. Closure remains contingent on corrected exact-head review and CI; all later-work exclusions remain unchanged.

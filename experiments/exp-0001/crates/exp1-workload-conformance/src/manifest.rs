@@ -600,8 +600,8 @@ pub struct ArtifactMetadata<'a> {
 }
 #[derive(Clone, Debug)]
 pub struct ProvenanceEdge<'a> {
-    pub from: &'a str,
-    pub to: &'a str,
+    pub from_artifact_id: &'a str,
+    pub to_artifact_id: &'a str,
     pub relation: &'a str,
 }
 #[derive(Clone, Debug)]
@@ -697,26 +697,15 @@ fn validate_r7(
     {
         return Err(Error::Reference);
     }
-    let created = stream.created_by_record_id;
-    if !ctx
-        .provenance
-        .iter()
-        .any(|e| e.from == stream.artifact_id && e.to == created && e.relation == "created_by")
-    {
+    // R7 provenance uses artifact nodes only. The stream's creating record is
+    // bound by its required artifact field; the graph separately binds the
+    // stream to the workload-manifest artifact with the frozen relation name.
+    if !ctx.provenance.iter().any(|e| {
+        e.from_artifact_id == stream.artifact_id
+            && e.to_artifact_id == ma.artifact_id
+            && e.relation == "generated_from"
+    }) {
         return Err(Error::Reference);
-    }
-    let mut current = created;
-    let mut seen = BTreeSet::new();
-    while current != ma.artifact_id {
-        if !seen.insert(current) {
-            return Err(Error::Reference);
-        }
-        let next = ctx
-            .provenance
-            .iter()
-            .find(|e| e.from == current && e.relation == "derived_from")
-            .ok_or(Error::Reference)?;
-        current = next.to;
     }
     Ok(())
 }
@@ -737,20 +726,57 @@ fn validate_artifact_manifest(
     }
     let m = closed(
         &root,
-        &["artifact_id", "artifacts", "provenance_edges", "uri"],
+        &[
+            "body",
+            "correction_reason",
+            "created_at_utc_ns",
+            "record_id",
+            "record_kind",
+            "run_id",
+            "schema_version",
+            "series_id",
+            "supersedes_record_id",
+        ],
     )?;
-    if strv(&m["artifact_id"])? != strv(&reference["artifact_id"])?
-        || strv(&m["uri"])? != strv(&reference["uri"])?
+    if strv(&m["schema_version"])? != "EXP1-R7-JSON-JCS-1"
+        || strv(&m["record_kind"])? != "artifact_manifest"
+        || strv(&m["record_id"])? != strv(&reference["artifact_id"])?
+    {
+        return Err(Error::Reference);
+    }
+    uuid(strv(&m["record_id"])?)?;
+    uuid(strv(&m["series_id"])?)?;
+    dec(strv(&m["created_at_utc_ns"])?, true)?;
+    if uuid_state(&m["run_id"])?.is_none()
+        || uuid_state(&m["supersedes_record_id"])?.is_some()
+        || string_state(&m["correction_reason"])?.is_some()
     {
         return Err(Error::Reference);
     }
     let declared = strv(&reference["sha256"])?;
     if encoded.len().to_string() != strv(&reference["byte_length"])?
         || hex(&artifact_digest(bytes)) != declared
+        || uri(strv(&reference["uri"])?).is_err()
     {
         return Err(Error::Reference);
     }
-    let artifacts = arr(&m["artifacts"])?;
+    let body = closed(
+        &m["body"],
+        &[
+            "artifacts",
+            "provenance_edges",
+            "publication_state",
+            "scope",
+            "series_freeze",
+        ],
+    )?;
+    if strv(&body["scope"])? != "run"
+        || strv(&body["publication_state"])? != "published"
+        || uuid_state(&body["series_freeze"])?.is_some()
+    {
+        return Err(Error::Reference);
+    }
+    let artifacts = arr(&body["artifacts"])?;
     if artifacts.len() != 1 {
         return Err(Error::Reference);
     }
@@ -760,34 +786,35 @@ fn validate_artifact_manifest(
             "artifact_id",
             "byte_length",
             "created_by_record_id",
+            "logical_path",
             "media_type",
+            "retention_state",
             "role",
+            "sensitivity",
             "sha256",
             "uri",
+            "validation_report_ids",
         ],
     )?;
     if strv(&a["artifact_id"])? != stream.artifact_id
         || strv(&a["byte_length"])? != stream.byte_length.to_string()
         || strv(&a["created_by_record_id"])? != stream.created_by_record_id
+        || strv(&a["logical_path"])?
+            != "exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000002/configuration"
         || strv(&a["media_type"])? != stream.media_type
+        || strv(&a["retention_state"])? != "published"
         || strv(&a["role"])? != stream.role
+        || strv(&a["sensitivity"])? != "public"
         || strv(&a["sha256"])? != stream.sha256
         || strv(&a["uri"])? != stream.uri
+        || !arr(&a["validation_report_ids"])?.is_empty()
     {
         return Err(Error::Reference);
     }
-    let edges = arr(&m["provenance_edges"])?;
-    if edges.len() != provenance.len() {
+    // This bounded fixture has no internal artifact-to-artifact derivation.
+    // The caller-supplied resolved graph is checked by `validate_r7`.
+    if !arr(&body["provenance_edges"])?.is_empty() || provenance.len() != 1 {
         return Err(Error::Reference);
-    }
-    for (raw, expected) in edges.iter().zip(provenance) {
-        let e = closed(raw, &["from", "relation", "to"])?;
-        if strv(&e["from"])? != expected.from
-            || strv(&e["relation"])? != expected.relation
-            || strv(&e["to"])? != expected.to
-        {
-            return Err(Error::Reference);
-        }
     }
     Ok(())
 }
