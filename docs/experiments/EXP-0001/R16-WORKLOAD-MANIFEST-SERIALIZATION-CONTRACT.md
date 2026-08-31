@@ -3,6 +3,7 @@
 **Authority base:** live `main` at `f38b637b27cf6748c875077a86e5e0f318ba0483`
 **Status:** complete as documentation design; BLK-009 is resolved only at that boundary
 **Manifest profile:** `EXP-0001-WORKLOAD-MANIFEST-JCS-v1`
+**Manifest-digest profile:** `EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1`
 **Decision date:** 2026-08-31
 
 ## 1. Scope and selected physical profile
@@ -38,10 +39,15 @@ declared semantic order and cannot contain duplicate entries.
 - SHA-256 values are exactly 64 lowercase hexadecimal characters. Profile identifiers are the
   exact case-sensitive ASCII strings enumerated below, at most 128 octets. Other strings are
   nonempty valid Unicode scalar sequences; identifiers and URIs additionally obey their rules.
-- An immutable stream reference is the closed object `{artifact_id,byte_length,sha256,uri}`.
-  `artifact_id` is a UUID, `byte_length` is `u64`, `sha256` is the R7 exact-artifact
-  digest `SHA-256(ASCII "rusty-data-os/exp1/r7/artifact/v1" || 00 || bytes)`, and `uri` is an absolute normalized `file:` or `https:` URI without query or fragment. URI alone
-  is never identity.
+- An immutable stream reference is the closed object
+  `{artifact_id,artifact_manifest_ref,byte_length,created_by_record_id,media_type,role,sha256,uri}`.
+  `artifact_id` and `created_by_record_id` are UUIDs; `byte_length` is `u64`; `role` is exactly
+  R7 `configuration`; `media_type` is exactly
+  `application/vnd.rusty-data-os.exp1-workload-stream`; `sha256` is the R7 exact-artifact digest
+  `SHA-256(ASCII "rusty-data-os/exp1/r7/artifact/v1" || 00 || bytes)`; and `uri` is an absolute
+  normalized `file:` or `https:` URI without query or fragment. `artifact_manifest_ref` is an R7
+  closed `ref` object `{artifact_id,byte_length,sha256,uri}` resolving to the immutable R7
+  artifact-manifest record that contains the stream artifact entry. URI alone is never identity.
 - A state object is exactly `{"state":"not_applicable"}` or
   `{"state":"present","value":...}`. No other member or state is legal. R16 deliberately
   has no `missing`, `unknown`, or `null` state: all reproduction inputs must be known.
@@ -62,8 +68,8 @@ Every field below is required and occurs once.
 | `generator_inputs` | Closed object in section 2.4. |
 | `counts` | Closed object in section 2.4. |
 | `stream_digest` | Closed object `{algorithm,domain,value}`: exact values `SHA-256/FIPS-180-4`, `rusty-data-os/exp1/workload-stream/v1`, and SHA-256 text. |
-| `stream_ref` | Immutable stream-reference object. The referenced bytes are exactly the R14 stream bytes, not a physical event or adapter encoding. |
-| `authority_revisions` | Array of closed `{authority,revision}` objects, sorted by `authority`; exactly one each for `EXP-0000-WORKLOADS`, `EXP-0001-R2`, `EXP-0001-R7`, `EXP-0001-R12`, `EXP-0001-R14`, and `EXP-0001-R16`. `revision` is a nonempty immutable Git commit SHA or reviewed authority identifier. |
+| `stream_ref` | Immutable stream-reference object. The referenced bytes are exactly the R14 stream bytes, not a physical event or adapter encoding. Its R7 artifact entry MUST exactly match all duplicated identity, length, digest, URI, role, media-type, and creating-record values, and the resolved R7 provenance graph MUST bind that entry to its creating record and the workload-manifest artifact. Missing, conflicting, cyclic, or unreachable provenance fails `reference`. |
+| `authority_revisions` | Array of closed `{authority,revision}` objects, sorted by `authority`; exactly one each for `EXP-0000-WORKLOADS`, `EXP-0001-R2`, `EXP-0001-R7`, `EXP-0001-R12`, `EXP-0001-R14`, and `EXP-0001-R16`. `revision` is exactly one tagged closed object: `{"kind":"git_sha","value":git-sha}` or `{"kind":"reviewed_authority_id","value":identifier}`. A `git-sha` is exactly 40 lowercase hexadecimal characters; a reviewed identifier is nonempty, is not 40 lowercase hexadecimal characters, and names an immutable reviewed authority revision. |
 
 ### 2.3 Profile ledger and compatibility
 
@@ -129,11 +135,34 @@ R7 `corrects`/`supersedes` provenance edges. The prior identity, bytes, and evid
 Concurrent corrections form an invalid fork until one later manifest explicitly names every
 fork head. No ID is reused and no published manifest is mutated or erased.
 
+### 2.6 External manifest-digest descriptor
+
+The manifest digest profile is `EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1`. Its digest is exactly:
+
+```text
+SHA-256(ASCII "rusty-data-os/exp1/workload-manifest/v1" || 00 || complete_manifest_bytes)
+```
+
+`complete_manifest_bytes` is the complete canonical JCS byte sequence selected in section 1. The
+domain prefix is 42 octets including the final `00`. The digest is external to the manifest and
+therefore cannot refer to itself: no digest member, placeholder, omitted-member transform, or
+second serialization participates. A publication descriptor carries the closed object
+`{algorithm,domain,manifest_ref,profile,value}`, where `algorithm` is
+`SHA-256/FIPS-180-4`, `domain` is `rusty-data-os/exp1/workload-manifest/v1`, `profile` is
+`EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1`, `manifest_ref` is the R7 immutable `ref` for exactly the
+manifest bytes, and `value` is the digest rendered as exactly 64 lowercase hexadecimal characters.
+The descriptor and its R7 artifact entry MUST agree on manifest identity, byte length,
+exact-artifact digest, and URI. Missing descriptors; unknown profiles; altered domains or algorithms; uppercase,
+malformed, or unequal values; and any descriptor/manifest-reference mismatch fail `digest` or
+`reference`. The manifest, stream, exact stream artifact, and manifest digest are four distinct
+bindings and MUST NOT be substituted for one another.
+
 ## 3. Validation and record boundary
 
 Validation proceeds bytes/UTF-8/JSON/duplicate/I-JSON/JCS first, then closed schema, scalar
-ranges, profiles, cross-field rules, reference resolution, referenced byte length and exact
-artifact SHA-256, R14 stream parsing/counts, and finally the domain-separated workload digest.
+ranges, profiles, cross-field rules, reference resolution including the complete R7 artifact/provenance binding, referenced byte
+length and exact artifact SHA-256, R14 stream parsing/counts, the domain-separated workload digest, and
+finally the external manifest-digest descriptor against the unmodified complete manifest bytes.
 Any failure yields no accepted manifest. Validators must not reorder and accept, normalize text,
 repair identifiers, drop unknowns, infer state, clamp counts, select profiles, fetch a substitute,
 or recompute and replace declared authority values.
@@ -155,31 +184,47 @@ this manifest. Those records reference this immutable manifest/stream identity a
 
 ### 4.1 Canonical valid vector M01
 
-M01 binds R12/R14 `A01-S2`/W01: two P1/high warm-up operations, no measured operations, R14
-stream length `1596`, and digest
-`81dbc6b6e33ee775d4b36aeaa0aca45b9649c987f180e378b5d5fbcf1bc3b024`. The following single
-line is the **exact canonical JCS text and UTF-8 bytes**, with no trailing newline:
+M01 binds the uniform one-operation stream derived from R14 `S01`: one P1/high, minimal-envelope,
+monotonic-time warm-up operation and no measured operations. The R14 stream is the 55-octet header
+with counts `1/1/0`, followed by the eight-octet length `755` and the complete literal S01 bytes. It
+is 818 octets; its workload-stream digest is
+`0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09`; and its R7 exact-artifact
+digest is `789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a`. Thus every operation
+uses the manifest's single envelope and temporal profile and M01 can regenerate the stream without
+possessing it. The following single line is the **exact canonical JCS text and UTF-8 bytes**, with
+no trailing newline:
 
 ```json
-{"authority_revisions":[{"authority":"EXP-0000-WORKLOADS","revision":"reviewed-v1"},{"authority":"EXP-0001-R12","revision":"e39551e"},{"authority":"EXP-0001-R14","revision":"78b8b35"},{"authority":"EXP-0001-R16","revision":"documentation-vector-v1"},{"authority":"EXP-0001-R2","revision":"reviewed-v1"},{"authority":"EXP-0001-R7","revision":"reviewed-v1"}],"counts":{"by_envelope_profile":[{"count":"1","profile":"envelope-minimal"},{"count":"1","profile":"envelope-provenance"}],"by_segment":[{"count":"2","segment":"warm_up"},{"count":"0","segment":"measured"}],"by_size_class":[{"count":"2","profile":"P1"}],"by_temporal_profile":[{"count":"1","profile":"time-equal-burst-v1"},{"count":"1","profile":"time-monotonic-effective"}],"measured_operation_count":"0","operation_count":"2","warm_up_operation_count":"2"},"created_at_utc_ns":"1788134400000000000","generator_inputs":{"actor_provenance":{"state":"present","value":"actor-A"},"base_ns":"1000","controlled_schedule":{"state":"not_applicable"},"correction_fact_type":{"state":"not_applicable"},"envelope_semantic_version":"1","generator_version":"1","ordinary_fact_type":"fact-A","producer_count":"1","producer_id":"10213243-5465-4768-899a-abbccddeef00","reference_cardinality":"0","schema_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","schema_version":"1","seed":"0","source_provenance":{"state":"present","value":"source-A"},"stream_namespace":"00112233-4455-4677-8899-aabbccddeeff","unit_ns":"10","workload_contract_version":"1"},"manifest_id":"16000000-0000-4000-8000-000000000001","profiles":{"digest":"SHA-256/FIPS-180-4","envelope":"envelope-provenance","envelope_generator":"EXP-0001-ENVELOPE-INPUT-v1","identity_generator":"EXP-0001-UUID4-SHA256-v1","logical_time_generator":"EXP-0001-LOGICAL-TIME-v1","manifest":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","payload_content":"deterministic-high-variation","payload_generator":"EXP-0001-SHA256-CTR-v1","payload_size":"fixed-P1","reference_generator":"EXP-0001-PRIOR-EVENTS-v1","semantic_operation":"EXP-0001-SEMANTIC-OP-v1","size_class_order":"EXP-0000-SIZE-CLASS-ORDER-v1","temporal":"time-monotonic-effective","workload_contract":"EXP-0000-WORKLOADS-v1","workload_stream":"EXP-0001-WORKLOAD-STREAM-v1"},"record_kind":"workload_manifest","schema_version":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","stream_digest":{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-stream/v1","value":"81dbc6b6e33ee775d4b36aeaa0aca45b9649c987f180e378b5d5fbcf1bc3b024"},"stream_ref":{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"1596","sha256":"aa7945512fee86f05a899a88568d831d990c17b7821ae631114ce4c690b1602d","uri":"https://example.invalid/exp-0001/w01.stream"},"supersession":{"reason":{"state":"not_applicable"},"supersedes_manifest_ids":[]},"workload_id":"16000000-0000-4000-8000-000000000003"}
+{"authority_revisions":[{"authority":"EXP-0000-WORKLOADS","revision":{"kind":"git_sha","value":"70a29efd46dd3aee9ea9cb0831d0285b83cdd70a"}},{"authority":"EXP-0001-R12","revision":{"kind":"git_sha","value":"e39551e64d9a799a3d15bf75aa70a323c8e40ca8"}},{"authority":"EXP-0001-R14","revision":{"kind":"git_sha","value":"78b8b35e4efda44a8097db05f396679a1265a239"}},{"authority":"EXP-0001-R16","revision":{"kind":"reviewed_authority_id","value":"documentation-vector-v1"}},{"authority":"EXP-0001-R2","revision":{"kind":"git_sha","value":"2659fb34caf054a7742a854d69d17cdd59bd2040"}},{"authority":"EXP-0001-R7","revision":{"kind":"git_sha","value":"f9d9876cf6599345a2e2244223a530ada2b9a828"}}],"counts":{"by_envelope_profile":[{"count":"1","profile":"envelope-minimal"}],"by_segment":[{"count":"1","segment":"warm_up"},{"count":"0","segment":"measured"}],"by_size_class":[{"count":"1","profile":"P1"}],"by_temporal_profile":[{"count":"1","profile":"time-monotonic-effective"}],"measured_operation_count":"0","operation_count":"1","warm_up_operation_count":"1"},"created_at_utc_ns":"1788134400000000000","generator_inputs":{"actor_provenance":{"state":"not_applicable"},"base_ns":"1000","controlled_schedule":{"state":"not_applicable"},"correction_fact_type":{"state":"not_applicable"},"envelope_semantic_version":"1","generator_version":"1","ordinary_fact_type":"fact-A","producer_count":"1","producer_id":"10213243-5465-4768-899a-abbccddeef00","reference_cardinality":"0","schema_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","schema_version":"1","seed":"0","source_provenance":{"state":"not_applicable"},"stream_namespace":"00112233-4455-4677-8899-aabbccddeeff","unit_ns":"10","workload_contract_version":"1"},"manifest_id":"16000000-0000-4000-8000-000000000001","profiles":{"digest":"SHA-256/FIPS-180-4","envelope":"envelope-minimal","envelope_generator":"EXP-0001-ENVELOPE-INPUT-v1","identity_generator":"EXP-0001-UUID4-SHA256-v1","logical_time_generator":"EXP-0001-LOGICAL-TIME-v1","manifest":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","payload_content":"deterministic-high-variation","payload_generator":"EXP-0001-SHA256-CTR-v1","payload_size":"fixed-P1","reference_generator":"EXP-0001-PRIOR-EVENTS-v1","semantic_operation":"EXP-0001-SEMANTIC-OP-v1","size_class_order":"EXP-0000-SIZE-CLASS-ORDER-v1","temporal":"time-monotonic-effective","workload_contract":"EXP-0000-WORKLOADS-v1","workload_stream":"EXP-0001-WORKLOAD-STREAM-v1"},"record_kind":"workload_manifest","schema_version":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","stream_digest":{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-stream/v1","value":"0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09"},"stream_ref":{"artifact_id":"16000000-0000-4000-8000-000000000002","artifact_manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000004","byte_length":"4096","sha256":"1111111111111111111111111111111111111111111111111111111111111111","uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"},"byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"},"supersession":{"reason":{"state":"not_applicable"},"supersedes_manifest_ids":[]},"workload_id":"16000000-0000-4000-8000-000000000003"}
 ```
 
-The example intentionally contains fictional publication identities/URI and no generated
-artifact. Mixed envelope/temporal counts describe the two operations; the top-level workload
-profiles name the selected workload cell and do not erase per-operation bindings.
+M01 is 3423 octets. Applying section 2.6 to those literal bytes yields the independently
+checkable manifest digest
+`b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9`. Its external descriptor is therefore:
+
+```json
+{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-manifest/v1","manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","sha256":"8fcbf85b1036acdc212ee179a549107efa189b9fa09efe92981ed1601eed7178","uri":"https://example.invalid/exp-0001/m01.manifest.jcs"},"profile":"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1","value":"b6e9a1d2ffa65bed11bdea6a2606abd4aee2200ddced30c8ec6000bccdde2ea9"}
+```
+
+The example intentionally contains fictional publication identities, URIs, manifest-reference
+metadata, and no generated artifact. Those fictional external R7 values illustrate
+the closed binding shape; the literal manifest digest, R14 stream length, workload-stream digest,
+and exact stream-artifact digest are normative and independently reproducible.
 
 ### 4.2 Negative vectors
 
 | Vector | Mutation of M01 | Required disposition |
 |---|---|---|
 | N01 | Add top-level `"extra":true`. | `unknown-field`. |
-| N02 | Change manifest/schema version to `...-v2`. | `unsupported-version`. |
-| N03 | Change either digest value to 64 zeroes or its domain to `/v2`. | `digest` or `profile-mismatch`; never replace it. |
-| N04 | Change total to `3`, measured to `1`, or a segment/profile subtotal without changing W01. | `count-mismatch`. |
-| N05 | Use uppercase/nil/malformed `manifest_id`. | `type` or `range`. |
+| N02 | Change manifest/schema or manifest-digest profile to `...-v2`. | `unsupported-version`. |
+| N03 | Substitute the stream digest, exact-artifact digest, or manifest digest for another; change any digest to 64 zeroes; or change a domain to `/v2`. | `digest` or `profile-mismatch`; never replace it. |
+| N04 | Change total to `2`, measured to `1`, or a segment/profile subtotal without changing the S01 stream. | `count-mismatch`. |
+| N05 | Use uppercase/nil/malformed `manifest_id`, a short Git SHA, a 40-hex reviewed identifier, or an unknown/ambiguous revision tag. | `type`, `range`, or `enum`. |
 | N06 | Pretty-print, append LF, exchange any two members, or escape a character differently from JCS. | `noncanonical`, even when the JSON value is otherwise equivalent. |
 | N07 | Give an original a reason, give a correction no target/reason, self-reference, form a cycle, or correct another workload ID. | `duplicate-or-conflict`, `supersession-cycle`, or `immutable-state`. |
-| N08 | Duplicate a JSON name, omit `seed`, use `null`, or use numeric `2` for a count. | `duplicate-member`, `missing-field`, or `type`. |
+| N08 | Duplicate a JSON name, omit `seed`, use `null`, or use numeric `1` for a count. | `duplicate-member`, `missing-field`, or `type`. |
+| N09 | Omit/mismatch the stream role, media type, creating record, artifact-manifest reference, artifact entry, or required provenance edge. | `reference`; no stream or manifest is accepted. |
+
 
 ## 5. Disposition and exclusions
 
