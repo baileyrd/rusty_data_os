@@ -66,9 +66,11 @@ promotion remained open or unauthorized; R18 supplies the separate bounded next 
 
 ## R18 closure and next readiness boundary
 
-[R18](experiments/EXP-0001/R18-A2-CLOSURE-AND-SLICE-C-B1-READINESS.md) closes A2 at PR #64
-reviewed head `d2ee72aa4ff047d4cfcaa1df82d83f13566568f2` and merge
-`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`; both exact-head workflows passed. M01 remains the canonical positively valid R7-backed vector with its real 1,274-byte stream
+[R18](experiments/EXP-0001/R18-A2-CLOSURE-AND-SLICE-C-B1-READINESS.md) preserves PR #64 historical implementation head
+`d2ee72aa4ff047d4cfcaa1df82d83f13566568f2` and merge
+`9b5d89a36ed71d38420e9ae19f59d441a9d927aa`, and closes A2 with corrective PR #68 reviewed head
+`fcaf7f14c94df5a6cda1aeeb283b6726551d1844` and merge
+`79cbd64a436b104835a4279c07ba2777fb06cddb`; both corrective exact-head workflows passed. M01 remains the canonical positively valid R7-backed vector with its real 1,274-byte stream
 artifact-manifest fixture and independent 1,152-byte workload-manifest artifact fixture. R18 prospectively authorizes one
 third, dependency-free experiment workspace member for raw D1 append and deterministic physical
 reopen/replay correctness. BLK-015 is not needed because no `fsync`, D2/D3, survival, canonical

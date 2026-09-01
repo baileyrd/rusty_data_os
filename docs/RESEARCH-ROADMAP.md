@@ -169,7 +169,7 @@ This phase is explicitly non-committed. The project should not assume distributi
 
 ### Slice A2 conformance checkpoint
 
-R18 closes R17's dependency-free executable conformance after PR #64 exact-head review and CI, for the frozen R12/R14/R16 contracts as
+R18 closes R17's dependency-free executable conformance after preserving PR #64 as historical implementation authority and completing corrective PR #68 exact-head review and CI, for the frozen R12/R14/R16 contracts as
 bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
 or performance evidence. R17 itself did not advance Slice C/B1 or authorize a subsequent increment;
 R18 supplies the separate authorization below.

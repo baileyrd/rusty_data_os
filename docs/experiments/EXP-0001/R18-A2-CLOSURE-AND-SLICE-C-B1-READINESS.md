@@ -2,7 +2,7 @@
 
 **Approval:** GitHub issue #65, `EXP-0001-R18/a2-closure-b1-readiness-v1`
 **Authority base:** live `main` at PR #68 merge `79cbd64a436b104835a4279c07ba2777fb06cddb`
-**Status:** A2 closed; one bounded Slice C/B1 implementation prospectively authorized after this record is reviewed and merged  
+**Status:** A2 closed; one bounded Slice C/B1 implementation prospectively authorized after this record is reviewed and merged
 **Evidence classification:** governance/readiness decision; the referenced A2 result is implementation/correctness-validation evidence only
 
 ## 1. A2 closure
