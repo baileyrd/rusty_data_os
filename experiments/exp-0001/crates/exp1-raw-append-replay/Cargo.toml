@@ -1,0 +1,12 @@
+[package]
+name = "exp1-raw-append-replay"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+exp1-record-format = { path = "../exp1-record-format" }
+
+[lints]
+workspace = true

@@ -206,3 +206,9 @@ extends BLK-017 implementation and BLK-020/026/027 only to that crate. It intent
 BLK-015: no synchronization, canonical recovery, D2/D3, survival, fault, workload/benchmark
 execution, capture, performance, adapter, or production claim is authorized. The exact API,
 framing/integrity, accepted-prefix, fail-closed, test, and exclusion boundary is normative in R18.
+
+The authorized crate now implements that bounded boundary and its deterministic correctness gate.
+This closes only the raw D1 append/physical replay implementation subset of BLK-017 and extends the
+existing workspace validation boundary to the third member. BLK-015 and all synchronization,
+stable-storage, canonical recovery, D2/D3, generated workload, execution, benchmark/capture, fault,
+adapter, production, performance, and later-tranche work remain open or unauthorized.
