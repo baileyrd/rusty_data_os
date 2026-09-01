@@ -197,4 +197,4 @@ R20 resolves R19's semantic-to-physical ambiguity as documentation design by map
 
 ### R21 Phase 1 reference-context checkpoint
 
-R21 freezes the minimum bounded reference catalog and accepted-prefix state needed to distinguish all R12 reference outcomes without regenerating or revalidating semantics. It prospectively authorizes only the later pure `exp1-raw-append-replay::mapping` extension and tests. The complete R20 gate remains open until that implementation passes exact-head review and CI. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
+R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R12 does not classify cross-segment targets, and existing authorities do not prove a complete closed stream scope, so R21 authorizes no implementation and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.

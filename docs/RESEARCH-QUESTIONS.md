@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R21 freezes the reference context needed for a later complete R20 mapper gate, but implementation and descriptive D1 capture remain blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R21 narrows but does not close the reference-context governance gap; implementation and descriptive D1 capture remain blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -37,4 +37,4 @@ R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional 
 
 ### R21 reference-context note
 
-R21 answers only the governance sub-question of what deterministic information the pure mapper needs: a bounded immutable catalog of validated typed identities across complete streams and a mutable accepted prefix for one selected stream. It is not correctness evidence. The later implementation must pass the complete R20 gate, while live capture and all experimental execution remain blocked or unauthorized.
+R21 answers only the locally decidable part of the governance sub-question: a bounded immutable catalog of validated typed identities across supplied streams and a mutable accepted prefix for one selected stream. It leaves cross-segment eligibility and proof of a complete closed stream scope unresolved, authorizes no implementation, and is not correctness evidence. Live capture and all experimental execution remain blocked or unauthorized.
