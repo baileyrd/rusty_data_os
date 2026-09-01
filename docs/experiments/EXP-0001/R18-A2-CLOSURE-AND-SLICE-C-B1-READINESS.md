@@ -124,8 +124,7 @@ at its exact reviewed head. Passing proves only the bounded behavior tested.
 ## 5. Retained blockers and exclusions
 
 BLK-017 is implemented only for the raw D1 append/replay correctness subset after the authorized
-implementation passes review; BLK-020/026/027 extend only to the third dependency-free workspace
-member under unchanged CI. BLK-015 remains open and continues to block every D2/D3, filesystem
+implementation passes review; BLK-020/026/027 extend only to the third external-dependency-free workspace member with exactly one reviewed workspace path dependency on `exp1-record-format` under unchanged CI. BLK-015 remains open and continues to block every D2/D3, filesystem
 placement/protection, `fsync` survival, physical fault, and power/reset claim. BLK-020 remains open
 for benchmark/capture architecture; BLK-026/027 remain open for any later/native/series expansion.
 

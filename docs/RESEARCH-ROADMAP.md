@@ -177,7 +177,7 @@ R18 supplies the separate authorization below.
 ### R18 Slice C/B1 readiness checkpoint
 
 R18 closes A2 as bounded correctness evidence and prospectively authorizes only one experiment-local,
-dependency-free raw D1 append plus reopen/replay correctness crate. The tranche validates R1/R5
+external-dependency-free raw D1 append plus reopen/replay correctness crate with exactly one reviewed workspace path dependency on `exp1-record-format`. The tranche validates R1/R5
 framing, integrity, accepted physical prefixes, terminal truncation, and fail-closed scanning; it
 never labels D1 bytes canonical. BLK-015, D2/D3, execution, benchmarks, physical faults, adapters,
 production promotion, and every later tranche remain gated.

@@ -201,7 +201,7 @@ bounded correctness evidence. Corrected M01 remains the canonical positively val
 vector with its 1,274-byte stream and independent 1,152-byte workload-manifest artifact fixtures.
 
 R18 prospectively authorizes only Slice C's raw D1 append plus reopen/replay correctness subset in a
-third dependency-free workspace member under the unchanged R9 toolchain and CI. This limited reuse
+third external-dependency-free workspace member with exactly one reviewed workspace path dependency on `exp1-record-format` under the unchanged R9 toolchain and CI. This limited reuse
 extends BLK-017 implementation and BLK-020/026/027 only to that crate. It intentionally stays below
 BLK-015: no synchronization, canonical recovery, D2/D3, survival, fault, workload/benchmark
 execution, capture, performance, adapter, or production claim is authorized. The exact API,

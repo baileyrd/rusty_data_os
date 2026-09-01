@@ -47,6 +47,5 @@ persistence, fault, durability, benchmark, adapter, or production uncertainty.
 
 ### R18 disposition
 
-A2 closure preserves PR #64 historical head and merge and is finalized by corrective PR #68 reviewed head and merge. M01 is the canonical positively valid R7-backed vector with matching caller-supplied fixture bytes and metadata. R18 narrows UNK-020 by authorizing the unchanged dependency-free Rust workspace
-for one raw D1 append/reopen/replay correctness member. It does not resolve UNK-014/015/021/022 or
+A2 closure preserves PR #64 historical head and merge and is finalized by corrective PR #68 reviewed head and merge. M01 is the canonical positively valid R7-backed vector with matching caller-supplied fixture bytes and metadata. R18 narrows UNK-020 by authorizing one raw D1 append/reopen/replay correctness member with no external dependencies and exactly one reviewed workspace path dependency on `exp1-record-format`. It does not resolve UNK-014/015/021/022 or
 BLK-015; platform survival, D2/D3, physical faults, execution, capture, and benchmarks remain open.

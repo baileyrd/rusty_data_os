@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R1–R16 documentation inputs include the R16 BLK-009 documentation freeze, while owner-dependent fault apparatus, BLK-015, implementation, evidence, and execution remain open; Slices A and B are closed as correctness-validation evidence and no next increment is automatically authorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; Slices A, B/B0, and A2 are closed as bounded correctness evidence, and R18 prospectively authorizes only bounded Slice C/B1 raw D1 append and deterministic reopen/replay correctness; cost, performance, durability, generated-workload execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.

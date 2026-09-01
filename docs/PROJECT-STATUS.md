@@ -72,6 +72,6 @@ promotion remained open or unauthorized; R18 supplies the separate bounded next 
 `fcaf7f14c94df5a6cda1aeeb283b6726551d1844` and merge
 `79cbd64a436b104835a4279c07ba2777fb06cddb`; both corrective exact-head workflows passed. M01 remains the canonical positively valid R7-backed vector with its real 1,274-byte stream
 artifact-manifest fixture and independent 1,152-byte workload-manifest artifact fixture. R18 prospectively authorizes one
-third, dependency-free experiment workspace member for raw D1 append and deterministic physical
+third, external-dependency-free experiment workspace member with exactly one reviewed workspace path dependency on `exp1-record-format` for raw D1 append and deterministic physical
 reopen/replay correctness. BLK-015 is not needed because no `fsync`, D2/D3, survival, canonical
 recovery, execution, benchmark, fault, adapter, production, or performance claim is permitted.
