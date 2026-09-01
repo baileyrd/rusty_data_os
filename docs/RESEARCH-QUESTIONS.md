@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R21 narrows but does not close the reference-context governance gap; implementation and descriptive D1 capture remain blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R22 resolves cross-segment references, but closed stream scope still blocks reference-context implementation; implementation and descriptive D1 capture remain blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -37,4 +37,11 @@ R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional 
 
 ### R21 reference-context note
 
-R21 answers only the locally decidable part of the governance sub-question: a bounded immutable catalog of validated typed identities across supplied streams and a mutable accepted prefix for one selected stream. It leaves cross-segment eligibility and proof of a complete closed stream scope unresolved, authorizes no implementation, and is not correctness evidence. Live capture and all experimental execution remain blocked or unauthorized.
+R21 answers only the locally decidable part of the governance sub-question: a bounded immutable catalog of validated typed identities across supplied streams and a mutable accepted prefix for one selected stream. R22 supersedes its cross-segment gap with strictly segment-local eligibility; proof of a complete closed stream scope remains unresolved. Neither decision authorizes implementation or constitutes correctness evidence. Live capture and all experimental execution remain blocked or unauthorized.
+
+### R22 cross-segment reference note
+
+R22 answers the cross-segment sub-question as documentation design: warm-up and measured references
+are each strictly segment-local, and a known same-stream target in the other segment receives
+`E-REFERENCE-CROSS-SEGMENT`. The independent closed stream-scope proof remains unanswered, so no
+reference-context implementation, full R20 closure, capture, or execution is authorized.

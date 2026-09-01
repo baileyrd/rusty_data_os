@@ -13,11 +13,12 @@ which complete workload streams, from mutable **accepted-prefix state**, which s
 selected stream has successfully passed mapping. Neither object validates semantic meaning or
 regenerates workload values.
 
-Re-audit found two authorities that R12/R14 do not supply: a rule for references across the WS1
+Re-audit found two authorities that R12/R14 did not supply: a rule for references across the WS1
 warm-up/measured boundary, where OP1 ordinals restart, and a binding that proves a caller has
-supplied the complete set of streams in a workload/cell. R21 therefore does **not** fully resolve
-the reference-context governance blocker and does not authorize its Rust implementation. A later
-governance decision must resolve those two questions before the complete R20 mapper gate can close.
+supplied the complete set of streams in a workload/cell. [R22](R22-CROSS-SEGMENT-REFERENCE-RULE.md)
+now supersedes only R21's unresolved cross-segment language by selecting strictly segment-local
+references and `E-REFERENCE-CROSS-SEGMENT`. The complete closed-stream-scope proof remains unresolved,
+so R21 still does **not** authorize Rust implementation and the complete R20 mapper gate stays open.
 The independent live-Linux-capture blocker remains open; no descriptive D1 harness or execution is
 authorized.
 
@@ -46,15 +47,11 @@ Each source stream must contain exactly one stream namespace, and namespaces mus
 the inputs. The selected namespace must occur exactly once. A stream's transactional catalog
 position is its WS1 zero-based operation index. Warm-up positions
 precede measured positions exactly as the WS1 header declares; this total position controls only
-accepted-prefix processing and state advance. Reference eligibility instead uses the R12 OP1
-segment and segment-local operation ordinal. R12 section 5.3 requires a target in the same stream
-with a lower operation ordinal, but its selection function has no segment input and does not say
-whether a target may cross the warm-up/measured boundary. Because ordinals restart at that boundary,
-R12 does not uniquely classify cross-segment targets. R21 neither treats total WS1 position as the
-reference ordinal nor invents a cross-segment disposition. Same-segment targets are eligible only
-when their segment ordinal is lower than the current segment ordinal. Cross-segment targets remain
-a governance error with no R12 disposition until a later authority decides whether they are
-forbidden or eligible and, if forbidden, which disposition applies.
+accepted-prefix processing and state advance. Reference eligibility uses the R12 OP1 segment and segment-local operation
+ordinal. R22 supersedes the former ambiguity: `(stream_namespace, segment)` is the domain, and `[0,i)` contains only
+same-segment ordinary events with lower segment ordinals. Any known same-stream target in the other
+segment is `E-REFERENCE-CROSS-SEGMENT`; total WS1 position controls only accepted-prefix processing
+and state advance.
 `validate_stream` owns contiguous segment/ordinal validation; any discontinuity is
 `ContextBuildError::SemanticValidation` before a catalog exists.
 
@@ -167,10 +164,10 @@ The mapper validates one operation transactionally in this exact order:
    precedence:
    current EventId -> `SelfReference`; known non-Event role -> `WrongKind`; known EventId with
    correction/retraction fact class -> `WrongFact`; known EventId in another supplied stream ->
-   `CrossStream`; known same-stream EventId in the same segment with a greater segment ordinal ->
-   `Future`; known same-stream EventId at the current segment ordinal -> `SelfReference`
-   defensively; known same-stream, same-segment lower-ordinal ordinary EventId -> valid. A known
-   same-stream EventId in another segment is the unresolved cross-segment governance case. An
+   `CrossStream`; known same-stream EventId in another segment -> `CrossSegment`; known same-stream
+   EventId in the same segment with a greater segment ordinal -> `Future`; known same-stream EventId
+   at the current segment ordinal -> `SelfReference` defensively; known same-stream, same-segment
+   lower-ordinal ordinary EventId -> valid. An
    identity absent from the supplied catalog is the unresolved closed-scope case, not yet `Missing`.
 4. Apply the existing R20 sequence/physical-ordinal and RF1 construction checks.
 
@@ -186,8 +183,10 @@ closed-scope completeness is proven:
 | duplicate rejected by `SemanticValidation` | `E-REFERENCE-DUPLICATE` |
 | `ReferenceError::SelfReference` | `E-REFERENCE-SELF` |
 | `ReferenceError::CrossStream` | `E-REFERENCE-CROSS-STREAM` |
+| prospective `ReferenceError::CrossSegment` | R22 `E-REFERENCE-CROSS-SEGMENT` |
 
-Cross-segment and incomplete-scope outcomes are governance gaps, not invented R12 error variants.
+R22 adds prospective `ReferenceError::CrossSegment` / `E-REFERENCE-CROSS-SEGMENT`; it is a new
+experiment-local disposition, not an R12 variant. Incomplete-scope outcomes remain a governance gap.
 Identity collision and stream discontinuity are catalog/context failures, not invented R12
 reference dispositions. A known foreign correction EventId is `WrongFact` before `CrossStream`; a
 foreign non-Event identity is `WrongKind`; self wins before role/fact/locality. Multiple ordered targets are all-or-nothing: the first
@@ -195,7 +194,8 @@ invalid member in encoded order determines the one error and no later member is 
 
 ## 6. Prospective public surface and ownership
 
-After the two remaining governance decisions are frozen, only
+After the remaining closed-scope governance decision is frozen and implementation is separately
+authorized, only
 `exp1-raw-append-replay::mapping` may be authorized to change. The prospective surface may add public
 `ReferenceCatalog`, `ReferenceContext`/`AcceptedPrefixState`, `ContextBuildError`, and
 `ReferenceError`; add `MappingError::Reference(ReferenceError)` and
@@ -233,7 +233,7 @@ non-evidence and are formed by changing the stated final UUID octet while retain
 | V21-12 | WS1 skips ordinal, repeats ordinal, starts measured at 1, or returns to warm-up | conformance semantic failure; no catalog |
 | V21-13 | valid state before V21-04/V21-05/V21-06/V21-08/V21-10 | returned error has no frame/next state; original accepted count and R20 watermarks unchanged |
 | V21-14 | V21-01 with valid sequence/physical ordinal | accepted count and both R20 watermarks each advance once; catalog counters and entries unchanged |
-| V21-15 | measured current ordinal 0 targets a warm-up EventId, or either segment targets the other | unresolved cross-segment governance case; total WS1 position must not decide it |
+| V21-15 | measured current ordinal 0 targets a warm-up EventId, or either segment targets the other | superseded by R22: `E-REFERENCE-CROSS-SEGMENT`; total WS1 position does not decide eligibility |
 
 For a multi-target operation `[valid EventId(1), invalid RequestId(1), invalid missing]`, the second
 member produces `WrongKind`; no target is removed, the missing third member cannot replace that

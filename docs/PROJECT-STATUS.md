@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R21 narrows but does not close the reference-context governance gap; live capture remains blocked and execution unauthorized
+**Status:** Phase 1 planning/readiness — R22 resolves cross-segment references; closed stream scope still blocks reference-context implementation; live capture remains blocked and execution unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -104,8 +104,20 @@ materialization, capture, or execution is authorized.
 
 [R20](experiments/EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes one validated SOP1 operation to exactly one structural type-3 `EXP1-B1-RF1` provisional record. The complete SOP1 is the stable core; its event ID is duplicated in the type-3 body, and later ingestion supplies distinct nonzero assigned sequence and consecutive physical ordinal values. This resolves R19's mapping blocker as documentation design and prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only that crate's manifest and the matching lock entry may change, and append integration is excluded. The independent live-Linux-capture freeze remains open; no harness, execution, D2/D3, `fsync`, canonicality, durability, or recovery claim follows.
 
-The authorized pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable mapping rules; the complete R20 correctness gate is not closed. Duplicate reference bytes are rejected by SOP1 validation, but future, self, and cross-stream membership require prior-event and stream context absent from the frozen mapper state. R21 freezes the locally decidable catalog/context subset, but cross-segment eligibility and closed stream-scope proof remain unresolved; a later governance decision and implementation are required for full mapper closure. They do not integrate with append/reopen, materialize or execute a workload, or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
+The authorized pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable mapping rules; the complete R20 correctness gate is not closed. Duplicate reference bytes are rejected by SOP1 validation, but future, self, and cross-stream membership require prior-event and stream context absent from the frozen mapper state. R21 freezes the locally decidable catalog/context subset, and R22 resolves cross-segment eligibility; closed stream-scope proof, later authorization, and implementation are still required for full mapper closure. They do not integrate with append/reopen, materialize or execute a workload, or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
 
 ## R21 reference-context decision
 
-[R21](experiments/EXP-0001/R21-REFERENCE-VALIDATION-CONTEXT.md) freezes a catalog built only from complete validated semantic streams and a separate caller-owned accepted-prefix state. Its typed, stream-bound identity entries, bounds, collisions, and partial precedence are frozen, but R12 does not classify cross-segment targets and no authority proves a complete closed stream set. The reference-context governance blocker and complete R20 gate therefore remain open, and no Rust implementation is authorized. No Rust/Cargo change, append integration, workload execution, capture, durability, recovery, benchmark, or performance evidence is part of R21. The independent live Linux capture blocker still prevents a descriptive D1 harness.
+[R21](experiments/EXP-0001/R21-REFERENCE-VALIDATION-CONTEXT.md) freezes a catalog built only from complete validated semantic streams and a separate caller-owned accepted-prefix state. Its typed, stream-bound identity entries, bounds, collisions, and partial precedence are frozen. R22 supersedes the cross-segment ambiguity, but no authority proves a complete closed stream set. The reference-context governance blocker and complete R20 gate therefore remain open, and no Rust implementation is authorized. No Rust/Cargo change, append integration, workload execution, capture, durability, recovery, benchmark, or performance evidence is part of R21. The independent live Linux capture blocker still prevents a descriptive D1 harness.
+
+## R22 cross-segment reference decision
+
+[R22](experiments/EXP-0001/R22-CROSS-SEGMENT-REFERENCE-RULE.md) selects strictly segment-local
+reference eligibility: R12 `[0,i)` is the same-stream, same-segment prefix, and total WS1 position
+remains only byte/accepted-prefix order. A known same-stream target in the other segment fails with
+the new experiment-local `E-REFERENCE-CROSS-SEGMENT`, after wrong-kind, wrong-fact, and cross-stream
+classification and before same-segment future/missing handling. R22 supersedes only R12 section
+5.3's ambiguous cross-segment interpretation and R21's matching unresolved language; existing
+R12/R14 vectors and bytes are unchanged. The separate complete closed stream-scope proof remains
+open, so R21 implementation, full R20 closure, live Linux capture, a descriptive D1 harness, and
+execution remain unauthorized.
