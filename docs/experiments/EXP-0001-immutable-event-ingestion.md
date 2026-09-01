@@ -3,7 +3,7 @@
 **Status:** Proposed; bounded correctness implementations are staged, but workload/benchmark execution and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R18 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R19 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -156,3 +156,21 @@ exercise stable R5 vectors, exact extents, write-state failures, truncation boun
 damage, limits, repetition, and input preservation. This is implementation/correctness-validation
 evidence only. No workload, benchmark, synchronization, D2/D3, survival, canonical recovery, fault,
 adapter, production, performance, or subsequent tranche was performed or authorized.
+
+
+## R19 Slice C/B1 closure and descriptive D1 blocker
+
+[R19](EXP-0001/R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) closes the PR #74
+implementation at reviewed head `5c448695f4e460cab57eaadd7f7a83bfce1559ab` and merge
+`ef29804347faa812502f855e5cc3ffee6f4901c2` only as complete-frame, raw process-local D1
+submission, explicit progress/error, poison-on-terminal-failure, and deterministic fail-closed
+physical accepted-prefix replay correctness evidence. Both exact-head workflows passed. No
+workload, benchmark, stable-storage, namespace, canonical-recovery, D2/D3, fault, adapter,
+production, or performance evidence follows.
+
+The smallest generated-workload descriptive D1 harness remains blocked. R7 requires Linux capture
+interfaces that the current dependency-free, unsafe-forbidden workspace cannot uniquely implement,
+and it does not freeze evidence UUIDv4 assignment. The next decision must select the exact safe
+capture method, dependency or bounded-unsafe policy, unavailable-field behavior, and identity
+assignment. No fourth crate, workload materialization, capture, descriptive execution, or later
+tranche is authorized.

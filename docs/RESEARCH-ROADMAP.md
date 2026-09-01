@@ -181,3 +181,14 @@ external-dependency-free raw D1 append plus reopen/replay correctness crate with
 framing, integrity, accepted physical prefixes, terminal truncation, and fail-closed scanning; it
 never labels D1 bytes canonical. BLK-015, D2/D3, execution, benchmarks, physical faults, adapters,
 production promotion, and every later tranche remain gated.
+
+
+## R19 Phase 1 checkpoint
+
+[R19](experiments/EXP-0001/R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) closes
+the merged raw D1 append/physical replay tranche only as bounded correctness evidence. The smallest
+useful generated-workload descriptive D1 harness is not implementation-ready: the exact R7 Linux
+capture interface and evidence UUIDv4 assignment are not selected within the empty-dependency,
+unsafe-forbidden workspace. An owner-reviewed capture-interface/dependency-or-bounded-unsafe and
+identity decision is the next smallest gate. Phase 1 execution, performance evidence, D2/D3,
+faults, adapters, production, and later work remain unauthorized.
