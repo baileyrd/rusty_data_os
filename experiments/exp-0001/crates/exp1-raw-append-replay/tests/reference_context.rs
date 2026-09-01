@@ -136,6 +136,284 @@ fn fixture() -> (ClosedScopeInput<'static>, [u8; 16], &'static [u8]) {
     )
 }
 
+fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
+    let input = OperationInput {
+        segment: Segment::WarmUp,
+        seed,
+        ordinal: 0,
+        size_class: 1,
+        content: Content::High,
+        envelope: Envelope::Minimal,
+        temporal: Temporal::Monotonic,
+        stream_namespace: namespace,
+        producer_id: parse_uuid("20213243-5465-4768-899a-abbccddeef00").unwrap(),
+        producer_ordinal: 0,
+        controlled_schedule: None,
+    };
+    let request_id = identity(&input, IdentityKind::Request).unwrap();
+    let event_id = identity(&input, IdentityKind::Event).unwrap();
+    let information_id = identity(&input, IdentityKind::Information).unwrap();
+    let env1 = envelope_input(&EnvelopeInput {
+        operation: &input,
+        semantic_version: "1",
+        fact_type: "fact-A",
+        schema_id: parse_uuid("dddddddd-dddd-4ddd-8ddd-dddddddddddd").unwrap(),
+        schema_version: "1",
+        source: None,
+        actor: None,
+        request_id,
+        event_id,
+        information_id,
+        effective_time: 1000,
+        semantics: ReferenceSemantics::None,
+        references: &[],
+    })
+    .unwrap();
+    SemanticOperation {
+        op1: input.encode().unwrap(),
+        payload_profile: "EXP-0001-SHA256-CTR-v1",
+        payload: payload(&input).unwrap(),
+        request_id,
+        event_id,
+        information_id,
+        env1,
+        base_ns: 1000,
+        unit_ns: 10,
+    }
+    .encode()
+    .unwrap()
+}
+
+fn replace_all(mut value: String, replacements: &[(&str, String)]) -> String {
+    for (from, to) in replacements {
+        assert!(
+            value.contains(from),
+            "fixture replacement must match {from}"
+        );
+        value = value.replace(from, to);
+    }
+    value
+}
+
+fn two_stream_fixture() -> (
+    ClosedScopeInput<'static>,
+    [u8; 16],
+    [u8; 16],
+    &'static [u8],
+    &'static [u8],
+) {
+    let (mut input, first_ns, first_stream) = fixture();
+    let second_ns = parse_uuid("10112233-4455-4677-8899-aabbccddeeff").unwrap();
+    let second_stream =
+        bytes(workload_stream(&[generated_minimal_operation(second_ns, 1)], 1, 0).unwrap());
+    let second_stream_sha = hex(&artifact_digest(second_stream));
+    let second_stream_digest = hex(&workload_digest(second_stream));
+
+    let second_artifact_id = "26000000-0000-4000-8000-000000000002";
+    let second_manifest_id = "26000000-0000-4000-8000-000000000001";
+    let second_workload_id = "26000000-0000-4000-8000-000000000003";
+    let second_created_by = "26000000-0000-4000-8000-000000000005";
+    let second_manifest_artifact_id = "26000000-0000-4000-8000-000000000009";
+    let second_workload_artifact_id = "26000000-0000-4000-8000-000000000011";
+
+    let stream_r7 = bytes(
+        replace_all(
+            String::from_utf8(vectors::R7_ARTIFACT_MANIFEST.to_vec()).unwrap(),
+            &[
+                (
+                    "16000000-0000-4000-8000-000000000002",
+                    second_artifact_id.into(),
+                ),
+                (
+                    "16000000-0000-4000-8000-000000000001",
+                    second_manifest_id.into(),
+                ),
+                (
+                    "16000000-0000-4000-8000-000000000005",
+                    second_created_by.into(),
+                ),
+                (
+                    "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a",
+                    second_stream_sha.clone(),
+                ),
+                (
+                    "https://example.invalid/exp-0001/s01.stream",
+                    "https://example.invalid/exp-0001/s02.stream".into(),
+                ),
+                (
+                    "artifacts/26000000-0000-4000-8000-000000000002/configuration",
+                    "artifacts/16000000-0000-4000-8000-000000000002/configuration".into(),
+                ),
+            ],
+        )
+        .into_bytes(),
+    );
+    let workload_r7 = bytes(
+        replace_all(
+            String::from_utf8(vectors::R7_WORKLOAD_ARTIFACT_MANIFEST.to_vec()).unwrap(),
+            &[
+                (
+                    "16000000-0000-4000-8000-000000000001",
+                    second_manifest_id.into(),
+                ),
+                (
+                    "16000000-0000-4000-8000-000000000010",
+                    "26000000-0000-4000-8000-000000000010".into(),
+                ),
+                ("3423", "0".into()),
+                (
+                    "ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86",
+                    "PLACEHOLDER".into(),
+                ),
+                (
+                    "https://example.invalid/exp-0001/m01.manifest.jcs",
+                    "https://example.invalid/exp-0001/m02.manifest.jcs".into(),
+                ),
+                (
+                    "artifacts/26000000-0000-4000-8000-000000000001/workload_manifest",
+                    "artifacts/16000000-0000-4000-8000-000000000001/workload_manifest".into(),
+                ),
+            ],
+        )
+        .into_bytes(),
+    );
+    let provisional_manifest = replace_all(
+        vectors::M01.to_owned(),
+        &[
+            (
+                "00112233-4455-4677-8899-aabbccddeeff",
+                format_uuid(second_ns),
+            ),
+            (
+                "10213243-5465-4768-899a-abbccddeef00",
+                "20213243-5465-4768-899a-abbccddeef00".into(),
+            ),
+            (
+                "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+                "dddddddd-dddd-4ddd-8ddd-dddddddddddd".into(),
+            ),
+            ("\"seed\":\"0\"", "\"seed\":\"1\"".into()),
+            (
+                "16000000-0000-4000-8000-000000000001",
+                second_manifest_id.into(),
+            ),
+            (
+                "16000000-0000-4000-8000-000000000002",
+                second_artifact_id.into(),
+            ),
+            (
+                "16000000-0000-4000-8000-000000000003",
+                second_workload_id.into(),
+            ),
+            (
+                "16000000-0000-4000-8000-000000000005",
+                second_created_by.into(),
+            ),
+            (
+                "16000000-0000-4000-8000-000000000009",
+                second_manifest_artifact_id.into(),
+            ),
+            (
+                "0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09",
+                second_stream_digest.clone(),
+            ),
+            (
+                "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a",
+                second_stream_sha.clone(),
+            ),
+            ("\"818\"", format!("\"{}\"", second_stream.len())),
+            ("\"1274\"", format!("\"{}\"", stream_r7.len())),
+            (
+                "b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c",
+                hex(&artifact_digest(stream_r7)),
+            ),
+            (
+                "https://example.invalid/exp-0001/s01.stream",
+                "https://example.invalid/exp-0001/s02.stream".into(),
+            ),
+        ],
+    );
+    let second_manifest = bytes(provisional_manifest.into_bytes());
+    let manifest_sha = hex(&artifact_digest(second_manifest));
+    let corrected_workload_r7 = bytes(
+        String::from_utf8(workload_r7.to_vec())
+            .unwrap()
+            .replace("\"0\"", &format!("\"{}\"", second_manifest.len()))
+            .replace("PLACEHOLDER", &manifest_sha)
+            .into_bytes(),
+    );
+    let descriptor = leak(ManifestDigestDescriptor {
+        algorithm: "SHA-256/FIPS-180-4",
+        domain: MANIFEST_DOMAIN,
+        profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
+        value: text(hex(&manifest_digest(second_manifest))),
+        manifest_ref: ManifestReference {
+            artifact_id: second_manifest_id,
+            byte_length: second_manifest.len() as u64,
+            sha256: text(manifest_sha),
+            uri: "https://example.invalid/exp-0001/m02.manifest.jcs",
+        },
+    });
+    let stream_artifact = leak(ArtifactMetadata {
+        artifact_id: second_artifact_id,
+        byte_length: second_stream.len() as u64,
+        sha256: text(second_stream_sha.clone()),
+        uri: "https://example.invalid/exp-0001/s02.stream",
+        role: "configuration",
+        media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
+        created_by_record_id: second_created_by,
+    });
+    let workload_ref = leak(ManifestReference {
+        artifact_id: second_workload_artifact_id,
+        byte_length: corrected_workload_r7.len() as u64,
+        sha256: text(hex(&artifact_digest(corrected_workload_r7))),
+        uri: "https://example.invalid/exp-0001/workload-artifact-manifest.jcs",
+    });
+    let validation = leak(ValidationContext {
+        stream: second_stream,
+        descriptor,
+        manifest_artifact_sha256: descriptor.manifest_ref.sha256,
+        targets: &[],
+        artifact_manifest_bytes: stream_r7,
+        workload_artifact_manifest_bytes: corrected_workload_r7,
+        workload_artifact_manifest_ref: workload_ref,
+        stream_artifact,
+    });
+    let mut provenance = Vec::new();
+    provenance.extend((stream_r7.len() as u64).to_be_bytes());
+    provenance.extend(stream_r7);
+    provenance.extend((corrected_workload_r7.len() as u64).to_be_bytes());
+    provenance.extend(corrected_workload_r7);
+    let second_member = ClosedScopeMemberInput {
+        stream_namespace: second_ns,
+        workload_id: second_workload_id,
+        manifest_id: second_manifest_id,
+        cell_id: "PC-D1-B1-F1",
+        stream: second_stream,
+        manifest: second_manifest,
+        manifest_validation: validation,
+        resolved_metadata_bytes: bytes(provenance),
+    };
+    let first = input.members[0].clone();
+    input.members = Box::leak(vec![first, second_member].into_boxed_slice());
+    let scope = text(format!(
+        "{{\"cell_id\":\"PC-D1-B1-F1\",\"members\":[{{\"manifest_digest\":\"{}\",\"manifest_id\":\"16000000-0000-4000-8000-000000000001\",\"stream_artifact_sha256\":\"{}\",\"stream_byte_length\":\"{}\",\"stream_digest\":\"{}\",\"stream_namespace\":\"00112233-4455-4677-8899-aabbccddeeff\",\"workload_id\":\"16000000-0000-4000-8000-000000000003\"}},{{\"manifest_digest\":\"{}\",\"manifest_id\":\"{}\",\"stream_artifact_sha256\":\"{}\",\"stream_byte_length\":\"{}\",\"stream_digest\":\"{}\",\"stream_namespace\":\"{}\",\"workload_id\":\"{}\"}}],\"record_kind\":\"closed_stream_scope\",\"schema_version\":\"EXP-0001-R23-CLOSED-STREAM-SCOPE-JCS-v1\",\"scope_id\":\"24000000-0000-4000-8000-000000000001\"}}",
+        input.members[0].manifest_validation.descriptor.value,
+        hex(&artifact_digest(first_stream)),
+        first_stream.len(),
+        hex(&workload_digest(first_stream)),
+        descriptor.value,
+        second_manifest_id,
+        second_stream_sha,
+        second_stream.len(),
+        second_stream_digest,
+        format_uuid(second_ns),
+        second_workload_id,
+    ));
+    rebind_scope(&mut input, scope.as_bytes());
+    (input, first_ns, second_ns, first_stream, second_stream)
+}
+
 fn first_operation(stream: &[u8]) -> &[u8] {
     let n = u64::from_be_bytes(stream[55..63].try_into().unwrap()) as usize;
     &stream[63..63 + n]
@@ -714,4 +992,49 @@ fn current_event_self_reference_is_rejected_by_unchanged_semantics() {
     );
     assert_eq!(state, state_before);
     assert_eq!(catalog, catalog_before);
+}
+
+#[test]
+fn valid_two_stream_closed_scope_constructs_and_maps_each_selected_namespace() {
+    let (input, first_ns, second_ns, first_stream, second_stream) = two_stream_fixture();
+    let first_context = construct_reference_context(input.clone(), first_ns).unwrap();
+    let second_context = construct_reference_context(input, second_ns).unwrap();
+
+    for (context, stream) in [
+        (&first_context, first_stream),
+        (&second_context, second_stream),
+    ] {
+        assert_eq!(context.catalog().stream_count(), 2);
+        assert_eq!(context.catalog().operation_count(), 2);
+        assert_eq!(context.catalog().identity_binding_count(), 6);
+        assert_eq!(context.initial_state().accepted_count(), 0);
+        assert_eq!(context.initial_state().previous_sequence(), 0);
+        assert_eq!(context.initial_state().previous_physical_ordinal(), 0);
+
+        let catalog_before = context.catalog().clone();
+        let mapped = map_semantic_operation_with_context(
+            first_operation(stream),
+            1,
+            1,
+            context.catalog(),
+            context.initial_state(),
+        )
+        .unwrap();
+        assert_eq!(mapped.next_state().accepted_count(), 1);
+        assert_eq!(mapped.next_state().previous_sequence(), 1);
+        assert_eq!(mapped.next_state().previous_physical_ordinal(), 1);
+        assert_eq!(context.catalog(), &catalog_before);
+    }
+}
+
+#[test]
+fn two_stream_fixture_validates_second_member_authority_binding() {
+    let (mut input, first_ns, _, _, _) = two_stream_fixture();
+    let mut members = input.members.to_vec();
+    members[1].resolved_metadata_bytes = b"";
+    input.members = Box::leak(members.into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, first_ns),
+        Err(ContextConstructionError::InvalidMemberBinding)
+    );
 }
