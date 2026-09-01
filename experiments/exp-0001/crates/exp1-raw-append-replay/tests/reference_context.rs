@@ -446,3 +446,187 @@ fn descriptor_resource_limit_precedes_parsing() {
         Err(ContextConstructionError::ResourceLimit)
     );
 }
+
+fn replace_descriptor(input: &mut ClosedScopeInput<'static>, from: &str, to: &str) {
+    let descriptor = text(
+        String::from_utf8(input.descriptor.to_vec())
+            .unwrap()
+            .replace(from, to),
+    );
+    rebind_scope(input, descriptor.as_bytes());
+}
+
+#[test]
+fn constructor_exact_set_matrix_reaches_public_error_taxonomy() {
+    let (mut input, ns, _) = fixture();
+    input.members = &[];
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::OmittedStream)
+    );
+
+    let (mut input, ns, _) = fixture();
+    let mut extra = input.members[0].clone();
+    extra.stream_namespace = parse_uuid("10112233-4455-4677-8899-aabbccddeeff").unwrap();
+    input.members = Box::leak(vec![input.members[0].clone(), extra].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ExtraStream)
+    );
+
+    let (mut input, ns, _) = fixture();
+    input.members =
+        Box::leak(vec![input.members[0].clone(), input.members[0].clone()].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::DuplicateStreamNamespace)
+    );
+
+    let (mut input, ns, _) = fixture();
+    replace_descriptor(
+        &mut input,
+        "00112233-4455-4677-8899-aabbccddeeff",
+        "10112233-4455-4677-8899-aabbccddeeff",
+    );
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::SubstitutedStream)
+    );
+}
+
+#[test]
+fn constructor_member_cross_binding_matrix_has_exact_errors() {
+    for (needle, replacement, label) in [
+        (
+            "16000000-0000-4000-8000-000000000001",
+            "26000000-0000-4000-8000-000000000001",
+            "manifest id",
+        ),
+        (
+            "68fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594",
+            "78fb7283923c5f661845e2439544f4345fe5ba6782d8dd5bc28b2cfab5e10594",
+            "manifest digest",
+        ),
+        (
+            "0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09",
+            "1c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09",
+            "stream digest",
+        ),
+        (
+            "789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a",
+            "889769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a",
+            "stream artifact digest",
+        ),
+        ("\"818\"", "\"819\"", "stream length"),
+    ] {
+        let (mut input, ns, _) = fixture();
+        assert!(
+            String::from_utf8_lossy(input.descriptor).contains(needle),
+            "fixture contains {label}"
+        );
+        replace_descriptor(&mut input, needle, replacement);
+        assert_eq!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::InvalidMemberBinding),
+            "{label}"
+        );
+    }
+
+    let (mut input, ns, _) = fixture();
+    let mut member = input.members[0].clone();
+    member.stream_namespace = parse_uuid("10112233-4455-4677-8899-aabbccddeeff").unwrap();
+    input.members = Box::leak(vec![member].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::SubstitutedStream)
+    );
+}
+
+#[test]
+fn constructor_scope_and_selected_namespace_failures_are_transactional() {
+    let (mut input, ns, _) = fixture();
+    input.scope_digest.value = "00";
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::InvalidScopeDigest)
+    );
+
+    let (input, _, _) = fixture();
+    let absent = parse_uuid("10112233-4455-4677-8899-aabbccddeeff").unwrap();
+    assert_eq!(
+        construct_reference_context(input, absent),
+        Err(ContextConstructionError::SelectedStreamMissing)
+    );
+}
+
+#[test]
+fn every_mapping_failure_preserves_state_and_catalog() {
+    let (input, ns, stream) = fixture();
+    let context = construct_reference_context(input, ns).unwrap();
+    let catalog = context.catalog().clone();
+    let catalog_before = catalog.clone();
+    let state = context.initial_state().clone();
+    let state_before = state.clone();
+    for (operation, sequence, ordinal, expected) in [
+        (
+            b"bad".as_slice(),
+            1,
+            1,
+            ContextualMappingError::SemanticValidation(Error::Encoding),
+        ),
+        (
+            first_operation(stream),
+            0,
+            1,
+            ContextualMappingError::Mapping(MappingError::State(StateError::ZeroSequence)),
+        ),
+        (
+            first_operation(stream),
+            1,
+            2,
+            ContextualMappingError::Mapping(MappingError::State(
+                StateError::NonconsecutivePhysicalOrdinal,
+            )),
+        ),
+    ] {
+        assert_eq!(
+            map_semantic_operation_with_context(operation, sequence, ordinal, &catalog, &state),
+            Err(expected)
+        );
+        assert_eq!(state, state_before);
+        assert_eq!(catalog, catalog_before);
+    }
+}
+
+#[test]
+fn aggregate_limits_with_stricter_public_preconditions_are_explicit() {
+    // Descriptor/member equality requires at least one canonical member entry per supplied
+    // stream.  The smallest closed entry in this profile is 362 bytes, so 256 entries fit below
+    // 262,144 bytes; 257 is rejected by MAX_STREAMS (and by the descriptor parser) before any
+    // member authority allocation. Exercise that public first-error branch without forged R16
+    // evidence.
+    let (mut input, ns, _) = fixture();
+    let member = input.members[0].clone();
+    input.members = Box::leak(vec![member; 257].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ResourceLimit)
+    );
+
+    // Exact descriptor success is exercised by every valid fixture. One-over is checked before
+    // parsing, while an exact-length non-document reaches parsing rather than ResourceLimit.
+    let exact = vec![b'x'; 262_144];
+    let (mut input, ns, _) = fixture();
+    input.descriptor = &exact;
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::InvalidScopeEncoding)
+    );
+    let over = vec![b'x'; 262_145];
+    let (mut input, ns, _) = fixture();
+    input.descriptor = &over;
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ResourceLimit)
+    );
+}
