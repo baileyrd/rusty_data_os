@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; Slices A, B/B0, A2, and the R18-authorized raw D1 append/deterministic physical replay subset are bounded correctness evidence only; cost, performance, durability, generated-workload execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R19 closes Slices A, B/B0, A2, and raw D1 append/deterministic physical replay only as bounded correctness evidence; descriptive D1 capture is blocked on a reviewed semantic-to-physical mapping and live Linux capture freezes, and cost, performance, durability, generated-workload execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -18,3 +18,16 @@ without dependencies: its correctness suite says yes. It does not answer perform
 storage, persistence, fault, durability, adapter, or production research questions.
 
 The corrected M01/R7 fixture supports only the RQ-003 sub-question that the frozen contracts are mutually executable; it is not ingestion execution or performance evidence.
+
+
+### R19 evidence and blocker note
+
+R19 closes PR #74's exact reviewed Slice C/B1 implementation only as raw D1 submission and
+physical accepted-prefix replay correctness evidence. It identifies the smallest useful
+generated-workload descriptive D1 harness boundary but does not authorize it: R7's required Linux
+direct Linux capture interfaces have no uniquely selected implementation under the current empty
+external-dependency allowlist and unsafe-code prohibition, and the semantic-operation-to-physical-
+record mapping is not frozen. Owner-reviewed mapping and interface/dependency-or-bounded-unsafe
+decisions are required before implementation; caller/authority identity assignment is selected and
+requires a complete validated manifest. A later
+separate execution gate remains mandatory.

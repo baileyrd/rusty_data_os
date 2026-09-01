@@ -2,7 +2,7 @@
 
 **Approval:** GitHub issue #65, `EXP-0001-R18/a2-closure-b1-readiness-v1`
 **Authority base:** live `main` at PR #68 merge `79cbd64a436b104835a4279c07ba2777fb06cddb`
-**Status:** A2 closed; one bounded Slice C/B1 implementation prospectively authorized after this record is reviewed and merged
+**Status:** Superseded prospectively: A2 closed; the authorized Slice C/B1 implementation is closed by R19 as bounded correctness evidence
 **Evidence classification:** governance/readiness decision; the referenced A2 result is implementation/correctness-validation evidence only
 
 ## 1. A2 closure
@@ -134,3 +134,15 @@ commit/recovery claims; physical reset/power loss, destructive or synthetic faul
 production promotion; adapters, SQLite, RocksDB, server, network, query, distributed, security,
 authentication, secrets, or unrelated workspace/toolchain work. Slice C/B1 implementation itself
 is not performed by R18, and its completion authorizes no subsequent tranche.
+
+
+## 6. Post-merge disposition
+
+[R19](R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) records that this
+prospective authorization merged through PR #71 at reviewed head
+`21143b716de006dd5ec639c0b76a1b031d359fc1` and merge
+`e9c292cd614d97b2bf299fd8d2637de76dcdca54`, and that the bounded implementation merged through
+PR #74 at reviewed head `5c448695f4e460cab57eaadd7f7a83bfce1559ab` and merge
+`ef29804347faa812502f855e5cc3ffee6f4901c2` with both required exact-head workflows passing. R19
+closes only that implementation/correctness-validation subset. It does not retroactively expand
+this authorization. The proposed descriptive D1 harness remains blocked and unauthorized.

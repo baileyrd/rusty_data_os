@@ -28,7 +28,7 @@ Phase 0 exited when EXP-0000 and these documentation criteria were completed. Th
 
 ## Phase 1 — Canonical event ingestion
 
-**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A, B/B0, and A2 are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 as documentation design; R18 subsequently authorizes only bounded raw D1 append/replay correctness. Dependency-free generator and manifest conformance implementation exists, but generated workload and benchmark execution remain blocked; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
+**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A, B/B0, and A2 are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 as documentation design; R18 subsequently authorizes only bounded raw D1 append/replay correctness. External-dependency-free generator and manifest conformance implementation exists with reviewed workspace path dependencies, but generated workload and benchmark execution remain blocked; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
@@ -169,7 +169,7 @@ This phase is explicitly non-committed. The project should not assume distributi
 
 ### Slice A2 conformance checkpoint
 
-R18 closes R17's dependency-free executable conformance after preserving PR #64 as historical implementation authority and completing corrective PR #68 exact-head review and CI, for the frozen R12/R14/R16 contracts as
+R18 closes R17's external-dependency-free executable conformance, which contains reviewed workspace path dependencies, after preserving PR #64 as historical implementation authority and completing corrective PR #68 exact-head review and CI, for the frozen R12/R14/R16 contracts as
 bounded correctness evidence. It is not workload execution or benchmark, persistence, durability,
 or performance evidence. R17 itself did not advance Slice C/B1 or authorize a subsequent increment;
 R18 supplies the separate authorization below.
@@ -181,3 +181,12 @@ external-dependency-free raw D1 append plus reopen/replay correctness crate with
 framing, integrity, accepted physical prefixes, terminal truncation, and fail-closed scanning; it
 never labels D1 bytes canonical. BLK-015, D2/D3, execution, benchmarks, physical faults, adapters,
 production promotion, and every later tranche remain gated.
+
+
+## R19 Phase 1 checkpoint
+
+[R19](experiments/EXP-0001/R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) closes
+the merged raw D1 append/physical replay tranche only as bounded correctness evidence. The smallest
+useful generated-workload descriptive D1 harness is not implementation-ready: the exact R7 Linux
+semantic-operation-to-physical-record mapping and direct Linux capture implementation are not selected within the external-dependency-free workspace, which contains reviewed path dependencies and forbids unsafe code. Owner-reviewed mapping and capture-interface/dependency-or-bounded-unsafe decisions are the next smallest gate; caller/authority identity assignment is selected. Phase 1 execution, performance evidence, D2/D3,
+faults, adapters, production, and later work remain unauthorized.
