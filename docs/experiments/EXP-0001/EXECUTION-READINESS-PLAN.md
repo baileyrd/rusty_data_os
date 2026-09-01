@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; Slices A, B/B0, A2, and bounded Slice C/B1 correctness closed; R19 blocks descriptive D1 capture pending a platform-interface decision
+**Status:** Active staged plan; bounded correctness components through the pure R20 mapper are implemented; R19 still blocks descriptive D1 capture pending a platform-interface decision
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -234,3 +234,5 @@ authorized.
 ## R20 semantic mapping gate update
 
 [R20](R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) resolves R19's semantic-operation-to-physical-record blocker as documentation design. It freezes exactly one validated SOP1 to one `STRUCTURAL-0` RF1 type-3 provisional record, with complete SOP1 stable-core preservation and later-ingestion sequence/physical-ordinal inputs. A later pure public `exp1-raw-append-replay::mapping` implementation is prospectively authorized with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only its manifest and the matching lock entry may change, the other crates remain unchanged, and append integration is excluded. That mapper must pass R20's independent correctness gate. The live Linux capture-interface/dependency-or-bounded-unsafe decision remains open, so descriptive D1 harness implementation and all execution remain blocked. No fourth crate, external dependency, D2/D3, `fsync`, canonical recovery, fault work, workload/benchmark execution, or evidence claim is authorized.
+
+The pure mapper and its deterministic correctness tests now implement that bounded gate. This is implementation/correctness-validation evidence only; it does not alter the still-open live Linux capture decision or authorize harness construction or execution.

@@ -61,3 +61,5 @@ decisions recorded in R19. It does not resolve UNK-014/015/021, BLK-015, or any 
 ### R20 disposition
 
 R20 resolves only UNK-022's semantic-to-physical mapping ambiguity as documentation design and prospectively authorizes a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on the unchanged authority crates and no append integration. The direct Linux capture decision and every execution/evidence unknown remain open.
+
+That pure mapper now has bounded implementation/correctness-validation evidence. This does not resolve the direct Linux capture decision, authorize a descriptive harness, or supply execution, durability, recovery, or performance evidence.
