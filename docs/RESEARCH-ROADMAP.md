@@ -188,5 +188,9 @@ production promotion, and every later tranche remain gated.
 [R19](experiments/EXP-0001/R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) closes
 the merged raw D1 append/physical replay tranche only as bounded correctness evidence. The smallest
 useful generated-workload descriptive D1 harness is not implementation-ready: the exact R7 Linux
-semantic-operation-to-physical-record mapping and direct Linux capture implementation are not selected within the external-dependency-free workspace, which contains reviewed path dependencies and forbids unsafe code. Owner-reviewed mapping and capture-interface/dependency-or-bounded-unsafe decisions are the next smallest gate; caller/authority identity assignment is selected. Phase 1 execution, performance evidence, D2/D3,
+semantic-operation-to-physical-record mapping and direct Linux capture implementation were not selected when R19 was decided within the external-dependency-free workspace, which contains reviewed path dependencies and forbids unsafe code. R20 now resolves the mapping as documentation design; the capture-interface/dependency-or-bounded-unsafe decision remains the next gate; caller/authority identity assignment is selected. Phase 1 execution, performance evidence, D2/D3,
 faults, adapters, production, and later work remain unauthorized.
+
+### R20 Phase 1 semantic mapping checkpoint
+
+R20 resolves R19's semantic-to-physical ambiguity as documentation design by mapping one validated SOP1 to one structural RF1 type-3 provisional record. It prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, depending directly on `exp1-record-format` and `exp1-workload-conformance`; append integration and changes to the other crates remain excluded. The separate live Linux capture decision remains open, and no descriptive execution or evidence is authorized.
