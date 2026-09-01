@@ -118,7 +118,7 @@ All evidence and conclusions must follow the frozen [EXP-0001 interpretation and
 
 EXP-0001 is not expected to "prove the database architecture." It should produce a trade-space map showing the real cost of event ingestion and durability under controlled conditions.
 
-A useful result may be that some durability modes are competitive while others are not, or that grouping changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. R5 resolves BLK-001/003/016/017 and B0/B1 BLK-019 as documentation design. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) resolves BLK-018 and the B2/B3 design portion of BLK-019 while leaving D2 conditional and strict D3 unsupported. BLK-015, implementation, empirical equivalence, and execution remain open. R7 is complete as documentation design. [R8](EXP-0001/R8-PRIMARY-MATRIX-THRESHOLDS-AND-STATISTICAL-PLAN.md) freezes the bounded candidate matrix, statistical plan, and prospective owner-approved thresholds and is complete as documentation design; [R9](EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) froze the dependency-free Rust 1.89.0 Slice A workspace and CI. [R11](EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged bounded process-local, noncanonical D0 Slice B correctness gate. [R16](EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009 only as documentation design; the bounded generator and manifest conformance implementation exists, while generated workload artifacts, execution/capture, and empirical validation still block workload observations. Owner-dependent apparatus, capture, adapters, benchmarks, fault actions, machine changes, descriptive/confirmatory execution, persistence, and later slices remain unauthorized.
+A useful result may be that some durability modes are competitive while others are not, or that grouping changes the economics enough to justify a particular acknowledgement model. EXP-0000 completion is readiness documentation, not permission to build or run this experiment. R5 resolves BLK-001/003/016/017 and B0/B1 BLK-019 as documentation design. [R6](EXP-0001/R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md) resolves BLK-018 and the B2/B3 design portion of BLK-019 while leaving D2 conditional and strict D3 unsupported. BLK-015, implementation, empirical equivalence, and execution remain open. R7 is complete as documentation design. [R8](EXP-0001/R8-PRIMARY-MATRIX-THRESHOLDS-AND-STATISTICAL-PLAN.md) freezes the bounded candidate matrix, statistical plan, and prospective owner-approved thresholds and is complete as documentation design; [R9](EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) froze the external-dependency-free Rust 1.89.0 Slice A workspace and CI. [R11](EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged bounded process-local, noncanonical D0 Slice B correctness gate. [R16](EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009 only as documentation design; the bounded generator and manifest conformance implementation exists, while generated workload artifacts, execution/capture, and empirical validation still block workload observations. Owner-dependent apparatus, capture, adapters, benchmarks, fault actions, machine changes, descriptive/confirmatory execution, persistence, and later slices remain unauthorized.
 
 ## 11. Completion criteria
 
@@ -134,7 +134,7 @@ The experiment is complete when:
 
 ## Slice A2 conformance closure
 
-R17 records issue #63's prospectively approved, dependency-free R12/R14/R16 workload-conformance
+R17 records issue #63's prospectively approved, external-dependency-free R12/R14/R16 workload-conformance
 implementation as correctness evidence only. No workload was executed and no benchmark, storage,
 persistence, fault, durability, adapter, production, or architecture claim follows. BLK-015 and
 Slice C/B1 and execution gates remain unchanged; no next tranche is authorized.
@@ -168,9 +168,10 @@ physical accepted-prefix replay correctness evidence. Both exact-head workflows 
 workload, benchmark, stable-storage, namespace, canonical-recovery, D2/D3, fault, adapter,
 production, or performance evidence follows.
 
-The smallest generated-workload descriptive D1 harness remains blocked. R7 requires Linux capture
-interfaces that the current dependency-free, unsafe-forbidden workspace cannot uniquely implement,
-and it does not freeze evidence UUIDv4 assignment. The next decision must select the exact safe
-capture method, dependency or bounded-unsafe policy, unavailable-field behavior, and identity
-assignment. No fourth crate, workload materialization, capture, descriptive execution, or later
+The smallest generated-workload descriptive D1 harness remains blocked. Authorities do not freeze the M01-semantic-operation-to-physical-record mapping or the exact
+implementation for required direct Linux capture interfaces. The current external-dependency-free
+workspace has reviewed workspace path dependencies and prohibits unsafe code. The next decisions
+must freeze the mapping and the capture method, dependency or bounded-unsafe policy, privilege/loss
+behavior, and unavailable-field policy. Caller/authority identity assignment is already selected and
+requires a complete validated identity manifest. No fourth crate, workload materialization, capture, descriptive execution, or later
 tranche is authorized.

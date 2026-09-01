@@ -1,7 +1,7 @@
 # R19 — Slice C/B1 closure and descriptive D1 harness readiness
 
 **Authority base:** `main` at Slice C/B1 merge `ef29804347faa812502f855e5cc3ffee6f4901c2`
-**Status:** Slice C/B1 closed as bounded implementation/correctness-validation evidence; descriptive D1 harness implementation blocked pending one capture-interface decision
+**Status:** Slice C/B1 closed as bounded implementation/correctness-validation evidence; descriptive D1 harness implementation blocked pending semantic-to-physical mapping and live Linux capture decisions
 **Evidence classification:** governance/readiness decision; no workload was materialized or executed and no benchmark evidence was produced
 
 ## 1. Scope and authority audit
@@ -72,14 +72,19 @@ The candidate deterministic run directory would be
 `exp-0001/series/<series_id>/runs/<run_id>/`. The two caller-assigned IDs, frozen cell identity,
 workload identity, repository head, toolchain/build identity, and all effective settings would be
 bound into every applicable record and manifest. Reusing an identity with different inputs or an
-existing directory would fail closed. R7 record IDs would also be caller/authority assigned UUIDv4
-values unless a later owner decision uniquely freezes an assignment mechanism; content-derived,
-randomly improvised, timestamp-derived, or silently regenerated identities are forbidden.
+existing directory would fail closed. The selected identity boundary is caller/authority assignment. Preflight therefore requires a complete
+caller-supplied identity manifest covering every series, run, record, artifact, validation, and
+provenance ID needed for the closed run. The harness must validate each ID's type, UUIDv4 shape,
+uniqueness in its applicable domain, ownership/assignment evidence, and consistency across every
+record, reference, artifact, and provenance edge. It must reject missing, duplicate, conflicting,
+wrong-domain, or inconsistently bound identities. Harness-generated identities, CSPRNG use by the
+harness, content-, timestamp-, counter-, or path-derived identities, and silent regeneration are
+forbidden.
 
 ## 4. Candidate materialization, execution, and oracle sequence
 
-If the blocker in section 7 is resolved without changing the authorities, a later authorization
-may freeze this exact sequence:
+If both blockers in section 7 are resolved without changing the authorities, a later authorization
+may freeze this conditional sequence:
 
 1. Validate the closed CLI, empty output root, cell, identities, repository state, effective
    settings, and capture capability before creating evidence.
@@ -88,9 +93,11 @@ may freeze this exact sequence:
    and independent 1,152-byte workload-manifest artifact fixture. Validate exact bytes, counts,
    identities, bindings, lengths, provenance endpoints, artifact digests, workload-stream digest,
    and manifest digest against R12/R14/R16.
-3. Convert each ordered semantic operation to its already-frozen EXP1-B1-RF1 physical frame only
-   through `exp1-record-format`. Validate each complete frame before presenting it to the appender.
-   No second encoder, CRC, or framing path is permitted.
+3. Before any generated M01 frame or descriptive D1 execution is authorized, a later authority must
+   freeze and validate the exact, deterministic mapping from each M01 `SemanticOperation` to one or
+   more EXP1-B1-RF1 `Record` values. Only after that mapping passes its independent correctness gate
+   may `exp1-record-format` encode and validate the resulting complete frames. No second encoder,
+   CRC, or framing path is permitted.
 4. Capture the pre-run environment and effective settings, then perform exactly one process-local
    descriptive D1 pass for the selected P1, P2, or P3 minimal-envelope cell. Submit frames in
    stream order through one `RawAppender`; retain every receipt and abort on the first failure.
@@ -157,37 +164,58 @@ alter machine configuration, or claim that synthetic records are evidence.
 
 ## 7. Readiness determination and exact blocker
 
-**The descriptive D1 harness is blocked and is not prospectively authorized by R19.** The workload,
-frame, append, replay, oracle, layout, and record schemas are sufficiently constrained, but the
-required effective environment/instrumentation capture implementation is not uniquely realizable
-inside the mandated dependency boundary.
+**The descriptive D1 harness is blocked and is not prospectively authorized by R19.** At least two
+independent decisions remain open.
 
-R7 requires direct Linux capture including `clock_gettime(CLOCK_MONOTONIC_RAW)`,
-`clock_gettime(CLOCK_REALTIME)`, `getrusage`, process/procfs facts, file metadata, and explicit
-availability/loss dispositions. It deliberately does not select a Rust crate. The existing
-workspace forbids unsafe code, contains no platform-interface dependency, and exposes no reviewed
-capture implementation. Safe `std` does not uniquely expose all named R7 interfaces or their
-required effective-setting facts. Selecting an FFI crate, permitting local unsafe bindings,
-substituting `std::time`, invoking external commands, or marking collectable required fields
-unsupported would each be a consequential new implementation/platform policy. R7 and R18 do not
-choose among them. Silently choosing one would invent behavior and would invalidate the claimed
-R7-compliant capture boundary.
+### 7.1 Semantic-operation-to-physical-record mapping blocker
 
-The smallest decision needed is one owner-reviewed, repository-recorded capture-interface freeze
-that:
+Current authority freezes canonical M01 semantic-operation bytes, the EXP1-B1-RF1 physical record
+formats and validators, raw append/replay, and stable physical test vectors. It does **not** uniquely
+freeze or implement how an M01 `SemanticOperation` becomes an EXP1-B1-RF1 `Record`. In particular,
+no authority selects the record kind; body selection and field mapping; physical ordinal
+assignment; provisional/final/commit lifecycle representation; semantic identity/reference
+placement; logical, system, and durability time treatment; integrity profile; or encoding-failure
+behavior. Stable fixture frames demonstrate the physical codec; they are not a semantic-to-physical
+mapping.
 
-1. selects the exact safe implementation path for every required R7 environment, clock, resource,
-   filesystem, and instrumentation field in this descriptive D1 subset;
-2. names any permitted external crate with exact version/license/build policy **or** explicitly
-   authorizes and bounds unavoidable platform-specific unsafe FFI (or freezes an equally exact
-   dependency-free process/procfs method);
-3. freezes unavailable-field and command/tool-version behavior without weakening R7;
-4. freezes caller/owner assignment and capture for series, run, record, artifact, and provenance
-   UUIDv4 identities; and
-5. confirms that the resulting implementation remains valid for the Fedora 44 target without
-   making BLK-015 survival or fault claims.
+`exp1-record-format` can encode and validate an already-constructed `Record`, but it cannot supply
+this missing authority. A separate owner-reviewed decision must freeze the exact deterministic
+mapping and its validation vectors and correctness gate before generated M01 physical frames,
+workload materialization into physical records, or descriptive D1 execution can be authorized. R19
+does not invent or prospectively authorize that mapping.
 
-Until that decision merges, no fourth crate, binary, Cargo/workspace edit, executable R7 record
+### 7.2 Live Linux capture implementation blocker
+
+R7 requires direct Linux capture including `CLOCK_MONOTONIC_RAW`, `getrusage`, `statx` where
+required, `perf_event_open`/tracefs integration, process/procfs facts, ordinary file metadata,
+privilege and loss behavior, and explicit unavailable-field dispositions. Safe Rust and `std` can
+implement portions such as procfs reads and ordinary file metadata; R19 does not claim that all
+Linux capture is impossible under safe `std`. The unresolved boundary is the exact implementation
+for required direct Linux interfaces that safe `std` does not expose, together with privilege/loss
+behavior and unavailable-field policy. The existing external-dependency-free workspace contains
+reviewed workspace path dependencies, forbids unsafe code, and exposes no reviewed implementation
+of that direct-interface subset.
+
+A separate owner-reviewed capture decision must select one authority-compliant alternative:
+
+1. an exact reviewed external platform crate, including version, license, feature, build, and
+   dependency policy;
+2. tightly bounded, reviewed, platform-specific unsafe FFI;
+3. another authority-compliant implementation with its complete interface and evidence policy; or
+4. if R7 permits it, a formally reduced descriptive capture subset with exact unavailable-field,
+   privilege, and loss dispositions.
+
+That decision must also confirm the Fedora 44 target without making BLK-015 survival or fault
+claims. Ordinary safe-`std` capture portions do not resolve the direct-interface decision.
+
+### 7.3 Identity boundary is selected, not blocked
+
+Section 3 selects caller/authority-supplied identities. The complete caller-supplied identity
+manifest and its type, uniqueness, ownership/assignment-evidence, and cross-record consistency
+validation are therefore requirements, not an open assignment decision. Harness identity
+generation and CSPRNG assignment are prohibited and are not implementation blockers.
+
+Until both blocking decisions merge, no fourth crate, binary, Cargo/workspace edit, executable R7 record
 producer/validator, workload materialization, descriptive run, or evidence capture is authorized.
 This keeps UNK-022 and the executable-capture portion of BLK-020/021/026/027 open. The frozen
 candidate boundary above is the maximum scope that the smallest decision may unlock; any broader
@@ -202,7 +230,7 @@ confirmatory execution, threshold application, interpretation, performance claim
 RocksDB adapter, production crate, server, network, query, distributed, security, authentication,
 secret handling, machine change, or later tranche.
 
-Continuation requires the exact section 7 decision, a new documentation/governance authorization
+Continuation requires both exact section 7 blocking decisions, a new documentation/governance authorization
 against then-current `main`, and review of the exact candidate boundary before any Cargo or Rust
 change. Implementation completion would require exact-head CI plus review of every frozen record,
 artifact, failure, dependency, and exclusion obligation. Even then, implementation would authorize
