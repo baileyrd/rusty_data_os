@@ -168,13 +168,15 @@ physical accepted-prefix replay correctness evidence. Both exact-head workflows 
 workload, benchmark, stable-storage, namespace, canonical-recovery, D2/D3, fault, adapter,
 production, or performance evidence follows.
 
-The smallest generated-workload descriptive D1 harness remains blocked. Authorities do not freeze the M01-semantic-operation-to-physical-record mapping or the exact
-implementation for required direct Linux capture interfaces. The current external-dependency-free
-workspace has reviewed workspace path dependencies and prohibits unsafe code. R20 now freezes the mapping; a later decision must still freeze the capture method, dependency or bounded-unsafe policy, privilege/loss
+R19 found two blockers for the smallest generated-workload descriptive D1 harness: the
+M01-semantic-operation-to-physical-record mapping and the exact implementation for required direct
+Linux capture interfaces were both unfrozen. R20 now resolves only the mapping blocker. The current
+external-dependency-free workspace has reviewed workspace path dependencies and prohibits unsafe
+code; a later decision must still freeze the capture method, dependency or bounded-unsafe policy, privilege/loss
 behavior, and unavailable-field policy. Caller/authority identity assignment is already selected and
 requires a complete validated identity manifest. No fourth crate, workload materialization, capture, descriptive execution, or later
 tranche is authorized.
 
 ## R20 mapping readiness update
 
-[R20](EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes the D1 semantic mapping as documentation design: every validated SOP1 becomes exactly one structural RF1 type-3 provisional record whose stable core is the complete SOP1. Assigned sequence and consecutive physical ordinal remain later-ingestion inputs and are not workload ordinals. R20 prospectively authorizes only a bounded mapper implementation and tests in the existing three crates. Live Linux capture remains independently blocked; no harness, workload or benchmark execution, D2/D3, `fsync`, canonicality, recovery, durability, or performance claim is authorized.
+[R20](EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes the D1 semantic mapping as documentation design: every validated SOP1 becomes exactly one structural RF1 type-3 provisional record whose stable core is the complete SOP1. Assigned sequence and consecutive physical ordinal remain later-ingestion inputs and are not workload ordinals. R20 prospectively authorizes only a pure public `exp1-raw-append-replay::mapping` implementation and tests, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; append integration remains excluded. Live Linux capture remains independently blocked; no harness, workload or benchmark execution, D2/D3, `fsync`, canonicality, recovery, durability, or performance claim is authorized.

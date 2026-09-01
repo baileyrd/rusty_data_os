@@ -1,14 +1,14 @@
 # R20 Semantic Operation to Physical Record Mapping
 
-**Profile:** `EXP-0001-SOP1-TO-EXP1-B1-RF1-D1-v1`  
-**Status:** frozen documentation/governance decision  
+**Profile:** `EXP-0001-SOP1-TO-EXP1-B1-RF1-D1-v1`
+**Status:** frozen documentation/governance decision
 **Evidence classification:** documentation design; not implementation, execution, or experimental evidence
 
 ## 1. Decision and boundary
 
 R20 resolves the semantic-to-physical blocker recorded by [R19](R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md). Every validated R14 `EXP-0001-SEMANTIC-OP-v1` operation maps to **exactly one** `EXP1-B1-RF1` type-3 provisional record. There is no binding, reservation, membership, final-event, or commit record in this D1 mapping. The record is noncanonical lifecycle evidence and remains provisional after a successful OS-buffer write.
 
-This decision does not reinterpret SOP1 as a canonical envelope. It selects the complete, already canonical SOP1 byte string as R5's D1 `stable_core`: SOP1 contains the complete ENV1 and opaque payload and is independently validated before construction. It does not add a lifecycle field that SOP1 does not contain.
+This decision does not reinterpret SOP1 as a canonical envelope. It selects the complete canonically serialized SOP1 byte string as R5's D1 `stable_core`: SOP1 contains the complete ENV1 and opaque payload and is independently validated before construction. It does not make SOP1 a canonical storage record or canonical committed history, and it does not add a lifecycle field that SOP1 does not contain.
 
 The mapping is deterministic for the tuple `(validated SOP1 bytes, assigned_sequence, physical_ordinal)`. The last two values are explicit later-ingestion inputs. They are not derived from a workload ordinal. This qualification is necessary: R14 expressly excludes runtime assigned sequence and interleaving from the semantic stream, while R3 makes sequence engine-assigned. Collapsing either ordinal into the other would change those earlier decisions.
 
@@ -66,6 +66,26 @@ This is the complete provisional D1 representation. It does not use or define R5
 
 ## 5. Framing, validation, and deterministic failure
 
+### 5.1 Implementation ownership and dependency direction
+
+The later mapper implementation has exactly one owner: a new public `mapping` module in the existing
+`exp1-raw-append-replay` crate. Its public API is a pure mapping boundary: it accepts complete SOP1
+bytes plus the caller-supplied sequence/ordinal state and returns either one complete validated RF1
+frame (and the checked next state) or an error. SOP1 field parsing and cross-field checks are internal
+to that module. The API does not accept a file, appender, writer, or path, and calling `RawAppender`
+or otherwise integrating append/reopen behavior is excluded from this correctness tranche.
+
+The only permitted workspace path dependencies for `exp1-raw-append-replay` are its existing direct
+dependency on `exp1-record-format` and one new direct dependency on
+`exp1-workload-conformance`. The latter dependency is required so the physical-boundary mapper calls
+the semantic authority's validator rather than reproducing it. This keeps both authority crates as
+independent leaves and places their composition in the already-authorized raw D1 boundary; neither
+semantic conformance nor RF1 framing depends upward on append/replay. The later implementation may
+change only `exp1-raw-append-replay/Cargo.toml` and the corresponding dependency list in `Cargo.lock`;
+those exact dependency-only manifest/lock changes are authorized. The workspace root manifest,
+`exp1-record-format`, and `exp1-workload-conformance` must remain unchanged. The external-dependency
+allowlist remains empty, and no fourth crate is authorized.
+
 The record uses RF1 encoding version 1, type 3, and `STRUCTURAL-0`; integrity bytes are zero. Encoding and physical validation must call only `exp1-record-format`. No mapping implementation may copy, fork, or locally reproduce RF1 encoding, CRC, scanner, or validation logic.
 
 Before constructing anything, the complete operation must pass `exp1-workload-conformance` SOP1 validation. The mapper then checks all duplicated identities/embedded values, RF1 UUID shape, nonzero sequence/ordinal, strict sequence and physical order, checked lengths, and RF1 resource limits. It calls `exp1-record-format` to encode the `Record`, decodes/validates the complete frame with that crate, and requires exact record equality. Only then may the complete frame be returned.
@@ -106,7 +126,7 @@ P0 maps with a present zero-length SOP1 payload tag and a nonempty SOP1 core. P5
 
 ## 7. Future correctness gate and disposition
 
-R20 prospectively authorizes only a later bounded implementation of this mapper and its tests inside the existing three-crate experimental workspace. It must reuse `exp1-workload-conformance`, `exp1-record-format`, and where append/reopen testing is needed `exp1-raw-append-replay`; add no fourth crate or external dependency; and run no workload or benchmark.
+R20 prospectively authorizes only the later bounded `exp1-raw-append-replay::mapping` implementation and its tests under section 5.1's exact dependency boundary. The gate tests the mapper as a pure operation and does not authorize append/reopen integration. It must reuse `exp1-workload-conformance` and `exp1-record-format`, add no fourth crate or external dependency, and run no workload or benchmark.
 
 The independent gate must prove: all five operation cases and P0/P5; literal V20-01/V20-02 lengths, prefixes, digests, decoded equality, and byte-for-byte cores; A01 causal/correction targets; retraction distinction; ordinal/sequence separation including legal gaps; every section 5/6 rejection; no partial output/state advance; and exclusive RF1 encode/validate reuse. Tests may use synthetic mapper inputs but may not describe them as observations.
 

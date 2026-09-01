@@ -33,4 +33,4 @@ separate execution gate remains mandatory.
 
 ### R20 mapping note
 
-R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional record and permits only a later bounded mapper implementation. The direct Linux capture decision remains the separate blocker; R20 adds no execution, correctness result, durability, recovery, or performance evidence.
+R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional record and permits only a later pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on the unchanged `exp1-record-format` and `exp1-workload-conformance` crates. Append integration is excluded. The direct Linux capture decision remains the separate blocker; R20 adds no execution, correctness result, durability, recovery, or performance evidence.

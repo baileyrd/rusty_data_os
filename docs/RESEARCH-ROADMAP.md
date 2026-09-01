@@ -193,4 +193,4 @@ faults, adapters, production, and later work remain unauthorized.
 
 ### R20 Phase 1 semantic mapping checkpoint
 
-R20 resolves R19's semantic-to-physical ambiguity as documentation design by mapping one validated SOP1 to one structural RF1 type-3 provisional record. It prospectively authorizes only bounded mapping implementation in the existing three crates. The separate live Linux capture decision remains open, and no descriptive execution or evidence is authorized.
+R20 resolves R19's semantic-to-physical ambiguity as documentation design by mapping one validated SOP1 to one structural RF1 type-3 provisional record. It prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, depending directly on `exp1-record-format` and `exp1-workload-conformance`; append integration and changes to the other crates remain excluded. The separate live Linux capture decision remains open, and no descriptive execution or evidence is authorized.
