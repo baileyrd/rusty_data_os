@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slices A, B/B0, and A2 correctness gates passed; R18 prospectively authorizes only bounded Slice C/B1 raw D1 append/replay correctness; execution and later work remain unauthorized
+**Status:** Phase 1 planning/readiness — Slices A, B/B0, A2, and bounded Slice C/B1 raw D1 append/replay correctness are implemented; execution and later work remain unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -37,7 +37,14 @@ The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primar
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R16 are complete documentation/governance inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision and R8 is complete as documentation design. The [R9 authority](experiments/EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) now freezes the Slice A-only workspace, harness boundary, exact Rust 1.89.0 toolchain, dependency-free build, tests, and CI plan. It resolves BLK-020/026 for Slice A and prospectively resolves BLK-027 when R9 is reviewed and merged. That merge authorized only Slice A implementation. The reviewed Slice A implementation and its exact-head CI are bounded correctness-validation evidence. [R11](experiments/EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged minimum, process-local, noncanonical, D0-only Slice B implementation and prospectively authorizes only a documentation freeze for BLK-006/007. BLK-006/007 are resolved as documentation design only by R12. [R14](experiments/EXP-0001/R14-CANONICAL-WORKLOAD-STREAM-DIGEST.md) resolves BLK-008 as documentation design only. [R16](experiments/EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009/UNK-019 only as documentation design; implementation, workload observations, and descriptive and confirmatory execution remain unauthorized. Kernel-crash, physical reset/power-loss, storage-error apparatus, BLK-015, later-slice harness/toolchains, effective validation, empirical equivalence, evidence, and execution remain open. Adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
 
-Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, and A2 supply bounded implementation/correctness-validation evidence only. R18 authorizes the next raw D1 append/replay correctness implementation, but no workload execution, benchmark, D2/D3 durability, or performance evidence exists.
+Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and the bounded R18-authorized Slice C/B1 subset supply implementation/correctness-validation evidence only. No workload execution, benchmark, D2/D3 durability, or performance evidence exists.
+
+The R18-authorized Slice C/B1 crate now supplies bounded correctness-validation evidence for
+complete-frame validation, process-local raw D1 write submission, poison-on-terminal-write failure,
+and deterministic read-only physical reopen/replay. This observation does not establish stable
+storage, namespace durability, acknowledged-byte recovery, canonical recovery, D2/D3, workload or
+benchmark execution, faults, adapters, production readiness, performance, or authority for a later
+tranche.
 
 ## 5. Decision policy
 
