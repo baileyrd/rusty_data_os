@@ -230,3 +230,7 @@ and the semantic-operation-to-physical-record mapping is not frozen. Caller/auth
 assignment is selected and requires a complete validated manifest. BLK-020/021/026/027 and UNK-022
 remain open for the exact owner-reviewed mapping and capture decisions. No workload materialization, capture, execution, or later tranche is
 authorized.
+
+## R20 semantic mapping gate update
+
+[R20](R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) resolves R19's semantic-operation-to-physical-record blocker as documentation design. It freezes exactly one validated SOP1 to one `STRUCTURAL-0` RF1 type-3 provisional record, with complete SOP1 stable-core preservation and later-ingestion sequence/physical-ordinal inputs. A later bounded mapper implementation is prospectively authorized only in the existing three crates and must pass R20's independent correctness gate. The live Linux capture-interface/dependency-or-bounded-unsafe decision remains open, so descriptive D1 harness implementation and all execution remain blocked. No fourth crate, external dependency, D2/D3, `fsync`, canonical recovery, fault work, workload/benchmark execution, or evidence claim is authorized.

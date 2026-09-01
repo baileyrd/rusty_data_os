@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R19 closes Slices A, B/B0, A2, and raw D1 append/deterministic physical replay only as bounded correctness evidence; descriptive D1 capture is blocked on a reviewed semantic-to-physical mapping and live Linux capture freezes, and cost, performance, durability, generated-workload execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R20 freezes the semantic-to-physical mapping as documentation design, but descriptive D1 capture remains blocked on live Linux capture, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -31,3 +31,8 @@ record mapping is not frozen. Owner-reviewed mapping and interface/dependency-or
 decisions are required before implementation; caller/authority identity assignment is selected and
 requires a complete validated manifest. A later
 separate execution gate remains mandatory.
+
+
+### R20 mapping note
+
+R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional record and permits only a later bounded mapper implementation. The direct Linux capture decision remains the separate blocker; R20 adds no execution, correctness result, durability, recovery, or performance evidence.

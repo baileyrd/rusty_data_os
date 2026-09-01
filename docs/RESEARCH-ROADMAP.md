@@ -190,3 +190,7 @@ the merged raw D1 append/physical replay tranche only as bounded correctness evi
 useful generated-workload descriptive D1 harness is not implementation-ready: the exact R7 Linux
 semantic-operation-to-physical-record mapping and direct Linux capture implementation are not selected within the external-dependency-free workspace, which contains reviewed path dependencies and forbids unsafe code. Owner-reviewed mapping and capture-interface/dependency-or-bounded-unsafe decisions are the next smallest gate; caller/authority identity assignment is selected. Phase 1 execution, performance evidence, D2/D3,
 faults, adapters, production, and later work remain unauthorized.
+
+### R20 Phase 1 semantic mapping checkpoint
+
+R20 resolves R19's semantic-to-physical ambiguity as documentation design by mapping one validated SOP1 to one structural RF1 type-3 provisional record. It prospectively authorizes only bounded mapping implementation in the existing three crates. The separate live Linux capture decision remains open, and no descriptive execution or evidence is authorized.
