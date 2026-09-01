@@ -1,8 +1,8 @@
 # R23 Closed Stream Scope Proof
 
-**Profile:** `EXP-0001-R23-CLOSED-STREAM-SCOPE-JCS-v1`  
-**Digest profile:** `EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v1`  
-**Status:** frozen documentation/governance decision  
+**Profile:** `EXP-0001-R23-CLOSED-STREAM-SCOPE-JCS-v1`
+**Digest profile:** `EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v1`
+**Status:** frozen documentation/governance decision
 **Evidence classification:** synthetic documentation design; not implementation, execution, or
 experimental evidence
 
@@ -145,8 +145,9 @@ existing R21 bound/extraction/selection failures. The first failure in the order
 returned deterministically; within a stage, members are examined in canonical namespace order.
 No catalog, frame, accepted state, or partial result is returned.
 
-R21's inclusive limits remain authoritative: at most 256 streams, 16 MiB total WS1 bytes, 1,000,000
-operations, and 3,000,000 identity entries, plus its per-stream operation bound. R23 additionally
+R21's inclusive limits remain authoritative: at most 256 streams, 16,777,216 bytes (16 MiB) of
+total WS1 input, 65,536 operations across all streams, and `3 * operations` identity bindings, at
+most 196,608. R23 additionally
 limits descriptor bytes to 262,144, members to 256, the sum of accepted R16 manifest bytes to
 1,048,576, and all resolved R7 metadata bytes to 4,194,304. All counts, additions, conversions,
 digest buffers, and allocations are checked before use; overflow or a limit breach is
