@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — bounded correctness components through the pure R20 D1 mapper are implemented; live capture remains blocked and execution unauthorized
+**Status:** Phase 1 planning/readiness — the locally decidable pure R20 D1 mapping subset is implemented; live capture remains blocked and execution unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -104,4 +104,4 @@ materialization, capture, or execution is authorized.
 
 [R20](experiments/EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes one validated SOP1 operation to exactly one structural type-3 `EXP1-B1-RF1` provisional record. The complete SOP1 is the stable core; its event ID is duplicated in the type-3 body, and later ingestion supplies distinct nonzero assigned sequence and consecutive physical ordinal values. This resolves R19's mapping blocker as documentation design and prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only that crate's manifest and the matching lock entry may change, and append integration is excluded. The independent live-Linux-capture freeze remains open; no harness, execution, D2/D3, `fsync`, canonicality, durability, or recovery claim follows.
 
-The authorized pure mapper and deterministic R20 vector/rejection tests now provide bounded implementation/correctness-validation evidence. They do not integrate with append/reopen, materialize or execute a workload, or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
+The authorized pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable mapping rules; the complete R20 correctness gate is not closed. Duplicate reference bytes are rejected by SOP1 validation, but future, self, and cross-stream membership require prior-event and stream context absent from the frozen mapper state. A separately reviewed governance freeze must select that context before full mapper closure. They do not integrate with append/reopen, materialize or execute a workload, or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.

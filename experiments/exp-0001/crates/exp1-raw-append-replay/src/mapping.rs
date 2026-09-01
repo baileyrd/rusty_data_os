@@ -9,10 +9,16 @@ use exp1_workload_conformance::{Error as SemanticError, validate_semantic_operat
 ///
 /// `initial()` represents an empty destination. Callers retain ownership and replace
 /// their state only with [`MappedRecord::next_state`] after success.
+/// Inconsistent state cannot be fabricated across the public boundary:
+///
+/// ```compile_fail
+/// use exp1_raw_append_replay::mapping::MappingState;
+/// let _ = MappingState { previous_sequence: 0, previous_physical_ordinal: 5 };
+/// ```
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MappingState {
-    pub previous_sequence: u64,
-    pub previous_physical_ordinal: u64,
+    previous_sequence: u64,
+    previous_physical_ordinal: u64,
 }
 
 impl MappingState {
@@ -22,13 +28,28 @@ impl MappingState {
             previous_physical_ordinal: 0,
         }
     }
+
+    pub const fn previous_sequence(self) -> u64 {
+        self.previous_sequence
+    }
+
+    pub const fn previous_physical_ordinal(self) -> u64 {
+        self.previous_physical_ordinal
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MappedRecord {
     pub frame: Vec<u8>,
     pub record: Record,
-    pub next_state: MappingState,
+    next_state: MappingState,
+}
+
+impl MappedRecord {
+    /// Returns the only noninitial state that callers can supply to a later mapping.
+    pub const fn next_state(&self) -> MappingState {
+        self.next_state
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -60,6 +81,12 @@ pub enum MappingError {
     Decode(FormatError),
     RoundTripMismatch,
 }
+
+// Extraction, encode/decode, and round-trip errors are defensive composition-boundary errors.
+// With the currently frozen validators and limits, semantic validation bounds SOP1 below RF1's
+// limit and establishes the fields extracted below, while RF1 encode followed immediately by RF1
+// decode cannot ordinarily reach those variants. They remain explicit so a future change in either
+// unchanged authority crate fails closed instead of becoming a panic or an unchecked assumption.
 
 /// Maps complete SOP1 bytes without I/O or mutation of caller-owned state.
 pub fn map_semantic_operation(

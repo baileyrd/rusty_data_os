@@ -124,7 +124,7 @@ fn r20_documentation_vectors_are_exact() {
         Some("actor-A"),
         &[],
     );
-    let second = map(&s02, 2, 2, first.next_state);
+    let second = map(&s02, 2, 2, first.next_state());
     assert_eq!(second.frame.len(), 842);
     assert_eq!(
         hex(&second.frame[..72]),
@@ -202,7 +202,7 @@ fn all_operation_cases_and_payload_boundaries_preserve_the_complete_core() {
             Body::Provisional { stable_core, .. } => assert_eq!(stable_core, sop),
             _ => panic!("R20 always constructs type 3"),
         }
-        state = mapped.next_state;
+        state = mapped.next_state();
     }
 }
 
@@ -223,6 +223,103 @@ fn identity_for(ordinal: u64) -> [u8; 16] {
     identity(&input, IdentityKind::Event).unwrap()
 }
 
+fn field_range(bytes: &[u8], magic: &[u8], wanted: u8) -> std::ops::Range<usize> {
+    let mut position = magic.len() + 2;
+    loop {
+        let tag = bytes[position];
+        let length = u32::from_be_bytes(bytes[position + 1..position + 5].try_into().unwrap());
+        let start = position + 5;
+        let end = start + usize::try_from(length).unwrap();
+        if tag == wanted {
+            return start..end;
+        }
+        position = end;
+    }
+}
+
+fn replace_field(bytes: &[u8], magic: &[u8], tag: u8, replacement: &[u8]) -> Vec<u8> {
+    let range = field_range(bytes, magic, tag);
+    let mut out = bytes.to_vec();
+    let length_start = range.start - 4;
+    out[length_start..range.start]
+        .copy_from_slice(&u32::try_from(replacement.len()).unwrap().to_be_bytes());
+    out.splice(range, replacement.iter().copied());
+    out
+}
+
+#[test]
+fn authoritative_profiles_versions_and_kinds_reject_before_mapping() {
+    let sop = operation(
+        0,
+        0,
+        Envelope::Minimal,
+        ReferenceSemantics::None,
+        "fact-A",
+        None,
+        None,
+        &[],
+    );
+    let op_range = field_range(&sop, b"RDOS-SOP1", 1);
+    let env_range = field_range(&sop, b"RDOS-SOP1", 9);
+    let mut cases = Vec::new();
+
+    // Every SOP1 profile selector validated by the authoritative one-operation validator.
+    for tag in [2, 4, 8, 10, 11] {
+        let mut bad = sop.clone();
+        let range = field_range(&bad, b"RDOS-SOP1", tag);
+        bad[range.start] ^= 1;
+        cases.push(bad);
+    }
+    // Both OP1 versions and each one-byte OP1 enum/kind selector.
+    for tag in [1, 2, 3, 8, 9, 10] {
+        let mut bad = sop.clone();
+        let relative = field_range(&bad[op_range.clone()], b"RDOS-OP1", tag);
+        bad[op_range.start + relative.start] = 0xff;
+        cases.push(bad);
+    }
+    // ENV1 semantic version and reference-semantics kind.
+    for tag in [2, 12] {
+        let mut bad = sop.clone();
+        let relative = field_range(&bad[env_range.clone()], b"RDOS-ENV1", tag);
+        bad[env_range.start + relative.start] = 0xff;
+        cases.push(bad);
+    }
+
+    for bad in cases {
+        assert!(matches!(
+            map_semantic_operation(&bad, 1, 1, MappingState::initial()),
+            Err(MappingError::SemanticValidation(_))
+        ));
+    }
+}
+
+#[test]
+fn duplicate_reference_bytes_reject_but_membership_requires_unfrozen_context() {
+    let causal = operation(
+        2,
+        1,
+        Envelope::Causal,
+        ReferenceSemantics::Causal,
+        "fact-A",
+        None,
+        None,
+        &[identity_for(0)],
+    );
+    let env_range = field_range(&causal, b"RDOS-SOP1", 9);
+    let env = &causal[env_range];
+    let references = &env[field_range(env, b"RDOS-ENV1", 13)];
+    let mut duplicate = Vec::from(2_u32.to_be_bytes());
+    duplicate.extend_from_slice(&references[4..20]);
+    duplicate.extend_from_slice(&references[4..20]);
+    let invalid_env = replace_field(env, b"RDOS-ENV1", 13, &duplicate);
+    let invalid_sop = replace_field(&causal, b"RDOS-SOP1", 9, &invalid_env);
+
+    assert!(matches!(
+        map_semantic_operation(&invalid_sop, 1, 1, MappingState::initial()),
+        Err(MappingError::SemanticValidation(_))
+    ));
+}
+
 #[test]
 fn state_is_distinct_checked_and_gaps_are_legal() {
     let sop = operation(
@@ -236,14 +333,9 @@ fn state_is_distinct_checked_and_gaps_are_legal() {
         &[],
     );
     let first = map(&sop, 7, 1, MappingState::initial());
-    let second = map(&sop, 99, 2, first.next_state);
-    assert_eq!(
-        second.next_state,
-        MappingState {
-            previous_sequence: 99,
-            previous_physical_ordinal: 2
-        }
-    );
+    let second = map(&sop, 99, 2, first.next_state());
+    assert_eq!(second.next_state().previous_sequence(), 99);
+    assert_eq!(second.next_state().previous_physical_ordinal(), 2);
 
     for (sequence, ordinal, state, expected) in [
         (0, 1, MappingState::initial(), StateError::ZeroSequence),
@@ -259,26 +351,8 @@ fn state_is_distinct_checked_and_gaps_are_legal() {
             MappingState::initial(),
             StateError::NonconsecutivePhysicalOrdinal,
         ),
-        (7, 2, first.next_state, StateError::DuplicateSequence),
-        (6, 2, first.next_state, StateError::DecreasingSequence),
-        (
-            1,
-            1,
-            MappingState {
-                previous_sequence: u64::MAX,
-                previous_physical_ordinal: 0,
-            },
-            StateError::SequenceExhausted,
-        ),
-        (
-            u64::MAX,
-            1,
-            MappingState {
-                previous_sequence: 0,
-                previous_physical_ordinal: u64::MAX,
-            },
-            StateError::PhysicalOrdinalExhausted,
-        ),
+        (7, 2, first.next_state(), StateError::DuplicateSequence),
+        (6, 2, first.next_state(), StateError::DecreasingSequence),
     ] {
         assert_eq!(
             map_semantic_operation(&sop, sequence, ordinal, state),
@@ -287,9 +361,33 @@ fn state_is_distinct_checked_and_gaps_are_legal() {
     }
     let final_sequence = map(&sop, u64::MAX, 1, MappingState::initial());
     assert_eq!(
-        map_semantic_operation(&sop, u64::MAX, 2, final_sequence.next_state),
+        map_semantic_operation(&sop, u64::MAX, 2, final_sequence.next_state()),
         Err(MappingError::State(StateError::SequenceExhausted))
     );
+}
+
+#[test]
+fn failed_mapping_cannot_produce_or_advance_state() {
+    let sop = operation(
+        0,
+        0,
+        Envelope::Minimal,
+        ReferenceSemantics::None,
+        "fact-A",
+        None,
+        None,
+        &[],
+    );
+    let accepted = map(&sop, 7, 1, MappingState::initial());
+    let retained = accepted.next_state();
+    assert_eq!(
+        map_semantic_operation(&sop, 7, 2, retained),
+        Err(MappingError::State(StateError::DuplicateSequence))
+    );
+    assert_eq!(retained.previous_sequence(), 7);
+    assert_eq!(retained.previous_physical_ordinal(), 1);
+    let resumed = map(&sop, 8, 2, retained);
+    assert_eq!(resumed.next_state().previous_sequence(), 8);
 }
 
 #[test]
