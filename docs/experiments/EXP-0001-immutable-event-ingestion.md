@@ -3,7 +3,7 @@
 **Status:** Proposed; bounded correctness implementations are staged, but workload/benchmark execution and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R19 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R20 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -170,8 +170,11 @@ production, or performance evidence follows.
 
 The smallest generated-workload descriptive D1 harness remains blocked. Authorities do not freeze the M01-semantic-operation-to-physical-record mapping or the exact
 implementation for required direct Linux capture interfaces. The current external-dependency-free
-workspace has reviewed workspace path dependencies and prohibits unsafe code. The next decisions
-must freeze the mapping and the capture method, dependency or bounded-unsafe policy, privilege/loss
+workspace has reviewed workspace path dependencies and prohibits unsafe code. R20 now freezes the mapping; a later decision must still freeze the capture method, dependency or bounded-unsafe policy, privilege/loss
 behavior, and unavailable-field policy. Caller/authority identity assignment is already selected and
 requires a complete validated identity manifest. No fourth crate, workload materialization, capture, descriptive execution, or later
 tranche is authorized.
+
+## R20 mapping readiness update
+
+[R20](EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes the D1 semantic mapping as documentation design: every validated SOP1 becomes exactly one structural RF1 type-3 provisional record whose stable core is the complete SOP1. Assigned sequence and consecutive physical ordinal remain later-ingestion inputs and are not workload ordinals. R20 prospectively authorizes only a bounded mapper implementation and tests in the existing three crates. Live Linux capture remains independently blocked; no harness, workload or benchmark execution, D2/D3, `fsync`, canonicality, recovery, durability, or performance claim is authorized.
