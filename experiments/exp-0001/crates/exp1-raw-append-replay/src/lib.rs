@@ -144,9 +144,23 @@ pub struct PhysicalRecord {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ReplayTermination {
     CleanEof,
-    TerminalTruncation { offset: u64 },
-    Failure { offset: u64, error: FormatError },
-    IoFailure { offset: u64, error: io::ErrorKind },
+    TerminalTruncation {
+        offset: u64,
+    },
+    Failure {
+        offset: u64,
+        error: FormatError,
+    },
+    /// A read failed after `offset` source bytes were safely buffered.
+    ///
+    /// This terminal condition takes deterministic precedence over a format
+    /// failure or truncation within those buffered bytes. The buffered bytes
+    /// are still scanned fail-closed, so the report retains only the fully
+    /// validated physical prefix preceding either condition.
+    IoFailure {
+        offset: u64,
+        error: io::ErrorKind,
+    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -162,6 +176,10 @@ pub fn reopen_and_replay(path: impl AsRef<Path>, limits: ScanLimits) -> ReplayRe
         Ok(file) => file,
         Err(error) => return io_failure(0, error.kind()),
     };
+    replay_from_reader(&mut file, limits)
+}
+
+fn replay_from_reader<R: Read>(reader: &mut R, limits: ScanLimits) -> ReplayReport {
     let capacity = match limits
         .max_scan_bytes
         .checked_add(1)
@@ -181,12 +199,20 @@ pub fn reopen_and_replay(path: impl AsRef<Path>, limits: ScanLimits) -> ReplayRe
         }
     };
     let mut bytes = Vec::new();
-    if let Err(error) = Read::by_ref(&mut file)
+    let read_error = Read::by_ref(reader)
         .take(capacity as u64)
         .read_to_end(&mut bytes)
-    {
-        return io_failure(0, error.kind());
-    }
+        .err()
+        .map(|error| error.kind());
+    report_from_buffer(bytes, limits, capacity, read_error)
+}
+
+fn report_from_buffer(
+    bytes: Vec<u8>,
+    limits: ScanLimits,
+    capacity: usize,
+    read_error: Option<io::ErrorKind>,
+) -> ReplayReport {
     let outcome = scan_with_limits(&bytes, limits);
     let accepted_len = usize::try_from(outcome.scanned_bytes).unwrap_or(0);
     let accepted_prefix = bytes[..accepted_len].to_vec();
@@ -206,16 +232,25 @@ pub fn reopen_and_replay(path: impl AsRef<Path>, limits: ScanLimits) -> ReplayRe
         });
         offset += extent;
     }
-    let termination = match outcome.termination {
-        ScanTermination::CleanEof if bytes.len() == capacity => ReplayTermination::Failure {
-            offset: outcome.scanned_bytes,
-            error: FormatError::ScanByteLimit,
-        },
-        ScanTermination::CleanEof => ReplayTermination::CleanEof,
-        ScanTermination::TerminalTruncation { offset } => {
-            ReplayTermination::TerminalTruncation { offset }
+    let termination = if let Some(error) = read_error {
+        ReplayTermination::IoFailure {
+            offset: bytes.len() as u64,
+            error,
         }
-        ScanTermination::Failure { offset, error } => ReplayTermination::Failure { offset, error },
+    } else {
+        match outcome.termination {
+            ScanTermination::CleanEof if bytes.len() == capacity => ReplayTermination::Failure {
+                offset: outcome.scanned_bytes,
+                error: FormatError::ScanByteLimit,
+            },
+            ScanTermination::CleanEof => ReplayTermination::CleanEof,
+            ScanTermination::TerminalTruncation { offset } => {
+                ReplayTermination::TerminalTruncation { offset }
+            }
+            ScanTermination::Failure { offset, error } => {
+                ReplayTermination::Failure { offset, error }
+            }
+        }
     };
     ReplayReport {
         accepted_prefix,
@@ -243,6 +278,25 @@ mod tests {
         actions: VecDeque<Result<usize, io::ErrorKind>>,
         bytes: Vec<u8>,
     }
+
+    struct FailingReader {
+        bytes: Vec<u8>,
+        position: usize,
+        fail_at: usize,
+        error: io::ErrorKind,
+    }
+    impl Read for FailingReader {
+        fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
+            if self.position == self.fail_at {
+                return Err(io::Error::from(self.error));
+            }
+            let available = self.fail_at - self.position;
+            let count = available.min(output.len());
+            output[..count].copy_from_slice(&self.bytes[self.position..self.position + count]);
+            self.position += count;
+            Ok(count)
+        }
+    }
     impl Write for Scripted {
         fn write(&mut self, input: &[u8]) -> io::Result<usize> {
             match self.actions.pop_front().unwrap_or(Ok(input.len())) {
@@ -261,6 +315,11 @@ mod tests {
     fn v1() -> Vec<u8> {
         hex(
             "5244453101000100440000002400000001000000000000000000000000000000101112131415461798191a1b1c1d1e1f000102030405460788090a0b0c0d0e0f00000000",
+        )
+    }
+    fn v3() -> Vec<u8> {
+        hex(
+            "5244453101000201500000003000000002000000000000000000000041f0e427101112131415461798191a1b1c1d1e1f000102030405460788090a0b0c0d0e0f07000000000000000700000000000000",
         )
     }
     fn hex(value: &str) -> Vec<u8> {
@@ -347,5 +406,62 @@ mod tests {
         assert_eq!(error.failure, AppendFailure::OffsetOverflow);
         assert!(poison);
         assert!(writer.bytes.is_empty());
+    }
+
+    #[test]
+    fn read_io_failure_retains_only_the_validated_buffered_prefix() {
+        let first = v1();
+        let second = v3();
+        let adjacent = [first.as_slice(), second.as_slice()].concat();
+        let damaged = [first.as_slice(), &[1; 32]].concat();
+
+        for (bytes, fail_at, accepted_records, scanned_bytes) in [
+            (adjacent.clone(), 0, 0, 0),
+            (adjacent.clone(), first.len(), 1, first.len()),
+            (adjacent.clone(), first.len() + 40, 1, first.len()),
+            (damaged.clone(), damaged.len(), 1, first.len()),
+        ] {
+            let mut reader = FailingReader {
+                bytes,
+                position: 0,
+                fail_at,
+                error: io::ErrorKind::Other,
+            };
+            let report = replay_from_reader(&mut reader, ScanLimits::default());
+            assert_eq!(report.records.len(), accepted_records);
+            assert_eq!(report.scanned_bytes, scanned_bytes as u64);
+            assert_eq!(report.accepted_prefix, first[..scanned_bytes].to_vec());
+            assert_eq!(
+                report.termination,
+                ReplayTermination::IoFailure {
+                    offset: fail_at as u64,
+                    error: io::ErrorKind::Other,
+                }
+            );
+            if accepted_records == 1 {
+                assert_eq!(report.records[0].bytes, first);
+                assert_eq!(
+                    (report.records[0].offset, report.records[0].extent),
+                    (0, 68)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn identical_scripted_read_failures_produce_identical_reports() {
+        let first = v1();
+        let second = v3();
+        let bytes = [first.as_slice(), &second[..40]].concat();
+        let scan = || {
+            let mut reader = FailingReader {
+                fail_at: bytes.len(),
+                bytes: bytes.clone(),
+                position: 0,
+                error: io::ErrorKind::UnexpectedEof,
+            };
+            replay_from_reader(&mut reader, ScanLimits::default())
+        };
+        assert_eq!(scan(), scan());
     }
 }
