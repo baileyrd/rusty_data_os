@@ -66,7 +66,7 @@ That pure mapper now has bounded implementation/correctness-validation evidence 
 
 ### R21 disposition
 
-R21–R23 resolve the reference-context governance blocker and UNK-013 as documentation design: R21 freezes the catalog/context split, R22 resolves cross-segment eligibility, and R23 freezes complete closed-scope proof. No catalog/context implementation is yet authorized. Reconstruction, capture, harness construction, execution, durability, recovery, performance, and every R21 exclusion remain open or unauthorized.
+R21–R23 resolve the reference-context governance blocker and UNK-013 as documentation design: R21 freezes the catalog/context split, R22 resolves cross-segment eligibility, and R23 freezes complete closed-scope proof. R24 now prospectively authorizes exactly one bounded pure catalog/context implementation in the existing mapper; it does not implement or close that gate. Reconstruction, capture, harness construction, execution, durability, recovery, performance, and every R21 exclusion remain open or unauthorized.
 
 ### R22 disposition
 
@@ -80,3 +80,11 @@ manifest-bound canonical stream membership, and a domain-separated scope digest.
 built after exact supplied-set equality may classify an absent identity as `E-REFERENCE-MISSING`;
 an unproven scope fails construction. Implementation, full R20 closure, capture, and execution
 remain unauthorized.
+
+### R24 disposition
+
+R24 converts the closed R21–R23 governance design into one prospective, bounded pure-implementation
+authorization in `exp1-raw-append-replay`. It freezes no-manifest/no-dependency and unchanged-authority
+boundaries, transactional APIs and errors, exact bounds and precedence, required synthetic tests,
+and exact-head CI closure. Implementation and correctness evidence remain pending; capture, harness,
+execution, durability, recovery, and performance remain open or unauthorized.

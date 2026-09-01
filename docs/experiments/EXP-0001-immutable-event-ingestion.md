@@ -3,7 +3,7 @@
 **Status:** Proposed; bounded correctness implementations are staged, but workload/benchmark execution and confirmatory execution are not authorized
 **Linked hypothesis:** HYP-0001
 
-**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R23 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
+**Readiness authority:** The [execution-readiness and staged-implementation plan](EXP-0001/EXECUTION-READINESS-PLAN.md) is the authoritative bridge from EXP-0000 to eventual implementation. R1–R24 are complete documentation/governance inputs, including the [R7 evidence and apparatus authority](EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md), but only bounded correctness implementations are authorized; descriptive-execution and confirmatory-execution gates have not passed.
 
 ## 1. Research question
 
@@ -181,18 +181,18 @@ tranche is authorized.
 
 [R20](EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes the D1 semantic mapping as documentation design: every validated SOP1 becomes exactly one structural RF1 type-3 provisional record whose stable core is the complete SOP1. Assigned sequence and consecutive physical ordinal remain later-ingestion inputs and are not workload ordinals. R20 prospectively authorizes only a pure public `exp1-raw-append-replay::mapping` implementation and tests, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; append integration remains excluded. Live Linux capture remains independently blocked; no harness, workload or benchmark execution, D2/D3, `fsync`, canonicality, recovery, durability, or performance claim is authorized.
 
-The pure mapper and its deterministic tests now provide bounded implementation/correctness-validation evidence only for the locally decidable mapping subset. The complete R20 gate remains open: duplicate reference bytes are locally rejected, but the frozen API/state cannot decide prior-event membership, future/self status, or stream locality. R21 freezes the locally decidable catalog/context subset, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof; implementation still requires separate authorization before full correctness closure. No append/reopen integration or execution was added, and the live Linux capture blocker and all stated exclusions remain unchanged.
+The pure mapper and its deterministic tests now provide bounded implementation/correctness-validation evidence only for the locally decidable mapping subset. The complete R20 gate remains open: duplicate reference bytes are locally rejected, but the frozen API/state cannot decide prior-event membership, future/self status, or stream locality. R21 freezes the locally decidable catalog/context subset, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof; R24 now supplies the separate bounded authorization, but implementation and full correctness closure remain pending. No append/reopen integration or execution was added, and the live Linux capture blocker and all stated exclusions remain unchanged.
 
 ## R21 reference-context readiness update
 
-[R21](EXP-0001/R21-REFERENCE-VALIDATION-CONTEXT.md) freezes the locally decidable context as an immutable catalog built from supplied validated semantic-stream bytes plus mutable accepted-prefix state bound to one stream. It freezes typed identity/fact membership, bounds, collisions, partial precedence, and atomic state transition. R22 resolves cross-segment eligibility and R23 freezes complete closed-scope proof, closing the governance blocker; no implementation is authorized. Live Linux capture still independently blocks the descriptive D1 harness; no execution or evidence follows.
+[R21](EXP-0001/R21-REFERENCE-VALIDATION-CONTEXT.md) freezes the locally decidable context as an immutable catalog built from supplied validated semantic-stream bytes plus mutable accepted-prefix state bound to one stream. It freezes typed identity/fact membership, bounds, collisions, partial precedence, and atomic state transition. R22 resolves cross-segment eligibility and R23 freezes complete closed-scope proof, closing the governance blocker; R24 prospectively authorizes only the bounded pure implementation, which remains pending. Live Linux capture still independently blocks the descriptive D1 harness; no execution or evidence follows.
 
 ## R22 cross-segment readiness update
 
 [R22](EXP-0001/R22-CROSS-SEGMENT-REFERENCE-RULE.md) freezes strictly segment-local reference
 eligibility and the new experiment-local `E-REFERENCE-CROSS-SEGMENT` disposition. It supersedes only
 the ambiguous cross-segment reading of R12 section 5.3 and R21's corresponding unresolved language;
-R12/R14 vectors and bytes remain unchanged. At the R22 checkpoint the complete closed stream-scope proof remained unresolved. R23 now resolves it; reference-context implementation, complete R20 closure, live Linux capture, a descriptive D1 harness, and execution remain unauthorized.
+R12/R14 vectors and bytes remain unchanged. At the R22 checkpoint the complete closed stream-scope proof remained unresolved. R23 now resolves it, and R24 authorizes only the still-pending bounded reference-context implementation; complete R20 closure, live Linux capture, a descriptive D1 harness, and execution remain gated or unauthorized.
 
 ### R23 disposition
 
@@ -200,3 +200,12 @@ R23 freezes the minimum complete closed-stream-scope proof: a canonical, immutab
 with namespace-ordered R16/R14 member bindings and a domain-separated digest. Exact supplied-set
 equality is required before `E-REFERENCE-MISSING` is available. This closes the governance blocker
 but authorizes no reference-context implementation, harness, capture, or execution.
+
+### R24 disposition
+
+[R24](EXP-0001/R24-REFERENCE-CONTEXT-IMPLEMENTATION-AUTHORIZATION.md) confirms the R21–R23
+governance closure and prospectively authorizes exactly one pure correctness extension in the
+existing R20 mapper. It freezes exact files, APIs, construction/reference precedence, bounds,
+transactional tests, and exact-head completion without changing manifests, the lockfile, authority
+crates, dependencies, or append/reopen. No Rust implementation, execution, capture, or evidence is
+part of R24.

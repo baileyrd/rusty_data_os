@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R23 closes closed-stream-scope governance; reference-context implementation remains separately unauthorized; live capture remains blocked and execution unauthorized
+**Status:** Phase 1 planning/readiness — R24 authorizes the bounded pure reference-context implementation; implementation is pending, live capture remains blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -130,3 +130,15 @@ substitutions, duplicates, foreign membership, or digest disagreement. This full
 reference-context governance blocker and makes absence classifiable as `E-REFERENCE-MISSING` only
 after successful complete-scope construction. It authorizes no implementation; the full R20 gate
 still requires a separate increment, review, and CI. All execution and capture exclusions remain.
+
+## R24 reference-context implementation authorization
+
+[R24](experiments/EXP-0001/R24-REFERENCE-CONTEXT-IMPLEMENTATION-AUTHORIZATION.md) confirms that
+R21–R23 collectively close the governance prerequisites and prospectively authorizes exactly one
+bounded pure-correctness extension in the existing `exp1-raw-append-replay` mapper. It freezes the
+closed-scope constructor, immutable catalog, opaque caller-owned accepted-prefix state, contextual
+transactional mapper, errors, bounds, precedence, exact source/test paths, and completion gate. The
+existing manifests, lockfile, authority crates, dependencies, append/reopen boundary, and all
+execution/capture exclusions remain unchanged. R24 contains no Rust implementation or correctness
+evidence; the complete R20 gate remains open until implementation, synchronized documentation,
+exact-head review, tests, and both existing workflows are green.
