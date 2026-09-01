@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R24 authorizes the bounded pure reference-context implementation; implementation is pending, live capture remains blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — the R24-authorized bounded pure reference-context implementation is complete as correctness evidence only; live capture remains blocked and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -142,3 +142,14 @@ existing manifests, lockfile, authority crates, dependencies, append/reopen boun
 execution/capture exclusions remain unchanged. R24 contains no Rust implementation or correctness
 evidence; the complete R20 gate remains open until implementation, synchronized documentation,
 exact-head review, tests, and both existing workflows are green.
+
+## R24 bounded implementation update
+
+The existing mapper now contains the pure closed-scope constructor, immutable opaque catalog,
+caller-owned opaque accepted-prefix state, and transactional contextual mapper authorized by R24.
+Deterministic correctness tests and the unchanged R9 validation sequence close the complete R20
+correctness gate for this bounded pure component, subject to exact-head review and CI. This is
+correctness-validation evidence only. Append/reopen integration, workload materialization or
+execution, live Linux capture and a descriptive D1 harness remain blocked or unauthorized; no
+durability, recovery, performance, benchmark, fault, adapter, production, server, network, query,
+distributed, D2/D3, or `fsync` claim follows.

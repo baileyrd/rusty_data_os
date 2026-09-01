@@ -90,6 +90,11 @@ and unchanged exact-head CI gate. R17 grants no later-slice authority.
 
 ## R24 reference-context implementation-authorization trace
 
+The R24-authorized source boundary now implements the closed-scope constructor, opaque immutable
+catalog, opaque accepted-prefix state, ordered reference classifications, and transactional mapper.
+This closes the bounded complete R20 pure correctness gate subject to exact-head review and CI and
+is not workload, durability, recovery, performance, capture, or experimental evidence.
+
 | Authority | Inputs | Authorized output | Still excluded/open |
 |---|---|---|---|
 | [R24](experiments/EXP-0001/R24-REFERENCE-CONTEXT-IMPLEMENTATION-AUTHORIZATION.md) | R20 mapper/API/tests; R21 catalog, prefix, bounds and vectors; R22 segment locality; R23 closed-scope descriptor, bindings, bounds and vectors | Exactly one pending pure extension in `exp1-raw-append-replay`; frozen constructor/catalog/state/contextual-map APIs, deterministic errors/precedence, exact source/test paths, transactional and resource test gate; no manifest/dependency changes | Implementation and complete R20 closure until exact-head gate; authority crates; append/reopen; capture/harness/execution; fourth crate/dependency/unsafe; D2/D3/`fsync`; benchmarks, durability, recovery, faults, adapters, production, server/network/query/distributed work |

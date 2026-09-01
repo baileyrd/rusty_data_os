@@ -83,6 +83,11 @@ remain unauthorized.
 
 ### R24 disposition
 
+The authorized pure reference-context increment is now implemented with bounded deterministic
+correctness validation. It closes the complete R20 pure correctness gate subject to exact-head
+review and CI, but does not resolve live Linux capture, harness/execution, durability, recovery,
+performance, benchmark, fault, adapter, production, or later-slice unknowns.
+
 R24 converts the closed R21–R23 governance design into one prospective, bounded pure-implementation
 authorization in `exp1-raw-append-replay`. It freezes no-manifest/no-dependency and unchanged-authority
 boundaries, transactional APIs and errors, exact bounds and precedence, required synthetic tests,

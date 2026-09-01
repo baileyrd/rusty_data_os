@@ -36,6 +36,16 @@ impl MappingState {
     pub const fn previous_physical_ordinal(self) -> u64 {
         self.previous_physical_ordinal
     }
+
+    pub(crate) const fn from_validated(
+        previous_sequence: u64,
+        previous_physical_ordinal: u64,
+    ) -> Self {
+        Self {
+            previous_sequence,
+            previous_physical_ordinal,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

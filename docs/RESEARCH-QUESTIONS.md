@@ -54,6 +54,11 @@ construction. This closes governance only; implementation and evidence remain ab
 
 ### R24 implementation-authorization note
 
+The authorized constructor/catalog/accepted-prefix/contextual-mapper increment is now implemented
+as bounded correctness-validation evidence. The complete R20 pure correctness gate closes subject
+to exact-head review and CI; ingestion cost, live capture, execution, durability, recovery, and
+performance questions remain unanswered.
+
 R24 authorizes only the pending pure R21–R23 reference-context extension of the existing R20 mapper.
 Its closed-scope construction, immutable catalog, opaque accepted-prefix state, transactional mapping,
 resource/precedence tests, documentation synchronization, exact-head review, and both existing CI

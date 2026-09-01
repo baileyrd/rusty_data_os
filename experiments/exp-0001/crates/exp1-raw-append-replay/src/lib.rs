@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod mapping;
+pub mod reference_context;
 
 use exp1_record_format::{
     Error as FormatError, Record, ScanLimits, ScanTermination, decode, scan_with_limits,
