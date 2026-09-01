@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R23 closes reference-context governance after R22 resolves cross-segment references; implementation remains separately unauthorized and descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R23 closes reference-context governance after R22 resolves cross-segment references; R24 authorizes the bounded pure implementation, which remains pending; descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -37,7 +37,7 @@ R20 freezes exactly one validated SOP1 to one structural type-3 RF1 provisional 
 
 ### R21 reference-context note
 
-R21 freezes the bounded immutable catalog and accepted prefix; R22 selects strictly segment-local eligibility; R23 completes the governance answer with a canonical manifest-bound closed-scope descriptor and digest. None authorizes implementation or constitutes correctness evidence. Live capture and all experimental execution remain blocked or unauthorized.
+R21 freezes the bounded immutable catalog and accepted prefix; R22 selects strictly segment-local eligibility; R23 completes the governance answer with a canonical manifest-bound closed-scope descriptor and digest. R24 subsequently authorizes only their bounded pure implementation; no implementation or correctness evidence exists yet. Live capture and all experimental execution remain blocked or unauthorized.
 
 ### R22 cross-segment reference note
 
@@ -51,3 +51,10 @@ R23 completes the reference-classification governance answer: a reviewed cell's 
 member list binds every R16 manifest and R14 WS1 stream and is committed by a domain-separated
 digest. Omitted, extra, substituted, duplicate, foreign, or mismatched inputs fail context
 construction. This closes governance only; implementation and evidence remain absent.
+
+### R24 implementation-authorization note
+
+R24 authorizes only the pending pure R21–R23 reference-context extension of the existing R20 mapper.
+Its closed-scope construction, immutable catalog, opaque accepted-prefix state, transactional mapping,
+resource/precedence tests, documentation synchronization, exact-head review, and both existing CI
+workflows must close before correctness evidence exists. It does not authorize capture or execution.

@@ -197,7 +197,7 @@ R20 resolves R19's semantic-to-physical ambiguity as documentation design by map
 
 ### R21 Phase 1 reference-context checkpoint
 
-R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R22 classifies cross-segment targets, and R23 now freezes a canonical manifest-bound proof of complete cell scope. Governance is closed, but no implementation is authorized and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
+R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R22 classifies cross-segment targets, and R23 now freezes a canonical manifest-bound proof of complete cell scope. Governance is closed, and R24 prospectively authorizes only the bounded pure implementation; it remains unimplemented and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
 
 ### R22 Phase 1 cross-segment checkpoint
 
@@ -215,3 +215,10 @@ cell, canonically enumerates every namespace with exact R16 manifest and R14 str
 bindings, and commits to the bytes with a domain-separated digest. Exact equality with supplied
 validated streams is required. This closes governance only; reference-context implementation,
 live capture, harness construction, execution, and later phases remain separately gated.
+
+### R24 Phase 1 implementation-authorization checkpoint
+
+R24 prospectively authorizes the smallest pure reference-context extension in the existing mapper.
+Only the frozen mapper/context source and test paths may change; manifests, lockfile, authority crates,
+dependencies, append/reopen, capture, and execution remain unchanged or excluded. The next work is
+that bounded implementation and its exact completion gate, not a harness or later research phase.
