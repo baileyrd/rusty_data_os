@@ -136,7 +136,11 @@ fn fixture() -> (ClosedScopeInput<'static>, [u8; 16], &'static [u8]) {
     )
 }
 
-fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
+fn generated_minimal_operation_with_identities(
+    namespace: [u8; 16],
+    seed: u64,
+    identities: Option<([u8; 16], [u8; 16], [u8; 16])>,
+) -> Vec<u8> {
     let input = OperationInput {
         segment: Segment::WarmUp,
         seed,
@@ -150,9 +154,12 @@ fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
         producer_ordinal: 0,
         controlled_schedule: None,
     };
-    let request_id = identity(&input, IdentityKind::Request).unwrap();
-    let event_id = identity(&input, IdentityKind::Event).unwrap();
-    let information_id = identity(&input, IdentityKind::Information).unwrap();
+    let derived = (
+        identity(&input, IdentityKind::Request).unwrap(),
+        identity(&input, IdentityKind::Event).unwrap(),
+        identity(&input, IdentityKind::Information).unwrap(),
+    );
+    let (request_id, event_id, information_id) = derived;
     let env1 = envelope_input(&EnvelopeInput {
         operation: &input,
         semantic_version: "1",
@@ -169,7 +176,7 @@ fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
         references: &[],
     })
     .unwrap();
-    SemanticOperation {
+    let operation = SemanticOperation {
         op1: input.encode().unwrap(),
         payload_profile: "EXP-0001-SHA256-CTR-v1",
         payload: payload(&input).unwrap(),
@@ -181,7 +188,16 @@ fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
         unit_ns: 10,
     }
     .encode()
-    .unwrap()
+    .unwrap();
+    if let Some(identities) = identities {
+        operation_with_identities(&operation, identities)
+    } else {
+        operation
+    }
+}
+
+fn generated_minimal_operation(namespace: [u8; 16], seed: u64) -> Vec<u8> {
+    generated_minimal_operation_with_identities(namespace, seed, None)
 }
 
 fn replace_all(mut value: String, replacements: &[(&str, String)]) -> String {
@@ -195,7 +211,19 @@ fn replace_all(mut value: String, replacements: &[(&str, String)]) -> String {
     value
 }
 
-fn two_stream_fixture() -> (
+fn encoded_single_operation_stream(operation: Vec<u8>) -> &'static [u8] {
+    let mut stream = b"RDOS-WS1EXP-0001-SEMANTIC-OP-v1".to_vec();
+    stream.extend(1u64.to_be_bytes());
+    stream.extend(1u64.to_be_bytes());
+    stream.extend(0u64.to_be_bytes());
+    stream.extend(u64::try_from(operation.len()).unwrap().to_be_bytes());
+    stream.extend(operation);
+    bytes(stream)
+}
+
+fn two_stream_fixture_with_second_operation(
+    second_operation: impl FnOnce([u8; 16]) -> Vec<u8>,
+) -> (
     ClosedScopeInput<'static>,
     [u8; 16],
     [u8; 16],
@@ -204,8 +232,7 @@ fn two_stream_fixture() -> (
 ) {
     let (mut input, first_ns, first_stream) = fixture();
     let second_ns = parse_uuid("10112233-4455-4677-8899-aabbccddeeff").unwrap();
-    let second_stream =
-        bytes(workload_stream(&[generated_minimal_operation(second_ns, 1)], 1, 0).unwrap());
+    let second_stream = encoded_single_operation_stream(second_operation(second_ns));
     let second_stream_sha = hex(&artifact_digest(second_stream));
     let second_stream_digest = hex(&workload_digest(second_stream));
 
@@ -414,6 +441,16 @@ fn two_stream_fixture() -> (
     (input, first_ns, second_ns, first_stream, second_stream)
 }
 
+fn two_stream_fixture() -> (
+    ClosedScopeInput<'static>,
+    [u8; 16],
+    [u8; 16],
+    &'static [u8],
+    &'static [u8],
+) {
+    two_stream_fixture_with_second_operation(|namespace| generated_minimal_operation(namespace, 1))
+}
+
 fn first_operation(stream: &[u8]) -> &[u8] {
     let n = u64::from_be_bytes(stream[55..63].try_into().unwrap()) as usize;
     &stream[63..63 + n]
@@ -445,6 +482,20 @@ fn record_fields(bytes: &[u8], magic: &[u8]) -> Vec<Vec<u8>> {
             value
         })
         .collect()
+}
+
+fn operation_with_identities(
+    operation: &[u8],
+    (request_id, event_id, information_id): ([u8; 16], [u8; 16], [u8; 16]),
+) -> Vec<u8> {
+    let mut sop = record_fields(operation, b"RDOS-SOP1");
+    let mut envelope = record_fields(&sop[8], b"RDOS-ENV1");
+    for (field, identity) in [(4, request_id), (5, event_id), (6, information_id)] {
+        sop[field] = identity.to_vec();
+        envelope[field + 3] = identity.to_vec();
+    }
+    sop[8] = record(b"RDOS-ENV1", &envelope);
+    record(b"RDOS-SOP1", &sop)
 }
 
 fn operation_with_encoded_references(operation: &[u8], targets: &[[u8; 16]]) -> Vec<u8> {
@@ -1037,4 +1088,134 @@ fn two_stream_fixture_validates_second_member_authority_binding() {
         construct_reference_context(input, first_ns),
         Err(ContextConstructionError::InvalidMemberBinding)
     );
+}
+
+#[derive(Clone, Copy, Debug)]
+enum IdentityRole {
+    Request,
+    Event,
+    Information,
+}
+
+fn operation_identities(operation: &[u8]) -> [[u8; 16]; 3] {
+    let fields = record_fields(operation, b"RDOS-SOP1");
+    [
+        fields[4].as_slice().try_into().unwrap(),
+        fields[5].as_slice().try_into().unwrap(),
+        fields[6].as_slice().try_into().unwrap(),
+    ]
+}
+
+#[test]
+fn global_typed_collision_pairings_are_unreachable_after_r16_identity_validation() {
+    let (_, _, first_stream) = fixture();
+    let first_ids = operation_identities(first_operation(first_stream));
+    let cases = [
+        (
+            "request_to_request",
+            IdentityRole::Request,
+            IdentityRole::Request,
+        ),
+        ("event_to_event", IdentityRole::Event, IdentityRole::Event),
+        (
+            "information_to_information",
+            IdentityRole::Information,
+            IdentityRole::Information,
+        ),
+        (
+            "request_to_event",
+            IdentityRole::Request,
+            IdentityRole::Event,
+        ),
+        (
+            "event_to_request",
+            IdentityRole::Event,
+            IdentityRole::Request,
+        ),
+        (
+            "request_to_information",
+            IdentityRole::Request,
+            IdentityRole::Information,
+        ),
+        (
+            "information_to_request",
+            IdentityRole::Information,
+            IdentityRole::Request,
+        ),
+        (
+            "event_to_information",
+            IdentityRole::Event,
+            IdentityRole::Information,
+        ),
+        (
+            "information_to_event",
+            IdentityRole::Information,
+            IdentityRole::Event,
+        ),
+    ];
+
+    for (name, first_role, second_role) in cases {
+        let first_id = first_ids[first_role as usize];
+        let (input, first_ns, second_ns, _, _) =
+            two_stream_fixture_with_second_operation(|namespace| {
+                let valid = generated_minimal_operation(namespace, 1);
+                let mut ids = operation_identities(&valid);
+                ids[second_role as usize] = first_id;
+                operation_with_identities(&valid, (ids[0], ids[1], ids[2]))
+            });
+
+        // All enclosing SOP1/ENV1 copies and every WS1, R16 manifest, digest, R7 provenance, and
+        // R23 scope binding are regenerated by the fixture. Nevertheless, R16 derives each role's
+        // UUID from the complete OP1 (which includes the distinct stream namespace) and rejects
+        // the controlled identity before R24's later global-catalog collision stage. Thus no
+        // individually valid pair of member streams can reach IdentityCollision without changing
+        // or weakening the frozen authority validator.
+        assert_eq!(
+            construct_reference_context(input.clone(), first_ns),
+            Err(ContextConstructionError::SemanticValidation(
+                Error::ProfileMismatch
+            )),
+            "{name} selected from first stream"
+        );
+        assert_eq!(
+            construct_reference_context(input, second_ns),
+            Err(ContextConstructionError::SemanticValidation(
+                Error::ProfileMismatch
+            )),
+            "{name} selected from second stream"
+        );
+    }
+}
+
+#[test]
+fn within_operation_typed_collisions_are_unreachable_after_r16_identity_validation() {
+    let cases = [
+        ("request_event", IdentityRole::Request, IdentityRole::Event),
+        (
+            "request_information",
+            IdentityRole::Request,
+            IdentityRole::Information,
+        ),
+        (
+            "event_information",
+            IdentityRole::Event,
+            IdentityRole::Information,
+        ),
+    ];
+
+    for (name, source, destination) in cases {
+        let (input, first_ns, _, _, _) = two_stream_fixture_with_second_operation(|namespace| {
+            let valid = generated_minimal_operation(namespace, 1);
+            let mut ids = operation_identities(&valid);
+            ids[destination as usize] = ids[source as usize];
+            operation_with_identities(&valid, (ids[0], ids[1], ids[2]))
+        });
+        assert_eq!(
+            construct_reference_context(input, first_ns),
+            Err(ContextConstructionError::SemanticValidation(
+                Error::ProfileMismatch
+            )),
+            "{name}"
+        );
+    }
 }
