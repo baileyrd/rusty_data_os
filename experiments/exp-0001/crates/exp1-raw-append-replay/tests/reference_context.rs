@@ -141,6 +141,44 @@ fn first_operation(stream: &[u8]) -> &[u8] {
     &stream[63..63 + n]
 }
 
+fn record(magic: &[u8], fields: &[Vec<u8>]) -> Vec<u8> {
+    let mut out = magic.to_vec();
+    out.extend(u16::try_from(fields.len()).unwrap().to_be_bytes());
+    for (index, value) in fields.iter().enumerate() {
+        out.push(u8::try_from(index + 1).unwrap());
+        out.extend(u32::try_from(value.len()).unwrap().to_be_bytes());
+        out.extend(value);
+    }
+    out
+}
+
+fn record_fields(bytes: &[u8], magic: &[u8]) -> Vec<Vec<u8>> {
+    assert_eq!(&bytes[..magic.len()], magic);
+    let count = u16::from_be_bytes(bytes[magic.len()..magic.len() + 2].try_into().unwrap());
+    let mut position = magic.len() + 2;
+    (0..count)
+        .map(|tag| {
+            assert_eq!(bytes[position], u8::try_from(tag + 1).unwrap());
+            let len =
+                u32::from_be_bytes(bytes[position + 1..position + 5].try_into().unwrap()) as usize;
+            position += 5;
+            let value = bytes[position..position + len].to_vec();
+            position += len;
+            value
+        })
+        .collect()
+}
+
+fn operation_with_encoded_references(operation: &[u8], targets: &[[u8; 16]]) -> Vec<u8> {
+    let mut sop = record_fields(operation, b"RDOS-SOP1");
+    let mut envelope = record_fields(&sop[8], b"RDOS-ENV1");
+    let mut encoded = u32::try_from(targets.len()).unwrap().to_be_bytes().to_vec();
+    encoded.extend(targets.iter().flatten());
+    envelope[12] = encoded;
+    sop[8] = record(b"RDOS-ENV1", &envelope);
+    record(b"RDOS-SOP1", &sop)
+}
+
 fn rebind_scope(input: &mut ClosedScopeInput<'static>, descriptor: &'static [u8]) {
     input.descriptor = descriptor;
     let sha = text(hex(&artifact_digest(descriptor)));
@@ -629,4 +667,51 @@ fn aggregate_limits_with_stricter_public_preconditions_are_explicit() {
         construct_reference_context(input, ns),
         Err(ContextConstructionError::ResourceLimit)
     );
+}
+
+#[test]
+fn duplicate_targets_precede_context_lookup_and_are_transactional() {
+    let (input, ns, stream) = fixture();
+    let context = construct_reference_context(input, ns).unwrap();
+    let catalog = context.catalog().clone();
+    let state = context.initial_state().clone();
+    let catalog_before = catalog.clone();
+    let state_before = state.clone();
+    let target = parse_uuid("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").unwrap();
+    let operation = operation_with_encoded_references(first_operation(stream), &[target, target]);
+
+    assert_eq!(
+        map_semantic_operation_with_context(&operation, 1, 1, &catalog, &state),
+        Err(ContextualMappingError::SemanticValidation(
+            Error::DuplicateOrConflict
+        ))
+    );
+    assert_eq!(state, state_before);
+    assert_eq!(catalog, catalog_before);
+}
+
+#[test]
+fn current_event_self_reference_is_rejected_by_unchanged_semantics() {
+    let (input, ns, stream) = fixture();
+    let context = construct_reference_context(input, ns).unwrap();
+    let catalog = context.catalog().clone();
+    let state = context.initial_state().clone();
+    let state_before = state.clone();
+    let catalog_before = catalog.clone();
+    let sop = record_fields(first_operation(stream), b"RDOS-SOP1");
+    let event_id: [u8; 16] = sop[5].as_slice().try_into().unwrap();
+    let operation = operation_with_encoded_references(first_operation(stream), &[event_id]);
+
+    // R16 rejects a current EventId through the frozen envelope/profile invariants before the
+    // R24 catalog lookup (the public encoder reports DuplicateOrConflict even earlier).
+    // Consequently the mapper's explicit current-id SelfReference arm is defensive and cannot
+    // be reached with an unchanged, valid semantic operation.
+    assert_eq!(
+        map_semantic_operation_with_context(&operation, 1, 1, &catalog, &state),
+        Err(ContextualMappingError::SemanticValidation(
+            Error::ProfileMismatch
+        ))
+    );
+    assert_eq!(state, state_before);
+    assert_eq!(catalog, catalog_before);
 }
