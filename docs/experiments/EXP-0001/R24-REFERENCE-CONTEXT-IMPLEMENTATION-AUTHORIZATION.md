@@ -1,7 +1,7 @@
 # R24 Reference Context Implementation Authorization
 
-**Profile:** `EXP-0001-R24-REFERENCE-CONTEXT-v1`  
-**Status:** frozen documentation closure and prospective implementation authorization  
+**Profile:** `EXP-0001-R24-REFERENCE-CONTEXT-v1`
+**Status:** frozen documentation closure and prospective implementation authorization
 **Evidence classification:** governance/implementation authorization only; not implementation,
 execution, benchmark, durability, recovery, or experimental evidence
 
@@ -34,7 +34,7 @@ No other source or test file is authorized. The workspace manifest, all crate ma
 dependencies, so no authority-backed reason for a manifest change exists. Both authority crates,
 including their source and tests, remain byte-for-byte unchanged. No fourth crate or dependency is
 authorized. Documentation synchronization at implementation closure is the only permitted change
-outside the six implementation paths above.
+outside the five implementation and test paths above.
 
 ## 3. Frozen public boundary
 
