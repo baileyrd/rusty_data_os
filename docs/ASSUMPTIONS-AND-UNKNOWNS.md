@@ -26,7 +26,7 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-010 | Resolved by R3: capture once after semantic validation and immediately before event construction, then reserve sequence after construction. |
 | UNK-011 | Observation-side metadata retention, observer/context identity and multiplicity rules, and criteria for appending an observation as a separate canonical event. |
 | UNK-012 | Resolved for EXP-0001 B1 by R5: structural-only provisional use and the versioned CRC-32C error-detecting profile, coverage, encoding, limits, and vectors are frozen. |
-| UNK-013 | Narrowed by R21 as documentation design for the pure R20 mapper: the immutable typed catalog, caller-owned accepted-prefix split, bounds, collisions, and locally decidable precedence are frozen. R22 resolves cross-segment reference eligibility as strictly segment-local; proof of a complete closed stream classification scope remains unresolved; implementation and the complete correctness gate remain open. |
+| UNK-013 | Resolved as governance design by R21–R23: R21 freezes the immutable typed catalog and accepted prefix, R22 selects segment-local eligibility, and R23 freezes a canonical manifest-bound descriptor and digest proving complete cell scope. Implementation and the complete correctness gate remain open. |
 | UNK-014 | R4 selects bare-metal Bosgame M5/Fedora 44 and four intended paths. The owner accepts externally reviewed but unretained host, 1 ns clock-resolution, nearest-parent XFS/LVM/NVMe, write-back, FUA, and volatile-write-cache observations for conditional planning. BLK-014 is closed for R4 planning; final placement, complete execution provenance, exact PLP/controller protection, and empirical survival remain unresolved for execution and dependent claims. |
 | UNK-015 | Concrete crash/fault-injection mechanisms and implementation of physical validity detection for partial, torn, truncated, or uncertain outcomes. EXP-0000 defines the semantic procedure and R1 defines minimum deterministic classifications and fail-closed scan/recovery policy; mechanisms remain open. |
 | UNK-016 | Resolved by R3: durable binding, explicit reconciliation, exact-candidate retry, conflict handling, and commit-before-ack uncertainty rules. |
@@ -66,11 +66,17 @@ That pure mapper now has bounded implementation/correctness-validation evidence 
 
 ### R21 disposition
 
-R21 narrows but does not resolve the reference-context governance blocker or UNK-013. It freezes the pure catalog/context split and locally decidable rules, while R22 resolves cross-segment eligibility; proof of a complete closed stream scope remains open; no catalog/context implementation is yet authorized. Reconstruction, capture, harness construction, execution, durability, recovery, performance, and every R21 exclusion remain open or unauthorized.
+R21–R23 resolve the reference-context governance blocker and UNK-013 as documentation design: R21 freezes the catalog/context split, R22 resolves cross-segment eligibility, and R23 freezes complete closed-scope proof. No catalog/context implementation is yet authorized. Reconstruction, capture, harness construction, execution, durability, recovery, performance, and every R21 exclusion remain open or unauthorized.
 
 ### R22 disposition
 
 R22 resolves the cross-segment portion of UNK-013 as documentation design with strictly
-segment-local eligibility and `E-REFERENCE-CROSS-SEGMENT`. The complete closed stream classification
-scope remains unknown. R21 implementation, complete R20 closure, live Linux capture, the descriptive
-D1 harness, and execution remain blocked or unauthorized.
+segment-local eligibility and `E-REFERENCE-CROSS-SEGMENT`. R23 subsequently resolves the complete closed stream classification scope as documentation design. R21 implementation, complete R20 closure, live Linux capture, the descriptive D1 harness, and execution remain blocked or unauthorized.
+
+### R23 disposition
+
+R23 resolves the remaining UNK-013 governance question with an immutable canonical descriptor,
+manifest-bound canonical stream membership, and a domain-separated scope digest. Only a catalog
+built after exact supplied-set equality may classify an absent identity as `E-REFERENCE-MISSING`;
+an unproven scope fails construction. Implementation, full R20 closure, capture, and execution
+remain unauthorized.

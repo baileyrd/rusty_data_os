@@ -197,7 +197,7 @@ R20 resolves R19's semantic-to-physical ambiguity as documentation design by map
 
 ### R21 Phase 1 reference-context checkpoint
 
-R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R22 now classifies cross-segment targets, but existing authorities do not prove a complete closed stream scope, so no implementation is authorized and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
+R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R22 classifies cross-segment targets, and R23 now freezes a canonical manifest-bound proof of complete cell scope. Governance is closed, but no implementation is authorized and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
 
 ### R22 Phase 1 cross-segment checkpoint
 
@@ -206,3 +206,12 @@ R22 freezes strictly segment-local reference eligibility and the experiment-loca
 only the cross-segment governance question. Proof of a complete closed stream scope, R21
 implementation, the complete R20 gate, live Linux capture, a descriptive D1 harness, execution, and
 later phases remain gated.
+
+
+### R23 Phase 1 closed-scope checkpoint
+
+R23 freezes the minimum deterministic closure proof: an immutable JCS descriptor names one reviewed
+cell, canonically enumerates every namespace with exact R16 manifest and R14 stream/artifact
+bindings, and commits to the bytes with a domain-separated digest. Exact equality with supplied
+validated streams is required. This closes governance only; reference-context implementation,
+live capture, harness construction, execution, and later phases remain separately gated.

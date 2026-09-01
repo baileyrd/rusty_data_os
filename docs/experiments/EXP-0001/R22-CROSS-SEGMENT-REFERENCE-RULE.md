@@ -89,8 +89,7 @@ only after closed-scope governance also resolves and a separate increment author
 
 The catalog must retain both segments, including future measured entries, so a warm-up-to-measured
 target can be classified as cross-segment rather than missing. Catalog presence does not make a
-future operation accepted or eligible. R22 does not resolve how the constructor proves that its
-multi-stream input is the complete closed classification scope.
+future operation accepted or eligible. R22 itself does not resolve how the constructor proves that input is complete; R23 subsequently freezes that proof.
 
 ## 4. Compatibility and supersession
 
@@ -103,8 +102,7 @@ and existing error rules remain authoritative. R22 does not silently rewrite R12
 R12's existing vectors and bytes remain unchanged because none specifies a cross-segment target.
 R14's SOP1/WS1 encodings, digests, and warm-up-then-measured byte order remain unchanged. R16 is
 unchanged. R21 section 2.1's and section 5's unresolved cross-segment text is superseded by R22;
-R21's catalog design, accepted-prefix lifecycle, other precedence rules, vectors, exclusions, and
-unresolved complete-closed-scope requirement remain in force.
+R21's catalog design, accepted-prefix lifecycle, other precedence rules, vectors, and exclusions remain in force. Its unresolved complete-closed-scope requirement is superseded by R23.
 
 ## 5. Documentation vectors
 
@@ -136,8 +134,7 @@ segment dimension.
 
 ## 6. Disposition, remaining blocker, and exclusions
 
-R22 **fully resolves the cross-segment governance question**. It does not resolve the independent
-proof of a complete closed stream set. Therefore R21's full reference-context implementation
+R22 **fully resolves the cross-segment governance question**. R23 subsequently resolves the independent proof of a complete closed stream set. R21's full reference-context implementation
 remains unauthorized, the complete R20 correctness gate remains open, and a later authorization,
 implementation, exact-head review, and CI are still required. The live Linux capture freeze remains
 open, so no descriptive D1 harness or execution is authorized.
