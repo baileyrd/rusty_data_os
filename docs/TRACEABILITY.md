@@ -92,7 +92,7 @@ and unchanged exact-head CI gate. R17 grants no later-slice authority.
 
 The R24-authorized source boundary now implements the closed-scope constructor, opaque immutable
 catalog, opaque accepted-prefix state, ordered reference classifications, and transactional mapper.
-This closes the bounded complete R20 pure correctness gate subject to exact-head review and CI and
+The complete R20 pure correctness gate remains open pending the complete R24 section 6 executable test matrix, exact-head review, and CI and
 is not workload, durability, recovery, performance, capture, or experimental evidence.
 
 | Authority | Inputs | Authorized output | Still excluded/open |

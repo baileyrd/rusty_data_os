@@ -1,78 +1,257 @@
-//! Synthetic constructor rejection checks. These do not materialize or execute a workload.
+//! R24 executable correctness gate. Fixtures are synthetic authority-conformance inputs.
 
-use exp1_raw_append_replay::reference_context::*;
+use exp1_raw_append_replay::{mapping::*, reference_context::*};
+use exp1_workload_conformance::*;
+#[allow(dead_code)]
+mod vectors {
+    pub const S01: &str = "52444f532d534f5031000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000000600000001010700000004000000200800000001010900000001010a00000001010b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000000e000000010002000000164558502d303030312d5348413235362d4354522d763103000000209a06d1077fd2e1119719444421b9df11bdbf3131aa90e8ab5a291cca55202e7f04000000184558502d303030312d55554944342d5348413235362d76310500000010cf79754651a34f76b1718244bf8053db0600000010330f201aea7c4335a8ece6fe23266a1c07000000103d3c52813d4347db8825664f324e091d080000001a4558502d303030312d454e56454c4f50452d494e5055542d7631090000013952444f532d454e5631000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000000600000001010700000004000000200800000001010900000001010a00000001010b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000000e00000001000200000001310300000006666163742d410400000010eeeeeeeeeeee4eee8eeeeeeeeeeeeeee0500000001310600000001000700000001000800000010cf79754651a34f76b1718244bf8053db0900000010330f201aea7c4335a8ece6fe23266a1c0a000000103d3c52813d4347db8825664f324e091d0b0000000800000000000003e80c00000001000d00000004000000000a000000184558502d303030312d5052494f522d4556454e54532d76310b000000184558502d303030312d4c4f474943414c2d54494d452d76310c0000000800000000000003e80d00000008000000000000000a";
+    pub const S02: &str = "52444f532d534f5031000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000010600000001010700000004000000200800000001010900000001020a00000001020b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000010e000000010002000000164558502d303030312d5348413235362d4354522d76310300000020701866aac4b5cfd4db8974593a0e4b9db5e5879a12cdda727f27885badb7696404000000184558502d303030312d55554944342d5348413235362d76310500000010fcec18c95b8e4655a5ce5463a7872f850600000010c57a25cf26e64dbaad56ea7cec2a4865070000001080f644cff28f432ab64174dfcc5cf873080000001a4558502d303030312d454e56454c4f50452d494e5055542d7631090000014852444f532d454e5631000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000010600000001010700000004000000200800000001010900000001020a00000001020b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000010e00000001000200000001310300000006666163742d410400000010eeeeeeeeeeee4eee8eeeeeeeeeeeeeee050000000131060000000901736f757263652d410700000008016163746f722d410800000010fcec18c95b8e4655a5ce5463a7872f850900000010c57a25cf26e64dbaad56ea7cec2a48650a0000001080f644cff28f432ab64174dfcc5cf8730b0000000800000000000003e80c00000001000d00000004000000000a000000184558502d303030312d5052494f522d4556454e54532d76310b000000184558502d303030312d4c4f474943414c2d54494d452d76310c0000000800000000000003e80d00000008000000000000000a";
+    pub const W00: &str = "52444f532d5753314558502d303030312d53454d414e5449432d4f502d7631000000000000000000000000000000000000000000000000";
+    pub const W01: &str = "52444f532d5753314558502d303030312d53454d414e5449432d4f502d763100000000000000020000000000000002000000000000000000000000000002f352444f532d534f5031000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000000600000001010700000004000000200800000001010900000001010a00000001010b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000000e000000010002000000164558502d303030312d5348413235362d4354522d763103000000209a06d1077fd2e1119719444421b9df11bdbf3131aa90e8ab5a291cca55202e7f04000000184558502d303030312d55554944342d5348413235362d76310500000010cf79754651a34f76b1718244bf8053db0600000010330f201aea7c4335a8ece6fe23266a1c07000000103d3c52813d4347db8825664f324e091d080000001a4558502d303030312d454e56454c4f50452d494e5055542d7631090000013952444f532d454e5631000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000000600000001010700000004000000200800000001010900000001010a00000001010b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000000e00000001000200000001310300000006666163742d410400000010eeeeeeeeeeee4eee8eeeeeeeeeeeeeee0500000001310600000001000700000001000800000010cf79754651a34f76b1718244bf8053db0900000010330f201aea7c4335a8ece6fe23266a1c0a000000103d3c52813d4347db8825664f324e091d0b0000000800000000000003e80c00000001000d00000004000000000a000000184558502d303030312d5052494f522d4556454e54532d76310b000000184558502d303030312d4c4f474943414c2d54494d452d76310c0000000800000000000003e80d00000008000000000000000a000000000000030252444f532d534f5031000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000010600000001010700000004000000200800000001010900000001020a00000001020b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000010e000000010002000000164558502d303030312d5348413235362d4354522d76310300000020701866aac4b5cfd4db8974593a0e4b9db5e5879a12cdda727f27885badb7696404000000184558502d303030312d55554944342d5348413235362d76310500000010fcec18c95b8e4655a5ce5463a7872f850600000010c57a25cf26e64dbaad56ea7cec2a4865070000001080f644cff28f432ab64174dfcc5cf873080000001a4558502d303030312d454e56454c4f50452d494e5055542d7631090000014852444f532d454e5631000d010000009652444f532d4f5031000e010000000200010200000002000103000000010004000000080000000000000000050000000800000000000000010600000001010700000004000000200800000001010900000001020a00000001020b0000001000112233445546778899aabbccddeeff0c000000101021324354654768899aabbccddeef000d0000000800000000000000010e00000001000200000001310300000006666163742d410400000010eeeeeeeeeeee4eee8eeeeeeeeeeeeeee050000000131060000000901736f757263652d410700000008016163746f722d410800000010fcec18c95b8e4655a5ce5463a7872f850900000010c57a25cf26e64dbaad56ea7cec2a48650a0000001080f644cff28f432ab64174dfcc5cf8730b0000000800000000000003e80c00000001000d00000004000000000a000000184558502d303030312d5052494f522d4556454e54532d76310b000000184558502d303030312d4c4f474943414c2d54494d452d76310c0000000800000000000003e80d00000008000000000000000a";
+    pub const M01: &str = r#"{"authority_revisions":[{"authority":"EXP-0000-WORKLOADS","revision":{"kind":"git_sha","value":"70a29efd46dd3aee9ea9cb0831d0285b83cdd70a"}},{"authority":"EXP-0001-R12","revision":{"kind":"git_sha","value":"e39551e64d9a799a3d15bf75aa70a323c8e40ca8"}},{"authority":"EXP-0001-R14","revision":{"kind":"git_sha","value":"78b8b35e4efda44a8097db05f396679a1265a239"}},{"authority":"EXP-0001-R16","revision":{"kind":"reviewed_authority_id","value":"documentation-vector-v1"}},{"authority":"EXP-0001-R2","revision":{"kind":"git_sha","value":"2659fb34caf054a7742a854d69d17cdd59bd2040"}},{"authority":"EXP-0001-R7","revision":{"kind":"git_sha","value":"f9d9876cf6599345a2e2244223a530ada2b9a828"}}],"counts":{"by_envelope_profile":[{"count":"1","profile":"envelope-minimal"}],"by_segment":[{"count":"1","segment":"warm_up"},{"count":"0","segment":"measured"}],"by_size_class":[{"count":"1","profile":"P1"}],"by_temporal_profile":[{"count":"1","profile":"time-monotonic-effective"}],"measured_operation_count":"0","operation_count":"1","warm_up_operation_count":"1"},"created_at_utc_ns":"1788134400000000000","generator_inputs":{"actor_provenance":{"state":"not_applicable"},"base_ns":"1000","controlled_schedule":{"state":"not_applicable"},"correction_fact_type":{"state":"not_applicable"},"envelope_semantic_version":"1","generator_version":"1","ordinary_fact_type":"fact-A","producer_count":"1","producer_id":"10213243-5465-4768-899a-abbccddeef00","reference_cardinality":"0","schema_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","schema_version":"1","seed":"0","source_provenance":{"state":"not_applicable"},"stream_namespace":"00112233-4455-4677-8899-aabbccddeeff","unit_ns":"10","workload_contract_version":"1"},"manifest_id":"16000000-0000-4000-8000-000000000001","profiles":{"digest":"SHA-256/FIPS-180-4","envelope":"envelope-minimal","envelope_generator":"EXP-0001-ENVELOPE-INPUT-v1","identity_generator":"EXP-0001-UUID4-SHA256-v1","logical_time_generator":"EXP-0001-LOGICAL-TIME-v1","manifest":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","payload_content":"deterministic-high-variation","payload_generator":"EXP-0001-SHA256-CTR-v1","payload_size":"fixed-P1","reference_generator":"EXP-0001-PRIOR-EVENTS-v1","semantic_operation":"EXP-0001-SEMANTIC-OP-v1","size_class_order":"EXP-0000-SIZE-CLASS-ORDER-v1","temporal":"time-monotonic-effective","workload_contract":"EXP-0000-WORKLOADS-v1","workload_stream":"EXP-0001-WORKLOAD-STREAM-v1"},"record_kind":"workload_manifest","schema_version":"EXP-0001-WORKLOAD-MANIFEST-JCS-v1","stream_digest":{"algorithm":"SHA-256/FIPS-180-4","domain":"rusty-data-os/exp1/workload-stream/v1","value":"0c1634abb76bc9ab70b864ba11154a704f83df42caca9556f90b2704fe3b8f09"},"stream_ref":{"artifact_id":"16000000-0000-4000-8000-000000000002","artifact_manifest_ref":{"artifact_id":"16000000-0000-4000-8000-000000000009","byte_length":"1274","sha256":"b65688eb056a71bacaff1178ef4d0693b1c5ef59c43bdbdaa7b360e562f4998c","uri":"https://example.invalid/exp-0001/artifact-manifest.jcs"},"byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","role":"configuration","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream"},"supersession":{"reason":{"state":"not_applicable"},"supersedes_manifest_ids":[]},"workload_id":"16000000-0000-4000-8000-000000000003"}"#;
 
-fn scope_input<'a>(descriptor: &'a [u8]) -> ClosedScopeInput<'a> {
-    let artifact_sha =
-        exp1_workload_conformance::hex(&exp1_workload_conformance::artifact_digest(descriptor));
-    // These strings are deliberately leaked only inside this short-lived correctness test so the
-    // borrowed public input can exercise stage-one precedence without an authority graph.
-    let artifact_sha = Box::leak(artifact_sha.into_boxed_str());
-    ClosedScopeInput {
+    pub const R7_ARTIFACT_MANIFEST: &[u8] = br#"{"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000002","byte_length":"818","created_by_record_id":"16000000-0000-4000-8000-000000000005","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000002/configuration","media_type":"application/vnd.rusty-data-os.exp1-workload-stream","retention_state":"published","role":"configuration","sensitivity":"public","sha256":"789769303a70ae2a5f77682e7ad82cf01db34ffd3283fa0757805e46feb6586a","uri":"https://example.invalid/exp-0001/s01.stream","validation_report_ids":[]}],"provenance_edges":[{"from_artifact_id":"16000000-0000-4000-8000-000000000002","relation":"generated_from","to_artifact_id":"16000000-0000-4000-8000-000000000001"}],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000004","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}"#;
+
+    pub const R7_WORKLOAD_ARTIFACT_MANIFEST: &[u8] = br#"{"body":{"artifacts":[{"artifact_id":"16000000-0000-4000-8000-000000000001","byte_length":"3423","created_by_record_id":"16000000-0000-4000-8000-000000000006","logical_path":"exp-0001/series/16000000-0000-4000-8000-000000000007/runs/16000000-0000-4000-8000-000000000008/artifacts/16000000-0000-4000-8000-000000000001/workload_manifest","media_type":"application/vnd.rusty-data-os.exp1-workload-manifest+jcs","retention_state":"published","role":"workload_manifest","sensitivity":"public","sha256":"ca4f9ad7a3f405aba25efca556794a54bed35c7d84b37f9ee5e260b9252bfe86","uri":"https://example.invalid/exp-0001/m01.manifest.jcs","validation_report_ids":[]}],"provenance_edges":[],"publication_state":"published","scope":"run","series_freeze":{"state":"not_applicable"}},"correction_reason":{"state":"not_applicable"},"created_at_utc_ns":"1788134400000000000","record_id":"16000000-0000-4000-8000-000000000010","record_kind":"artifact_manifest","run_id":{"state":"present","value":"16000000-0000-4000-8000-000000000008"},"schema_version":"EXP1-R7-JSON-JCS-1","series_id":"16000000-0000-4000-8000-000000000007","supersedes_record_id":{"state":"not_applicable"}}"#;
+}
+
+fn leak<T>(v: T) -> &'static T {
+    Box::leak(Box::new(v))
+}
+fn text(v: String) -> &'static str {
+    Box::leak(v.into_boxed_str())
+}
+fn bytes(v: Vec<u8>) -> &'static [u8] {
+    Box::leak(v.into_boxed_slice())
+}
+
+fn fixture() -> (ClosedScopeInput<'static>, [u8; 16], &'static [u8]) {
+    let operation = decode_hex(vectors::S01).unwrap();
+    let stream = bytes(workload_stream(&[operation], 1, 0).unwrap());
+    let manifest = vectors::M01.as_bytes();
+    let descriptor = leak(ManifestDigestDescriptor {
+        algorithm: "SHA-256/FIPS-180-4",
+        domain: MANIFEST_DOMAIN,
+        profile: "EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1",
+        value: text(hex(&manifest_digest(manifest))),
+        manifest_ref: ManifestReference {
+            artifact_id: "16000000-0000-4000-8000-000000000001",
+            byte_length: manifest.len() as u64,
+            sha256: text(hex(&artifact_digest(manifest))),
+            uri: "https://example.invalid/exp-0001/m01.manifest.jcs",
+        },
+    });
+    let stream_artifact = leak(ArtifactMetadata {
+        artifact_id: "16000000-0000-4000-8000-000000000002",
+        byte_length: stream.len() as u64,
+        sha256: text(hex(&artifact_digest(stream))),
+        uri: "https://example.invalid/exp-0001/s01.stream",
+        role: "configuration",
+        media_type: "application/vnd.rusty-data-os.exp1-workload-stream",
+        created_by_record_id: "16000000-0000-4000-8000-000000000005",
+    });
+    let wam_ref = leak(ManifestReference {
+        artifact_id: "16000000-0000-4000-8000-000000000011",
+        byte_length: vectors::R7_WORKLOAD_ARTIFACT_MANIFEST.len() as u64,
+        sha256: text(hex(&artifact_digest(
+            vectors::R7_WORKLOAD_ARTIFACT_MANIFEST,
+        ))),
+        uri: "https://example.invalid/exp-0001/workload-artifact-manifest.jcs",
+    });
+    let validation = leak(ValidationContext {
+        stream,
         descriptor,
-        scope_digest: ScopeDigestDescriptor {
-            algorithm: "SHA-256/FIPS-180-4",
-            domain: "rusty-data-os/exp1/closed-stream-scope/v1",
-            profile: "EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v1",
-            value: "00",
-            scope_ref: ScopeReference {
-                artifact_id: "scope",
-                byte_length: descriptor.len() as u64,
-                sha256: artifact_sha,
-                uri: "https://example.invalid/scope",
+        manifest_artifact_sha256: descriptor.manifest_ref.sha256,
+        targets: &[],
+        artifact_manifest_bytes: vectors::R7_ARTIFACT_MANIFEST,
+        workload_artifact_manifest_bytes: vectors::R7_WORKLOAD_ARTIFACT_MANIFEST,
+        workload_artifact_manifest_ref: wam_ref,
+        stream_artifact,
+    });
+    let mut provenance = Vec::new();
+    provenance.extend((vectors::R7_ARTIFACT_MANIFEST.len() as u64).to_be_bytes());
+    provenance.extend(vectors::R7_ARTIFACT_MANIFEST);
+    provenance.extend((vectors::R7_WORKLOAD_ARTIFACT_MANIFEST.len() as u64).to_be_bytes());
+    provenance.extend(vectors::R7_WORKLOAD_ARTIFACT_MANIFEST);
+    let provenance = bytes(provenance);
+    let ns = parse_uuid("00112233-4455-4677-8899-aabbccddeeff").unwrap();
+    let member = leak(ClosedScopeMemberInput {
+        stream_namespace: ns,
+        workload_id: "16000000-0000-4000-8000-000000000003",
+        manifest_id: "16000000-0000-4000-8000-000000000001",
+        cell_id: "PC-D1-B1-F1",
+        stream,
+        manifest,
+        manifest_validation: validation,
+        resolved_metadata_bytes: provenance,
+    });
+    let scope_descriptor = text(format!(
+        "{{\"cell_id\":\"PC-D1-B1-F1\",\"members\":[{{\"manifest_digest\":\"{}\",\"manifest_id\":\"16000000-0000-4000-8000-000000000001\",\"stream_artifact_sha256\":\"{}\",\"stream_byte_length\":\"{}\",\"stream_digest\":\"{}\",\"stream_namespace\":\"00112233-4455-4677-8899-aabbccddeeff\",\"workload_id\":\"16000000-0000-4000-8000-000000000003\"}}],\"record_kind\":\"closed_stream_scope\",\"schema_version\":\"EXP-0001-R23-CLOSED-STREAM-SCOPE-JCS-v1\",\"scope_id\":\"24000000-0000-4000-8000-000000000001\"}}",
+        descriptor.value,
+        hex(&artifact_digest(stream)),
+        stream.len(),
+        hex(&workload_digest(stream))
+    ));
+    let scope_bytes = scope_descriptor.as_bytes();
+    let scope_sha = text(hex(&artifact_digest(scope_bytes)));
+    let scope_r7 = text(format!(
+        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"24000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"created_by_record_id\":\"24000000-0000-4000-8000-000000000003\",\"media_type\":\"application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs\",\"retention_state\":\"published\",\"role\":\"configuration\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope\"}}],\"provenance_edges\":[],\"publication_state\":\"published\"}},\"record_kind\":\"artifact_manifest\",\"schema_version\":\"EXP1-R7-JSON-JCS-1\"}}",
+        scope_bytes.len(),
+        scope_sha
+    ));
+    let mut di = b"rusty-data-os/exp1/closed-stream-scope/v1\0".to_vec();
+    di.extend(scope_bytes);
+    let digest = text(hex(&sha256(&di)));
+    let members: &'static [ClosedScopeMemberInput<'static>] =
+        Box::leak(vec![member.clone()].into_boxed_slice());
+    (
+        ClosedScopeInput {
+            descriptor: scope_bytes,
+            scope_digest: ScopeDigestDescriptor {
+                algorithm: "SHA-256/FIPS-180-4",
+                domain: "rusty-data-os/exp1/closed-stream-scope/v1",
+                profile: "EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v1",
+                value: digest,
+                scope_ref: ScopeReference {
+                    artifact_id: "24000000-0000-4000-8000-000000000002",
+                    byte_length: scope_bytes.len() as u64,
+                    sha256: scope_sha,
+                    uri: "https://example.invalid/scope",
+                },
             },
+            scope_artifact: ScopeArtifactMetadata {
+                artifact_id: "24000000-0000-4000-8000-000000000002",
+                byte_length: scope_bytes.len() as u64,
+                sha256: scope_sha,
+                uri: "https://example.invalid/scope",
+                role: "configuration",
+                media_type: "application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs",
+                created_by_record_id: "24000000-0000-4000-8000-000000000003",
+                metadata_bytes: scope_r7.as_bytes(),
+            },
+            members,
         },
-        scope_artifact: ScopeArtifactMetadata {
-            artifact_id: "scope",
-            byte_length: descriptor.len() as u64,
-            sha256: artifact_sha,
-            uri: "https://example.invalid/scope",
-            role: "configuration",
-            media_type: "application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs",
-            created_by_record_id: "record",
-            metadata_bytes: &[],
-        },
-        authorized_cell_ids: &[],
-        members: &[],
-    }
+        ns,
+        stream,
+    )
+}
+
+fn first_operation(stream: &[u8]) -> &[u8] {
+    let n = u64::from_be_bytes(stream[55..63].try_into().unwrap()) as usize;
+    &stream[63..63 + n]
 }
 
 #[test]
-fn descriptor_encoding_precedes_digest_and_authority_resolution() {
-    let input = scope_input(b"not-json");
+fn valid_construction_mapping_and_exactly_once_advancement() {
+    let (input, ns, stream) = fixture();
+    let context = construct_reference_context(input, ns).unwrap();
+    assert_eq!(context.catalog().stream_count(), 1);
+    let before = context.initial_state().clone();
+    let catalog = context.catalog().clone();
+    let mapped =
+        map_semantic_operation_with_context(first_operation(stream), 1, 1, &catalog, &before)
+            .unwrap();
+    assert_eq!(before.accepted_count(), 0);
+    assert_eq!(mapped.next_state().accepted_count(), 1);
+    assert_eq!(mapped.next_state().previous_sequence(), 1);
+    assert_eq!(catalog, context.catalog().clone());
     assert_eq!(
-        construct_reference_context(input, [0; 16]),
+        map_semantic_operation_with_context(
+            first_operation(stream),
+            2,
+            2,
+            &catalog,
+            mapped.next_state()
+        ),
+        Err(ContextualMappingError::Exhaustion)
+    );
+}
+#[test]
+fn caller_cannot_invent_cell_authority() {
+    let (mut input, ns, _) = fixture();
+    let changed = text(
+        String::from_utf8(input.descriptor.to_vec())
+            .unwrap()
+            .replace("PC-D1-B1-F1", "invented"),
+    );
+    input.descriptor = changed.as_bytes();
+    assert!(matches!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::InvalidCellAuthority)
+            | Err(ContextConstructionError::InvalidScopeDigest)
+    ));
+}
+#[test]
+fn missing_or_malformed_r7_evidence_fails_closed() {
+    let (mut input, ns, _) = fixture();
+    input.scope_artifact.metadata_bytes = b"";
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ScopeReferenceFailure)
+    );
+    let (mut input, ns, _) = fixture();
+    let mut member = input.members[0].clone();
+    member.resolved_metadata_bytes = b"";
+    input.members = Box::leak(vec![member].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::InvalidMemberBinding)
+    );
+}
+#[test]
+fn descriptor_uuid_and_ijson_invariants() {
+    for bad in [
+        "00000000-0000-0000-0000-000000000000",
+        "24000000-0000-4000-0000-000000000001",
+        "24000000-0000-4000-8000-00000000000A",
+    ] {
+        let (mut input, ns, _) = fixture();
+        input.descriptor = bytes(
+            String::from_utf8(input.descriptor.to_vec())
+                .unwrap()
+                .replace("24000000-0000-4000-8000-000000000001", bad)
+                .into_bytes(),
+        );
+        assert_eq!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::InvalidScopeEncoding)
+        );
+    }
+    let (mut input, ns, _) = fixture();
+    let mut d = input.descriptor.to_vec();
+    d.insert(10, 1);
+    input.descriptor = bytes(d);
+    assert_eq!(
+        construct_reference_context(input, ns),
         Err(ContextConstructionError::InvalidScopeEncoding)
     );
 }
-
 #[test]
-fn descriptor_resource_limit_precedes_parsing_and_allocation() {
-    let bytes = vec![b'x'; 262_145];
+fn discontinuity_is_transactional_and_legacy_r20_is_unchanged() {
+    let (input, ns, stream) = fixture();
+    let context = construct_reference_context(input, ns).unwrap();
+    let state = context.initial_state().clone();
+    let catalog = context.catalog().clone();
     assert_eq!(
-        construct_reference_context(scope_input(&bytes), [0; 16]),
-        Err(ContextConstructionError::ResourceLimit)
+        map_semantic_operation_with_context(b"bad", 1, 1, &catalog, &state),
+        Err(ContextualMappingError::SemanticValidation(Error::Encoding))
+    );
+    assert_eq!(state, context.initial_state().clone());
+    assert_eq!(
+        map_semantic_operation(first_operation(stream), 1, 1, MappingState::initial())
+            .unwrap()
+            .record
+            .physical_ordinal,
+        1
     );
 }
-
 #[test]
-fn public_error_taxonomy_keeps_all_r24_outcomes_distinct() {
-    let references = [
-        ReferenceError::Missing,
-        ReferenceError::Future,
-        ReferenceError::WrongKind,
-        ReferenceError::WrongFact,
-        ReferenceError::SelfReference,
-        ReferenceError::CrossStream,
-        ReferenceError::CrossSegment,
-    ];
-    for (index, left) in references.iter().enumerate() {
-        for (other, right) in references.iter().enumerate() {
-            assert_eq!(left == right, index == other);
-        }
-    }
-    assert_ne!(
-        ContextualMappingError::Discontinuity,
-        ContextualMappingError::Exhaustion
+fn descriptor_resource_limit_precedes_parsing() {
+    let bytes = vec![b'x'; 262_145];
+    let (mut input, ns, _) = fixture();
+    input.descriptor = &bytes;
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ResourceLimit)
     );
 }

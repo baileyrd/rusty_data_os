@@ -219,8 +219,7 @@ live capture, harness construction, execution, and later phases remain separatel
 ### R24 Phase 1 implementation-authorization checkpoint
 
 R24 prospectively authorizes the smallest pure reference-context extension in the existing mapper.
-That bounded extension is now implemented as correctness-validation evidence only, closing the
-complete R20 pure correctness gate subject to exact-head review and CI. It does not authorize or
+That bounded extension is now implemented as correctness-validation evidence only, while the complete R20 pure correctness gate remains open pending the complete R24 section 6 executable test matrix, exact-head review, and CI. It does not authorize or
 provide live capture, harness or workload execution, durability, recovery, or performance evidence.
 Only the frozen mapper/context source and test paths may change; manifests, lockfile, authority crates,
 dependencies, append/reopen, capture, and execution remain unchanged or excluded. The next work is

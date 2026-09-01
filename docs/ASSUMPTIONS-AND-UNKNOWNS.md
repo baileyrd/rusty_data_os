@@ -84,8 +84,7 @@ remain unauthorized.
 ### R24 disposition
 
 The authorized pure reference-context increment is now implemented with bounded deterministic
-correctness validation. It closes the complete R20 pure correctness gate subject to exact-head
-review and CI, but does not resolve live Linux capture, harness/execution, durability, recovery,
+correctness validation. The complete R20 pure correctness gate remains open pending the complete R24 section 6 executable test matrix, exact-head review, and CI, but does not resolve live Linux capture, harness/execution, durability, recovery,
 performance, benchmark, fault, adapter, production, or later-slice unknowns.
 
 R24 converts the closed R21–R23 governance design into one prospective, bounded pure-implementation

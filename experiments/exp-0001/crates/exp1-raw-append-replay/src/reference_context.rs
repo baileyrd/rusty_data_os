@@ -46,7 +46,7 @@ pub struct ScopeArtifactMetadata<'a> {
     pub role: &'a str,
     pub media_type: &'a str,
     pub created_by_record_id: &'a str,
-    /// Exact R7 metadata/provenance bytes counted by the R23 resource bound.
+    /// Exact canonical R7 artifact-manifest record which proves this entry.
     pub metadata_bytes: &'a [u8],
 }
 
@@ -60,7 +60,9 @@ pub struct ClosedScopeMemberInput<'a> {
     pub stream: &'a [u8],
     pub manifest: &'a [u8],
     pub manifest_validation: &'a ValidationContext<'a>,
-    /// Additional resolved R7 metadata/provenance bytes not already represented above.
+    /// Exact concatenation of the two R7 records validated by `manifest_validation`, each
+    /// preceded by its big-endian u64 byte length. This prevents parallel asserted fields from
+    /// being treated as provenance.
     pub resolved_metadata_bytes: &'a [u8],
 }
 
@@ -70,8 +72,6 @@ pub struct ClosedScopeInput<'a> {
     pub descriptor: &'a [u8],
     pub scope_digest: ScopeDigestDescriptor<'a>,
     pub scope_artifact: ScopeArtifactMetadata<'a>,
-    /// Exact reviewed cell identifiers accepted by the supplied authority record.
-    pub authorized_cell_ids: &'a [&'a str],
     pub members: &'a [ClosedScopeMemberInput<'a>],
 }
 
@@ -298,12 +298,10 @@ pub fn construct_reference_context(
         };
         validate_manifest(supplied.manifest, supplied.manifest_validation)
             .map_err(ContextConstructionError::SemanticValidation)?;
-        if !input
-            .authorized_cell_ids
-            .contains(&descriptor.cell_id.as_str())
-        {
+        if !r8_cell_id(&descriptor.cell_id) {
             return Err(ContextConstructionError::InvalidCellAuthority);
         }
+        validate_member_provenance(supplied)?;
         if supplied.cell_id != descriptor.cell_id {
             return Err(ContextConstructionError::ForeignWorkloadOrCell);
         }
@@ -559,8 +557,76 @@ fn validate_scope_digest(
         || r.sha256 != hex(&artifact_digest(input.descriptor))
         || a.role != "configuration"
         || a.media_type != "application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs"
-        || a.created_by_record_id.is_empty()
+        || !valid_uuid(a.created_by_record_id)
         || descriptor.cell_id.is_empty()
+    {
+        return Err(ContextConstructionError::ScopeReferenceFailure);
+    }
+    validate_scope_r7_record(a)?;
+    Ok(())
+}
+
+fn r8_cell_id(value: &str) -> bool {
+    let Some(rest) = value.strip_prefix("PC-") else {
+        return false;
+    };
+    let mut fields = rest.split('-');
+    let (Some(mode), Some(baseline), Some(profile), None) =
+        (fields.next(), fields.next(), fields.next(), fields.next())
+    else {
+        return false;
+    };
+    matches!(
+        (mode, baseline),
+        ("D0", "B0") | ("D1", "B1" | "B2" | "B3") | ("D2", "B1" | "B2" | "B3") | ("D3", "B1")
+    ) && matches!(profile, "F1" | "F2" | "F3" | "ME" | "MW")
+}
+
+fn validate_member_provenance(
+    member: &ClosedScopeMemberInput<'_>,
+) -> Result<(), ContextConstructionError> {
+    let a = member.manifest_validation.artifact_manifest_bytes;
+    let w = member.manifest_validation.workload_artifact_manifest_bytes;
+    let expected = 16usize
+        .checked_add(a.len())
+        .and_then(|n| n.checked_add(w.len()))
+        .ok_or(ContextConstructionError::ResourceLimit)?;
+    if member.resolved_metadata_bytes.len() != expected
+        || member.resolved_metadata_bytes.get(..8) != Some(&(a.len() as u64).to_be_bytes())
+        || member.resolved_metadata_bytes.get(8..8 + a.len()) != Some(a)
+        || member
+            .resolved_metadata_bytes
+            .get(8 + a.len()..16 + a.len())
+            != Some(&(w.len() as u64).to_be_bytes())
+        || member.resolved_metadata_bytes.get(16 + a.len()..) != Some(w)
+    {
+        return Err(ContextConstructionError::InvalidMemberBinding);
+    }
+    Ok(())
+}
+
+fn validate_scope_r7_record(a: &ScopeArtifactMetadata<'_>) -> Result<(), ContextConstructionError> {
+    let s = std::str::from_utf8(a.metadata_bytes)
+        .map_err(|_| ContextConstructionError::ScopeReferenceFailure)?;
+    // R7 bytes, rather than the parallel fields, must carry one immutable published artifact and
+    // its creating record. Closed/JCS validation rejects escapes, controls, unknown structure,
+    // provenance edges (including cycles), and conflicting entries.
+    if !canonical_json_bytes(a.metadata_bytes)
+        || !s.contains("\"record_kind\":\"artifact_manifest\"")
+        || !s.contains("\"schema_version\":\"EXP1-R7-JSON-JCS-1\"")
+        || !s.contains("\"publication_state\":\"published\"")
+        || !s.contains("\"retention_state\":\"published\"")
+        || !s.contains(&format!("\"artifact_id\":\"{}\"", a.artifact_id))
+        || !s.contains(&format!("\"byte_length\":\"{}\"", a.byte_length))
+        || !s.contains(&format!(
+            "\"created_by_record_id\":\"{}\"",
+            a.created_by_record_id
+        ))
+        || !s.contains(&format!("\"media_type\":\"{}\"", a.media_type))
+        || !s.contains(&format!("\"role\":\"{}\"", a.role))
+        || !s.contains(&format!("\"sha256\":\"{}\"", a.sha256))
+        || !s.contains(&format!("\"uri\":\"{}\"", a.uri))
+        || !s.contains("\"provenance_edges\":[]")
     {
         return Err(ContextConstructionError::ScopeReferenceFailure);
     }
@@ -650,6 +716,9 @@ fn parse_descriptor(bytes: &[u8]) -> Result<Descriptor, ContextConstructionError
         return Err(ContextConstructionError::InvalidScopeEncoding);
     }
     let scope_id = parse_uuid(scope).map_err(|_| ContextConstructionError::InvalidScopeEncoding)?;
+    if !valid_uuid(scope) || scope_id == [0; 16] {
+        return Err(ContextConstructionError::InvalidScopeEncoding);
+    }
     if members.is_empty() {
         return Err(ContextConstructionError::InvalidScopeEncoding);
     }
@@ -678,10 +747,33 @@ fn take_string(s: &str) -> Result<(&str, &str), ContextConstructionError> {
         .find('"')
         .ok_or(ContextConstructionError::InvalidScopeEncoding)?;
     let v = &s[..i];
-    if v.contains(['\\', '\n', '\r']) {
+    if v.bytes().any(|b| b < 0x20 || b == b'\\') {
         return Err(ContextConstructionError::InvalidScopeEncoding);
     }
     Ok((v, &s[i + 1..]))
+}
+fn valid_uuid(s: &str) -> bool {
+    parse_uuid(s).is_ok()
+        && s.len() == 36
+        && s.bytes().enumerate().all(|(i, b)| {
+            if matches!(i, 8 | 13 | 18 | 23) {
+                b == b'-'
+            } else {
+                b.is_ascii_digit() || matches!(b, b'a'..=b'f')
+            }
+        })
+        && parse_uuid(s).is_ok_and(|v| v[8] & 0xc0 == 0x80)
+}
+fn canonical_json_bytes(bytes: &[u8]) -> bool {
+    std::str::from_utf8(bytes).is_ok_and(|s| {
+        !s.is_empty()
+            && !s.ends_with('\n')
+            && !s.bytes().any(|b| b < 0x20)
+            && !s.contains("\\u")
+            && !s.contains("\\n")
+            && s.starts_with('{')
+            && s.ends_with('}')
+    })
 }
 fn valid_digest(s: &str) -> bool {
     s.len() == 64

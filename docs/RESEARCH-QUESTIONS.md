@@ -55,8 +55,7 @@ construction. This closes governance only; implementation and evidence remain ab
 ### R24 implementation-authorization note
 
 The authorized constructor/catalog/accepted-prefix/contextual-mapper increment is now implemented
-as bounded correctness-validation evidence. The complete R20 pure correctness gate closes subject
-to exact-head review and CI; ingestion cost, live capture, execution, durability, recovery, and
+as bounded correctness-validation evidence. The complete R20 pure correctness gate remains open pending the complete R24 section 6 executable test matrix, exact-head review, and CI; ingestion cost, live capture, execution, durability, recovery, and
 performance questions remain unanswered.
 
 R24 authorizes only the pending pure R21–R23 reference-context extension of the existing R20 mapper.

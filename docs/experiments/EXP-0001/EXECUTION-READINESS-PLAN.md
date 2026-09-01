@@ -259,8 +259,7 @@ authorization, exact-head review, and CI; no harness, capture, execution, or lat
 ## R24 reference-context implementation gate update
 
 The bounded pure implementation authorized here now exists in the existing mapper and supplies
-correctness-validation evidence only. The complete R20 pure correctness gate closes subject to
-exact-head review and both existing workflows. Live Linux capture still blocks the descriptive D1
+correctness-validation evidence only. The complete R20 pure correctness gate remains open pending the complete R24 section 6 executable test matrix, exact-head review, and both existing workflows. Live Linux capture still blocks the descriptive D1
 harness; append integration, workload/benchmark execution, D2/D3, `fsync`, durability, recovery,
 performance, faults, adapters, production, and later increments remain unauthorized.
 
