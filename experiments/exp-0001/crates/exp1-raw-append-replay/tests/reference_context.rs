@@ -205,6 +205,34 @@ fn caller_cannot_invent_cell_authority() {
 }
 
 #[test]
+fn foreign_workload_and_foreign_cell_are_distinct_from_member_binding_failure() {
+    let (mut input, ns, _) = fixture();
+    let mut member = input.members[0].clone();
+    member.workload_id = "26000000-0000-4000-8000-000000000003";
+    input.members = Box::leak(vec![member].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ForeignWorkloadOrCell)
+    );
+
+    let (mut input, ns, _) = fixture();
+    set_member_cell(&mut input, "PC-D1-B1-F2");
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ForeignWorkloadOrCell)
+    );
+
+    let (mut input, ns, _) = fixture();
+    let mut member = input.members[0].clone();
+    member.manifest_id = "26000000-0000-4000-8000-000000000001";
+    input.members = Box::leak(vec![member].into_boxed_slice());
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::InvalidMemberBinding)
+    );
+}
+
+#[test]
 fn exact_r8_registry_edges_are_enforced() {
     for cell in ["PC-D0-B0-F1", "PC-D1-B3-MW", "PC-D2-B2-ME", "PC-D3-B1-F3"] {
         let (mut input, ns, _) = fixture();
@@ -279,6 +307,32 @@ fn scope_r7_closed_schema_jcs_and_provenance_rejections() {
         construct_reference_context(input, ns),
         Err(ContextConstructionError::ScopeReferenceFailure)
     );
+}
+
+#[test]
+fn scope_r7_rejects_unescaped_or_injected_uri_values() {
+    for bad_uri in [
+        "https://example.invalid/\"scope",
+        "https://example.invalid/\\scope",
+        "https://example.invalid/scope\u{1f}",
+        "https://example.invalid/scope\u{7f}",
+        "https://example.invalid/scope\",\"unknown\":true,\"x\":\"",
+    ] {
+        let (mut input, ns, _) = fixture();
+        input.scope_digest.scope_ref.uri = text(bad_uri.to_owned());
+        input.scope_artifact.uri = text(bad_uri.to_owned());
+        input.scope_artifact.metadata_bytes = bytes(
+            String::from_utf8(input.scope_artifact.metadata_bytes.to_vec())
+                .unwrap()
+                .replace("https://example.invalid/scope", bad_uri)
+                .into_bytes(),
+        );
+        assert_eq!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::ScopeReferenceFailure),
+            "URI {bad_uri:?} must not become canonical authority evidence"
+        );
+    }
 }
 
 #[test]

@@ -302,7 +302,7 @@ pub fn construct_reference_context(
             return Err(ContextConstructionError::InvalidCellAuthority);
         }
         validate_member_provenance(supplied)?;
-        if supplied.cell_id != descriptor.cell_id {
+        if supplied.cell_id != descriptor.cell_id || supplied.workload_id != member.workload_id {
             return Err(ContextConstructionError::ForeignWorkloadOrCell);
         }
     }
@@ -374,7 +374,10 @@ pub fn construct_reference_context(
             return Err(ContextConstructionError::ResourceLimit);
         }
         for (position, op) in operations.iter().enumerate() {
-            let f = operation_fields(&op.bytes).ok_or(ContextConstructionError::Extraction)?;
+            let f = operation_fields(&op.bytes).map_err(|error| match error {
+                FieldsError::Encoding => ContextConstructionError::Extraction,
+                FieldsError::ReferenceLimit => ContextConstructionError::ResourceLimit,
+            })?;
             let ids = [
                 (f.request_id, Role::Request, None),
                 (f.event_id, Role::Event, Some(f.fact)),
@@ -437,10 +440,10 @@ pub fn map_semantic_operation_with_context(
 ) -> Result<ContextualMappedRecord, ContextualMappingError> {
     validate_semantic_operation(semantic_operation)
         .map_err(ContextualMappingError::SemanticValidation)?;
-    let fields = operation_fields(semantic_operation).ok_or(ContextualMappingError::Extraction)?;
-    if fields.references.len() > MAX_REFERENCES {
-        return Err(ContextualMappingError::ResourceLimit);
-    }
+    let fields = operation_fields(semantic_operation).map_err(|error| match error {
+        FieldsError::Encoding => ContextualMappingError::Extraction,
+        FieldsError::ReferenceLimit => ContextualMappingError::ResourceLimit,
+    })?;
     if state.scope_id != catalog.scope_id || state.namespace != catalog.selected_namespace {
         return Err(ContextualMappingError::Discontinuity);
     }
@@ -625,11 +628,22 @@ fn validate_scope_r7_record(a: &ScopeArtifactMetadata<'_>) -> Result<(), Context
     if !valid_uuid(a.artifact_id)
         || !valid_digest(a.sha256)
         || !valid_uuid(a.created_by_record_id)
+        || !valid_unescaped_json_string(a.uri)
         || a.metadata_bytes != expected.as_bytes()
     {
         return Err(ContextConstructionError::ScopeReferenceFailure);
     }
     Ok(())
+}
+
+// The frozen R7 serialization emits these caller-provided values without JSON escapes.  Requiring
+// the exact unescaped I-JSON subset makes interpolation safe: quotes/backslashes cannot terminate
+// a value or inject a member, controls cannot create malformed JSON, and UTF-8 is guaranteed by
+// the Rust string type.
+fn valid_unescaped_json_string(value: &str) -> bool {
+    value
+        .chars()
+        .all(|c| c >= '\u{20}' && c != '"' && c != '\\' && !matches!(c, '\u{7f}'..='\u{9f}'))
 }
 
 fn parse_descriptor(bytes: &[u8]) -> Result<Descriptor, ContextConstructionError> {
@@ -797,21 +811,36 @@ struct Fields {
     segment: StreamSegment,
     ordinal: u64,
 }
-fn operation_fields(bytes: &[u8]) -> Option<Fields> {
-    let sop = fields(bytes, b"RDOS-SOP1", 13)?;
-    let op = fields(sop[0], b"RDOS-OP1", 14)?;
-    let env = fields(sop[8], b"RDOS-ENV1", 13)?;
-    let ids = |v: &[u8]| v.try_into().ok();
+#[derive(Clone, Copy, Debug)]
+enum FieldsError {
+    Encoding,
+    ReferenceLimit,
+}
+fn operation_fields(bytes: &[u8]) -> Result<Fields, FieldsError> {
+    let sop = fields(bytes, b"RDOS-SOP1", 13).ok_or(FieldsError::Encoding)?;
+    let op = fields(sop[0], b"RDOS-OP1", 14).ok_or(FieldsError::Encoding)?;
+    let env = fields(sop[8], b"RDOS-ENV1", 13).ok_or(FieldsError::Encoding)?;
+    let ids = |v: &[u8]| v.try_into().map_err(|_| FieldsError::Encoding);
     let refs = &env[12];
-    let count = u32::from_be_bytes(refs.get(..4)?.try_into().ok()?) as usize;
+    let count = u32::from_be_bytes(
+        refs.get(..4)
+            .ok_or(FieldsError::Encoding)?
+            .try_into()
+            .map_err(|_| FieldsError::Encoding)?,
+    ) as usize;
+    // This check intentionally precedes Vec allocation. Encoded inputs cannot turn an untrusted
+    // u32 into an attempted multi-gigabyte reservation before the frozen R21 bound is enforced.
+    if count > MAX_REFERENCES {
+        return Err(FieldsError::ReferenceLimit);
+    }
     let mut references = Vec::with_capacity(count);
-    for v in refs.get(4..)?.chunks_exact(16) {
-        references.push(v.try_into().ok()?)
+    for v in refs.get(4..).ok_or(FieldsError::Encoding)?.chunks_exact(16) {
+        references.push(v.try_into().map_err(|_| FieldsError::Encoding)?)
     }
     if references.len() != count {
-        return None;
+        return Err(FieldsError::Encoding);
     }
-    Some(Fields {
+    Ok(Fields {
         request_id: ids(sop[4])?,
         event_id: ids(sop[5])?,
         information_id: ids(sop[6])?,
@@ -820,14 +849,14 @@ fn operation_fields(bytes: &[u8]) -> Option<Fields> {
             [0] | [1] => Fact::Ordinary,
             [2] => Fact::Correction,
             [3] => Fact::Retraction,
-            _ => return None,
+            _ => return Err(FieldsError::Encoding),
         },
         segment: match op[2] {
             [0] => StreamSegment::WarmUp,
             [1] => StreamSegment::Measured,
-            _ => return None,
+            _ => return Err(FieldsError::Encoding),
         },
-        ordinal: u64::from_be_bytes(op[4].try_into().ok()?),
+        ordinal: u64::from_be_bytes(op[4].try_into().map_err(|_| FieldsError::Encoding)?),
     })
 }
 fn extract_stream(
@@ -865,7 +894,10 @@ fn extract_stream(
         let b = bytes
             .get(p..end)
             .ok_or(ContextConstructionError::Extraction)?;
-        let f = operation_fields(b).ok_or(ContextConstructionError::Extraction)?;
+        let f = operation_fields(b).map_err(|error| match error {
+            FieldsError::Encoding => ContextConstructionError::Extraction,
+            FieldsError::ReferenceLimit => ContextConstructionError::ResourceLimit,
+        })?;
         let sop = fields(b, b"RDOS-SOP1", 13).ok_or(ContextConstructionError::Extraction)?;
         let op = fields(sop[0], b"RDOS-OP1", 14).ok_or(ContextConstructionError::Extraction)?;
         if op[10] != namespace {
@@ -901,4 +933,62 @@ fn fields<'a>(bytes: &'a [u8], magic: &[u8], count: u16) -> Option<Vec<&'a [u8]>
         p = e
     }
     (p == bytes.len()).then_some(out)
+}
+
+#[cfg(test)]
+mod allocation_bound_tests {
+    use super::*;
+
+    fn record(magic: &[u8], fields: &[Vec<u8>]) -> Vec<u8> {
+        let mut out = magic.to_vec();
+        out.extend(u16::try_from(fields.len()).unwrap().to_be_bytes());
+        for (index, value) in fields.iter().enumerate() {
+            out.push(u8::try_from(index + 1).unwrap());
+            out.extend(u32::try_from(value.len()).unwrap().to_be_bytes());
+            out.extend(value);
+        }
+        out
+    }
+
+    fn operation_with_encoded_reference_count(count: usize, include_members: bool) -> Vec<u8> {
+        let mut op = vec![Vec::new(); 14];
+        op[2] = vec![0];
+        op[4] = 0_u64.to_be_bytes().to_vec();
+        let op = record(b"RDOS-OP1", &op);
+
+        let mut refs = u32::try_from(count).unwrap().to_be_bytes().to_vec();
+        if include_members {
+            refs.resize(4 + count * 16, 0);
+        }
+        let mut env = vec![Vec::new(); 13];
+        env[11] = vec![1];
+        env[12] = refs;
+        let env = record(b"RDOS-ENV1", &env);
+
+        let mut sop = vec![Vec::new(); 13];
+        sop[0] = op;
+        sop[4] = vec![0; 16];
+        sop[5] = vec![0; 16];
+        sop[6] = vec![0; 16];
+        sop[8] = env;
+        record(b"RDOS-SOP1", &sop)
+    }
+
+    #[test]
+    fn reference_limit_is_inclusive_and_one_over_is_rejected_before_allocation() {
+        let exact = operation_with_encoded_reference_count(MAX_REFERENCES, true);
+        assert_eq!(
+            operation_fields(&exact).unwrap().references.len(),
+            MAX_REFERENCES
+        );
+
+        // Deliberately omit the 1,048,592 member bytes. ReferenceLimit must be returned from the
+        // four-byte count alone, rather than attempting Vec::with_capacity(65_537) or reporting
+        // the later encoding-length error.
+        let over = operation_with_encoded_reference_count(MAX_REFERENCES + 1, false);
+        assert!(matches!(
+            operation_fields(&over),
+            Err(FieldsError::ReferenceLimit)
+        ));
+    }
 }
