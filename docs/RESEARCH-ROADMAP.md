@@ -194,3 +194,7 @@ faults, adapters, production, and later work remain unauthorized.
 ### R20 Phase 1 semantic mapping checkpoint
 
 R20 resolves R19's semantic-to-physical ambiguity as documentation design by mapping one validated SOP1 to one structural RF1 type-3 provisional record. It prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, depending directly on `exp1-record-format` and `exp1-workload-conformance`; append integration and changes to the other crates remain excluded. The separate live Linux capture decision remains open, and no descriptive execution or evidence is authorized.
+
+### R21 Phase 1 reference-context checkpoint
+
+R21 freezes the bounded reference-catalog/accepted-prefix split and locally decidable R12 outcomes without regenerating semantics. R12 does not classify cross-segment targets, and existing authorities do not prove a complete closed stream scope, so R21 authorizes no implementation and the complete R20 gate remains open. Live Linux capture, the descriptive D1 harness, execution, and every later research phase remain gated.
