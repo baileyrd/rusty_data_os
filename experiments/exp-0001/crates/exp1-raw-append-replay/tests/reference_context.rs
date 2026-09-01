@@ -95,7 +95,7 @@ fn fixture() -> (ClosedScopeInput<'static>, [u8; 16], &'static [u8]) {
     let scope_bytes = scope_descriptor.as_bytes();
     let scope_sha = text(hex(&artifact_digest(scope_bytes)));
     let scope_r7 = text(format!(
-        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"24000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"created_by_record_id\":\"24000000-0000-4000-8000-000000000003\",\"media_type\":\"application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs\",\"retention_state\":\"published\",\"role\":\"configuration\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope\"}}],\"provenance_edges\":[],\"publication_state\":\"published\"}},\"record_kind\":\"artifact_manifest\",\"schema_version\":\"EXP1-R7-JSON-JCS-1\"}}",
+        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"24000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"created_by_record_id\":\"24000000-0000-4000-8000-000000000003\",\"logical_path\":\"exp-0001/scopes/24000000-0000-4000-8000-000000000002/configuration\",\"media_type\":\"application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs\",\"retention_state\":\"published\",\"role\":\"configuration\",\"sensitivity\":\"public\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope\",\"validation_report_ids\":[]}}],\"provenance_edges\":[],\"publication_state\":\"published\",\"scope\":\"run\",\"series_freeze\":{{\"state\":\"not_applicable\"}}}},\"correction_reason\":{{\"state\":\"not_applicable\"}},\"created_at_utc_ns\":\"1788134400000000000\",\"record_id\":\"24000000-0000-4000-8000-000000000003\",\"record_kind\":\"artifact_manifest\",\"run_id\":{{\"state\":\"present\",\"value\":\"24000000-0000-4000-8000-000000000005\"}},\"schema_version\":\"EXP1-R7-JSON-JCS-1\",\"series_id\":\"24000000-0000-4000-8000-000000000004\",\"supersedes_record_id\":{{\"state\":\"not_applicable\"}}}}",
         scope_bytes.len(),
         scope_sha
     ));
@@ -141,6 +141,28 @@ fn first_operation(stream: &[u8]) -> &[u8] {
     &stream[63..63 + n]
 }
 
+fn rebind_scope(input: &mut ClosedScopeInput<'static>, descriptor: &'static [u8]) {
+    input.descriptor = descriptor;
+    let sha = text(hex(&artifact_digest(descriptor)));
+    input.scope_digest.scope_ref.byte_length = descriptor.len() as u64;
+    input.scope_digest.scope_ref.sha256 = sha;
+    input.scope_artifact.byte_length = descriptor.len() as u64;
+    input.scope_artifact.sha256 = sha;
+    let mut domain = b"rusty-data-os/exp1/closed-stream-scope/v1\0".to_vec();
+    domain.extend(descriptor);
+    input.scope_digest.value = text(hex(&sha256(&domain)));
+    input.scope_artifact.metadata_bytes = text(format!(
+        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"24000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"created_by_record_id\":\"24000000-0000-4000-8000-000000000003\",\"logical_path\":\"exp-0001/scopes/24000000-0000-4000-8000-000000000002/configuration\",\"media_type\":\"application/vnd.rusty-data-os.exp1-closed-stream-scope+jcs\",\"retention_state\":\"published\",\"role\":\"configuration\",\"sensitivity\":\"public\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope\",\"validation_report_ids\":[]}}],\"provenance_edges\":[],\"publication_state\":\"published\",\"scope\":\"run\",\"series_freeze\":{{\"state\":\"not_applicable\"}}}},\"correction_reason\":{{\"state\":\"not_applicable\"}},\"created_at_utc_ns\":\"1788134400000000000\",\"record_id\":\"24000000-0000-4000-8000-000000000003\",\"record_kind\":\"artifact_manifest\",\"run_id\":{{\"state\":\"present\",\"value\":\"24000000-0000-4000-8000-000000000005\"}},\"schema_version\":\"EXP1-R7-JSON-JCS-1\",\"series_id\":\"24000000-0000-4000-8000-000000000004\",\"supersedes_record_id\":{{\"state\":\"not_applicable\"}}}}",
+        descriptor.len(), sha
+    )).as_bytes();
+}
+
+fn set_member_cell(input: &mut ClosedScopeInput<'static>, cell: &'static str) {
+    let mut member = input.members[0].clone();
+    member.cell_id = cell;
+    input.members = Box::leak(vec![member].into_boxed_slice());
+}
+
 #[test]
 fn valid_construction_mapping_and_exactly_once_advancement() {
     let (input, ns, stream) = fixture();
@@ -174,12 +196,127 @@ fn caller_cannot_invent_cell_authority() {
             .unwrap()
             .replace("PC-D1-B1-F1", "invented"),
     );
-    input.descriptor = changed.as_bytes();
-    assert!(matches!(
+    rebind_scope(&mut input, changed.as_bytes());
+    set_member_cell(&mut input, "invented");
+    assert_eq!(
         construct_reference_context(input, ns),
         Err(ContextConstructionError::InvalidCellAuthority)
-            | Err(ContextConstructionError::InvalidScopeDigest)
-    ));
+    );
+}
+
+#[test]
+fn exact_r8_registry_edges_are_enforced() {
+    for cell in ["PC-D0-B0-F1", "PC-D1-B3-MW", "PC-D2-B2-ME", "PC-D3-B1-F3"] {
+        let (mut input, ns, _) = fixture();
+        let changed = text(
+            String::from_utf8(input.descriptor.to_vec())
+                .unwrap()
+                .replace("PC-D1-B1-F1", cell),
+        );
+        rebind_scope(&mut input, changed.as_bytes());
+        set_member_cell(&mut input, cell);
+        assert!(
+            construct_reference_context(input, ns).is_ok(),
+            "allowed {cell}"
+        );
+    }
+    for cell in ["PC-D0-B1-F1", "PC-D3-B2-F1", "PC-D1-B4-F1", "PC-D1-B1-F4"] {
+        let (mut input, ns, _) = fixture();
+        let changed = text(
+            String::from_utf8(input.descriptor.to_vec())
+                .unwrap()
+                .replace("PC-D1-B1-F1", cell),
+        );
+        rebind_scope(&mut input, changed.as_bytes());
+        set_member_cell(&mut input, cell);
+        assert_eq!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::InvalidCellAuthority),
+            "disallowed {cell}"
+        );
+    }
+}
+
+#[test]
+fn scope_r7_closed_schema_jcs_and_provenance_rejections() {
+    let mutations = [
+        ("\"scope\":\"run\"", "\"scope\":\"run\",\"unknown\":true"),
+        (
+            "\"provenance_edges\":[]",
+            "\"provenance_edges\":[{\"from_artifact_id\":\"24000000-0000-4000-8000-000000000002\",\"relation\":\"generated_from\",\"to_artifact_id\":\"24000000-0000-4000-8000-000000000002\"}]",
+        ),
+        (
+            "\"publication_state\":\"published\"",
+            "\"publication_state\":\"published\",\"publication_state\":\"published\"",
+        ),
+        (
+            "\"role\":\"configuration\"",
+            "\"role\":\"configuration\",\"role\":\"capture\"",
+        ),
+    ];
+    for (from, to) in mutations {
+        let (mut input, ns, _) = fixture();
+        input.scope_artifact.metadata_bytes = text(
+            String::from_utf8(input.scope_artifact.metadata_bytes.to_vec())
+                .unwrap()
+                .replace(from, to),
+        )
+        .as_bytes();
+        assert_eq!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::ScopeReferenceFailure)
+        );
+    }
+    let (mut input, ns, _) = fixture();
+    let s = String::from_utf8(input.scope_artifact.metadata_bytes.to_vec()).unwrap();
+    input.scope_artifact.metadata_bytes = text(s.replacen(
+        "\"body\":",
+        "\"record_kind\":\"artifact_manifest\",\"body\":",
+        1,
+    ))
+    .as_bytes();
+    assert_eq!(
+        construct_reference_context(input, ns),
+        Err(ContextConstructionError::ScopeReferenceFailure)
+    );
+}
+
+#[test]
+fn member_r7_semantics_are_revalidated_after_consistent_wrapper_updates() {
+    for replacement in [
+        (
+            "\"publication_state\":\"published\"",
+            "\"publication_state\":\"staged\"",
+        ),
+        (
+            "\"provenance_edges\":[",
+            "\"unknown\":true,\"provenance_edges\":[",
+        ),
+    ] {
+        let (mut input, ns, _) = fixture();
+        let mut member = input.members[0].clone();
+        let bad = bytes(
+            String::from_utf8(member.manifest_validation.artifact_manifest_bytes.to_vec())
+                .unwrap()
+                .replace(replacement.0, replacement.1)
+                .into_bytes(),
+        );
+        let mut validation = member.manifest_validation.clone();
+        validation.artifact_manifest_bytes = bad;
+        member.manifest_validation = leak(validation);
+        let other = member.manifest_validation.workload_artifact_manifest_bytes;
+        let mut wrapper = Vec::new();
+        wrapper.extend((bad.len() as u64).to_be_bytes());
+        wrapper.extend(bad);
+        wrapper.extend((other.len() as u64).to_be_bytes());
+        wrapper.extend(other);
+        member.resolved_metadata_bytes = bytes(wrapper);
+        input.members = Box::leak(vec![member].into_boxed_slice());
+        assert!(matches!(
+            construct_reference_context(input, ns),
+            Err(ContextConstructionError::SemanticValidation(_))
+        ));
+    }
 }
 #[test]
 fn missing_or_malformed_r7_evidence_fails_closed() {

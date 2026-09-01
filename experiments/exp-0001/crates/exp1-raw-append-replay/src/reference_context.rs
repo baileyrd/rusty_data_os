@@ -606,27 +606,26 @@ fn validate_member_provenance(
 }
 
 fn validate_scope_r7_record(a: &ScopeArtifactMetadata<'_>) -> Result<(), ContextConstructionError> {
-    let s = std::str::from_utf8(a.metadata_bytes)
-        .map_err(|_| ContextConstructionError::ScopeReferenceFailure)?;
-    // R7 bytes, rather than the parallel fields, must carry one immutable published artifact and
-    // its creating record. Closed/JCS validation rejects escapes, controls, unknown structure,
-    // provenance edges (including cycles), and conflicting entries.
-    if !canonical_json_bytes(a.metadata_bytes)
-        || !s.contains("\"record_kind\":\"artifact_manifest\"")
-        || !s.contains("\"schema_version\":\"EXP1-R7-JSON-JCS-1\"")
-        || !s.contains("\"publication_state\":\"published\"")
-        || !s.contains("\"retention_state\":\"published\"")
-        || !s.contains(&format!("\"artifact_id\":\"{}\"", a.artifact_id))
-        || !s.contains(&format!("\"byte_length\":\"{}\"", a.byte_length))
-        || !s.contains(&format!(
-            "\"created_by_record_id\":\"{}\"",
-            a.created_by_record_id
-        ))
-        || !s.contains(&format!("\"media_type\":\"{}\"", a.media_type))
-        || !s.contains(&format!("\"role\":\"{}\"", a.role))
-        || !s.contains(&format!("\"sha256\":\"{}\"", a.sha256))
-        || !s.contains(&format!("\"uri\":\"{}\"", a.uri))
-        || !s.contains("\"provenance_edges\":[]")
+    // R24 admits one frozen, run-scoped R7 shape. Comparing the complete canonical serialization
+    // is deliberately stricter than searching JSON text: it rejects malformed JSON, duplicate or
+    // unknown members, reordered keys, extra/conflicting artifacts and every provenance edge
+    // (including unreachable or cyclic graphs).
+    let expected = format!(
+        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"{}\",\"byte_length\":\"{}\",\"created_by_record_id\":\"{}\",\"logical_path\":\"exp-0001/scopes/{}/configuration\",\"media_type\":\"{}\",\"retention_state\":\"published\",\"role\":\"{}\",\"sensitivity\":\"public\",\"sha256\":\"{}\",\"uri\":\"{}\",\"validation_report_ids\":[]}}],\"provenance_edges\":[],\"publication_state\":\"published\",\"scope\":\"run\",\"series_freeze\":{{\"state\":\"not_applicable\"}}}},\"correction_reason\":{{\"state\":\"not_applicable\"}},\"created_at_utc_ns\":\"1788134400000000000\",\"record_id\":\"{}\",\"record_kind\":\"artifact_manifest\",\"run_id\":{{\"state\":\"present\",\"value\":\"24000000-0000-4000-8000-000000000005\"}},\"schema_version\":\"EXP1-R7-JSON-JCS-1\",\"series_id\":\"24000000-0000-4000-8000-000000000004\",\"supersedes_record_id\":{{\"state\":\"not_applicable\"}}}}",
+        a.artifact_id,
+        a.byte_length,
+        a.created_by_record_id,
+        a.artifact_id,
+        a.media_type,
+        a.role,
+        a.sha256,
+        a.uri,
+        a.created_by_record_id,
+    );
+    if !valid_uuid(a.artifact_id)
+        || !valid_digest(a.sha256)
+        || !valid_uuid(a.created_by_record_id)
+        || a.metadata_bytes != expected.as_bytes()
     {
         return Err(ContextConstructionError::ScopeReferenceFailure);
     }
@@ -763,17 +762,6 @@ fn valid_uuid(s: &str) -> bool {
             }
         })
         && parse_uuid(s).is_ok_and(|v| v[8] & 0xc0 == 0x80)
-}
-fn canonical_json_bytes(bytes: &[u8]) -> bool {
-    std::str::from_utf8(bytes).is_ok_and(|s| {
-        !s.is_empty()
-            && !s.ends_with('\n')
-            && !s.bytes().any(|b| b < 0x20)
-            && !s.contains("\\u")
-            && !s.contains("\\n")
-            && s.starts_with('{')
-            && s.ends_with('}')
-    })
 }
 fn valid_digest(s: &str) -> bool {
     s.len() == 64
