@@ -146,3 +146,13 @@ external-dependency-free experiment workspace library, with exactly one reviewed
 physical reopen/replay under R1/R5. This is correctness work only: no workload or benchmark is run,
 D1 remains provisional and noncanonical, and BLK-015, D2/D3, faults, adapters, production, execution,
 performance claims, and every subsequent tranche remain unauthorized.
+
+## Slice C/B1 bounded implementation result
+
+The R18-authorized `exp1-raw-append-replay` experiment crate implements complete-frame validation
+through `exp1-record-format`, process-local complete-write D1 submission with explicit progress and
+poisoning, and deterministic read-only physical accepted-prefix reopen/replay. Deterministic tests
+exercise stable R5 vectors, exact extents, write-state failures, truncation boundaries, fail-closed
+damage, limits, repetition, and input preservation. This is implementation/correctness-validation
+evidence only. No workload, benchmark, synchronization, D2/D3, survival, canonical recovery, fault,
+adapter, production, performance, or subsequent tranche was performed or authorized.
