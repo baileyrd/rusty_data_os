@@ -226,7 +226,11 @@ R19 finds the maximum candidate fourth binary and its three reviewed path depend
 sequence, replay oracle, R7 artifact graph, lifecycle, tests, and exclusions sufficiently bounded.
 It does not authorize implementation because R7's named Linux capture interfaces have no uniquely
 selected safe realization under the empty external-dependency allowlist and unsafe-code prohibition,
-and the semantic-operation-to-physical-record mapping is not frozen. Caller/authority identity
+and the semantic-operation-to-physical-record mapping was not frozen when R19 was decided; R20 now resolves that mapping only. Caller/authority identity
 assignment is selected and requires a complete validated manifest. BLK-020/021/026/027 and UNK-022
-remain open for the exact owner-reviewed mapping and capture decisions. No workload materialization, capture, execution, or later tranche is
+remain open for the exact owner-reviewed capture decision; R20 separately resolves the mapping as documentation design. No workload materialization, capture, execution, or later tranche is
 authorized.
+
+## R20 semantic mapping gate update
+
+[R20](R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) resolves R19's semantic-operation-to-physical-record blocker as documentation design. It freezes exactly one validated SOP1 to one `STRUCTURAL-0` RF1 type-3 provisional record, with complete SOP1 stable-core preservation and later-ingestion sequence/physical-ordinal inputs. A later pure public `exp1-raw-append-replay::mapping` implementation is prospectively authorized with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only its manifest and the matching lock entry may change, the other crates remain unchanged, and append integration is excluded. That mapper must pass R20's independent correctness gate. The live Linux capture-interface/dependency-or-bounded-unsafe decision remains open, so descriptive D1 harness implementation and all execution remain blocked. No fourth crate, external dependency, D2/D3, `fsync`, canonical recovery, fault work, workload/benchmark execution, or evidence claim is authorized.

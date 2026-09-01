@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slices A, B/B0, A2, and bounded Slice C/B1 raw D1 append/replay correctness are closed; descriptive D1 capture is blocked and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — Slices A, B/B0, A2, and bounded Slice C/B1 raw D1 append/replay correctness are closed; R20 freezes the D1 semantic mapping, but live capture remains blocked and execution unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -90,11 +90,16 @@ recovery, execution, benchmark, fault, adapter, production, or performance claim
 binds Slice C/B1 closure to PR #71 reviewed head `21143b716de006dd5ec639c0b76a1b031d359fc1`
 and merge `e9c292cd614d97b2bf299fd8d2637de76dcdca54`, plus PR #74 reviewed head
 `5c448695f4e460cab57eaadd7f7a83bfce1559ab` and merge
-`ef29804347faa812502f855e5cc3ffee6f4901c2`; both PR #74 exact-head workflows passed. R19 finds
-the candidate generated-workload descriptive D1 harness blocked because authorities do not freeze the M01-semantic-operation-to-EXP1-B1-RF1-Record mapping or the
-exact implementation of required direct Linux capture interfaces. The existing
+`ef29804347faa812502f855e5cc3ffee6f4901c2`; both PR #74 exact-head workflows passed. R19 found
+the candidate generated-workload descriptive D1 harness blocked because authorities did not then
+freeze the M01-semantic-operation-to-EXP1-B1-RF1-Record mapping or the exact implementation of
+required direct Linux capture interfaces. R20 now resolves the former only. The existing
 external-dependency-free workspace contains reviewed workspace path dependencies and forbids unsafe
-code. The next decisions must freeze that mapping and select the direct-interface implementation,
-dependency/unsafe policy, privilege/loss behavior, and unavailable-field policy. Caller/authority
-identity assignment is selected and requires a complete validated identity manifest. No fourth crate,
-workload materialization, capture, or execution is authorized.
+code. A later decision must still select the direct-interface implementation, dependency/unsafe
+policy, privilege/loss behavior, and unavailable-field policy. Caller/authority identity assignment
+is selected and requires a complete validated identity manifest. No fourth crate, workload
+materialization, capture, or execution is authorized.
+
+## R20 semantic-to-physical mapping decision
+
+[R20](experiments/EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes one validated SOP1 operation to exactly one structural type-3 `EXP1-B1-RF1` provisional record. The complete SOP1 is the stable core; its event ID is duplicated in the type-3 body, and later ingestion supplies distinct nonzero assigned sequence and consecutive physical ordinal values. This resolves R19's mapping blocker as documentation design and prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only that crate's manifest and the matching lock entry may change, and append integration is excluded. The independent live-Linux-capture freeze remains open; no harness, execution, D2/D3, `fsync`, canonicality, durability, or recovery claim follows.

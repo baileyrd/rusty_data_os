@@ -35,9 +35,9 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-019 | Resolved as documentation design by R16: `EXP-0001-WORKLOAD-MANIFEST-JCS-v1` freezes the closed JCS schema, bindings, validation, immutability, and vectors. Dependency-free manifest construction and conformance validation exist; execution and publication capture remain absent. |
 | UNK-020 | Narrowed by R5/R6/R9/R10: all B0–B3 documentation profiles/mappings are frozen; the Rust 1.89.0 workspace produced reviewed Slice A and Slice B correctness-validation evidence. R11 authorizes no executable reuse or expansion. Later-slice and benchmark-series toolchains, effective-configuration validation, and execution evidence remain unresolved. |
 | UNK-021 | R5 maps B1 D2/controlled D3, and R6 classifies SQLite/RocksDB D2 as conditional and strict D3 as unsupported. Empirical survival/equivalence and BLK-015 platform protection remain unresolved. |
-| UNK-022 | R7 resolves benchmark-record serialization/digests/artifact provenance/instrumentation as documentation design. R19 finds executable descriptive D1 capture blocked: the semantic-operation-to-physical-record mapping and exact direct Linux capture implementation are not frozen under the empty external-dependency allowlist and unsafe-code prohibition. Owner-reviewed semantic-to-physical mapping and capture-interface/dependency-or-bounded-unsafe decisions are required; caller/authority identity assignment is selected. Executable schemas/validators, effective validation, capture, and evidence remain open. |
+| UNK-022 | R20 resolves the semantic-operation-to-physical-record portion as documentation design: one validated SOP1 maps to one structural RF1 type-3 record with the complete SOP1 as stable core. Executable descriptive D1 capture remains blocked on the exact direct Linux interface/dependency-or-bounded-unsafe decision. Executable capture schemas/validators, effective validation, capture, and evidence remain open. |
 
-The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R19 are complete documentation/governance inputs. Slices A, B/B0, A2, and bounded raw D1 append/replay are closed as correctness-validation evidence; R19 authorizes no harness or execution. Generated workloads, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
+The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R20 are complete documentation/governance inputs. Slices A, B/B0, A2, and bounded raw D1 append/replay are closed as correctness-validation evidence; R19 authorizes no harness or execution. Generated workloads, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
 
 ### R17 / A2 disposition
 
@@ -56,3 +56,8 @@ BLK-015; platform survival, D2/D3, physical faults, execution, capture, and benc
 R19 closes the merged R18 implementation only as bounded correctness evidence and adds no
 empirical fact. It narrows UNK-022 to the exact semantic-to-physical mapping and direct Linux capture implementation
 decisions recorded in R19. It does not resolve UNK-014/015/021, BLK-015, or any execution unknown.
+
+
+### R20 disposition
+
+R20 resolves only UNK-022's semantic-to-physical mapping ambiguity as documentation design and prospectively authorizes a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on the unchanged authority crates and no append integration. The direct Linux capture decision and every execution/evidence unknown remain open.
