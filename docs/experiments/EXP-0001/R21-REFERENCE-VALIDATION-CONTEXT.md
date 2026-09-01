@@ -17,8 +17,7 @@ Re-audit found two authorities that R12/R14 did not supply: a rule for reference
 warm-up/measured boundary, where OP1 ordinals restart, and a binding that proves a caller has
 supplied the complete set of streams in a workload/cell. [R22](R22-CROSS-SEGMENT-REFERENCE-RULE.md)
 now supersedes only R21's unresolved cross-segment language by selecting strictly segment-local
-references and `E-REFERENCE-CROSS-SEGMENT`. The complete closed-stream-scope proof remains unresolved,
-so R21 still does **not** authorize Rust implementation and the complete R20 mapper gate stays open.
+references and `E-REFERENCE-CROSS-SEGMENT`. [R23](R23-CLOSED-STREAM-SCOPE-PROOF.md) subsequently freezes the complete closed-stream-scope proof, so the governance blocker is closed; R21 still does **not** authorize Rust implementation and the complete R20 mapper gate stays open.
 The independent live-Linux-capture blocker remains open; no descriptive D1 harness or execution is
 authorized.
 
@@ -86,8 +85,7 @@ and preserves R12's fail-without-remap rule. There is no retry, salt, replacemen
 wins behavior.
 
 Including a validated foreign stream can demonstrate that a known target is foreign, but omission
-cannot prove that an absent identity is missing rather than cross-stream. No existing authority
-binds the proposed constructor input to a complete closed stream set for a workload/cell. Thus the
+cannot prove that an absent identity is missing rather than cross-stream. R23 now binds a successor constructor input to a complete closed stream set for a workload/cell. Under R21 alone, the
 same bytes could otherwise classify as `CrossStream` or `Missing`; R21 leaves both dispositions
 unimplementable for an absent binding until a later authority supplies a closed-scope proof. The
 mapper must not guess provenance from UUID bits. Global typed identity collision rejection still
