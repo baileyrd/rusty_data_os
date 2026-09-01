@@ -7,6 +7,7 @@ publish.workspace = true
 
 [dependencies]
 exp1-record-format = { path = "../exp1-record-format" }
+exp1-workload-conformance = { path = "../exp1-workload-conformance" }
 
 [lints]
 workspace = true
