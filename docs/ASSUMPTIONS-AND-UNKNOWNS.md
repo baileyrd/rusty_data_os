@@ -32,12 +32,12 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-016 | Resolved by R3: durable binding, explicit reconciliation, exact-candidate retry, conflict handling, and commit-before-ack uncertainty rules. |
 | UNK-017 | Resolved by R3: durable reservation, permanent no-reuse gaps, strict monotonic replay, reporting, and fail-closed conflicts. |
 | UNK-018 | Platform-independent generator, permutation, identity, and stream-digest algorithms and reference vectors. R7 selects SHA-256 and the workload-stream domain; R12 freezes BLK-006/007 generator inputs and documentation vectors; R14 freezes canonical operation/stream bytes and digest vectors. Documentation design is resolved; implementation and executable conformance remain unresolved. |
-| UNK-019 | Resolved as documentation design by R16: `EXP-0001-WORKLOAD-MANIFEST-JCS-v1` freezes the closed JCS schema, bindings, validation, immutability, and vectors. Manifest implementation and executable validation remain absent. |
+| UNK-019 | Resolved as documentation design by R16: `EXP-0001-WORKLOAD-MANIFEST-JCS-v1` freezes the closed JCS schema, bindings, validation, immutability, and vectors. Dependency-free manifest construction and conformance validation exist; execution and publication capture remain absent. |
 | UNK-020 | Narrowed by R5/R6/R9/R10: all B0–B3 documentation profiles/mappings are frozen; the Rust 1.89.0 workspace produced reviewed Slice A and Slice B correctness-validation evidence. R11 authorizes no executable reuse or expansion. Later-slice and benchmark-series toolchains, effective-configuration validation, and execution evidence remain unresolved. |
 | UNK-021 | R5 maps B1 D2/controlled D3, and R6 classifies SQLite/RocksDB D2 as conditional and strict D3 as unsupported. Empirical survival/equivalence and BLK-015 platform protection remain unresolved. |
 | UNK-022 | R7 resolves benchmark-record serialization/digests/artifact provenance/instrumentation as documentation design; R9 authorized only Slice A physical-record fixtures and validators; R10 and R11 do not expand executable benchmark records, capture, or analysis. Executable benchmark-record schemas/validators, effective validation, capture, and evidence remain open. |
 
-The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R16 are complete documentation/governance inputs. Slices A and B are closed as correctness-validation evidence; R16 resolves BLK-009 only as documentation design and authorizes no next increment; generator and manifest implementation, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
+The [EXP-0001 execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) maps unknowns to gates. R5 resolves UNK-001 and the B1 physical/integrity portion of UNK-012. R6 narrows UNK-020/021. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) narrows UNK-015/018/019/022 without empirical proof. R7–R18 are complete documentation/governance inputs. Slices A, B/B0, and A2 are closed as correctness-validation evidence; R18 authorizes only bounded raw D1 append/replay correctness. Generated workloads, BLK-015, later slices, effective validation, execution, and benchmark evidence remain open.
 
 ### R17 / A2 disposition
 
@@ -45,4 +45,8 @@ The R12/R14/R16 contract subset now has dependency-free implementation/correctne
 issue #63. This does not resolve execution/capture unknowns, BLK-015, or any Slice C/B1,
 persistence, fault, durability, benchmark, adapter, or production uncertainty.
 
-The reopened M01 realizability unknown is resolved by the owner-selected real R7 fixture. This restores only the A2 conformance claim after its exact-head gate; it does not resolve execution, persistence, benchmark, fault, durability, or later-slice unknowns.
+### R18 disposition
+
+A2 closure preserves PR #64 historical head and merge and is finalized by corrective PR #68 reviewed head and merge. M01 is the canonical positively valid R7-backed vector with matching caller-supplied fixture bytes and metadata. R18 narrows UNK-020 by authorizing the unchanged dependency-free Rust workspace
+for one raw D1 append/reopen/replay correctness member. It does not resolve UNK-014/015/021/022 or
+BLK-015; platform survival, D2/D3, physical faults, execution, capture, and benchmarks remain open.
