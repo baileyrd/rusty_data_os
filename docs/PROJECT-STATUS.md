@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — Slices A, B/B0, A2, and bounded Slice C/B1 raw D1 append/replay correctness are implemented; execution and later work remain unauthorized
+**Status:** Phase 1 planning/readiness — Slices A, B/B0, A2, and bounded Slice C/B1 raw D1 append/replay correctness are closed; descriptive D1 capture is blocked and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -78,7 +78,21 @@ promotion remained open or unauthorized; R18 supplies the separate bounded next 
 `9b5d89a36ed71d38420e9ae19f59d441a9d927aa`, and closes A2 with corrective PR #68 reviewed head
 `fcaf7f14c94df5a6cda1aeeb283b6726551d1844` and merge
 `79cbd64a436b104835a4279c07ba2777fb06cddb`; both corrective exact-head workflows passed. M01 remains the canonical positively valid R7-backed vector with its real 1,274-byte stream
-artifact-manifest fixture and independent 1,152-byte workload-manifest artifact fixture. R18 prospectively authorizes one
+artifact-manifest fixture and independent 1,152-byte workload-manifest artifact fixture. R18 historically authorized the now-closed
 third, external-dependency-free experiment workspace member with exactly one reviewed workspace path dependency on `exp1-record-format` for raw D1 append and deterministic physical
 reopen/replay correctness. BLK-015 is not needed because no `fsync`, D2/D3, survival, canonical
 recovery, execution, benchmark, fault, adapter, production, or performance claim is permitted.
+
+
+## R19 closure and blocked descriptive D1 readiness
+
+[R19](experiments/EXP-0001/R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md)
+binds Slice C/B1 closure to PR #71 reviewed head `21143b716de006dd5ec639c0b76a1b031d359fc1`
+and merge `e9c292cd614d97b2bf299fd8d2637de76dcdca54`, plus PR #74 reviewed head
+`5c448695f4e460cab57eaadd7f7a83bfce1559ab` and merge
+`ef29804347faa812502f855e5cc3ffee6f4901c2`; both PR #74 exact-head workflows passed. R19 finds
+the candidate generated-workload descriptive D1 harness blocked because R7 does not select a safe
+capture interface and the existing dependency-free, unsafe-forbidden workspace cannot uniquely
+implement all required platform capture. The smallest next decision must freeze that interface,
+dependency/unsafe policy, unavailable-field behavior, and UUIDv4 assignment. No fourth crate,
+workload materialization, capture, or execution is authorized.

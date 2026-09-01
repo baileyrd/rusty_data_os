@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; Slices A, B/B0, and A2 closed; R18 authorizes only bounded Slice C/B1 raw D1 append/replay correctness
+**Status:** Active staged plan; Slices A, B/B0, A2, and bounded Slice C/B1 correctness closed; R19 blocks descriptive D1 capture pending a platform-interface decision
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -20,8 +20,8 @@ A documentation-complete experiment framework is not an executable experiment.
 |---|---|---|
 | Framework readiness | Complete | EXP-0000's seven reviewed contracts remain linked and internally consistent. |
 | Design-choice readiness | Incomplete | The physical and lifecycle choices required by the intended slice are resolved through R1–R8 as applicable. |
-| Implementation readiness | Slices A, B/B0, and A2 complete | R18 authorizes only the frozen raw D1 append/reopen/replay correctness tranche; every execution or later increment requires separate authorization. |
-| Correctness-validation readiness | Slices A and B passed only | Stable fixtures, oracle, recovery rules, fault mechanisms, and validation procedures must exist for every applicable measured mode. |
+| Implementation readiness | Slices A, B/B0, A2, and bounded Slice C/B1 complete | R19 closes raw D1 append/reopen/replay correctness; a descriptive harness is blocked on the capture-interface/identity decision and every execution or later increment requires separate authorization. |
+| Correctness-validation readiness | Slices A, B/B0, A2, and bounded Slice C/B1 passed only | Stable fixtures, oracle, recovery rules, fault mechanisms, and validation procedures must exist for every applicable measured mode. |
 | Descriptive execution readiness | Incomplete | A validated runnable cell, environment, stream, adapter, instrumentation, and result path pass the descriptive gate. |
 | Confirmatory execution readiness | Incomplete | The stricter frozen-design gate in section 7 passes; descriptive readiness alone is insufficient. |
 
@@ -51,14 +51,14 @@ other blocker IDs or the frozen semantic contracts (`SEM`). Unknowns refer to th
 | BLK-017 | B1 append and synchronization APIs | Resolved as documentation design by [R5](R5-B0-B1-PHYSICAL-PROFILES-AND-ADAPTER-CONTRACTS.md) and its focused contract; BLK-015/implementation/evidence remain gated | BLK-001, BLK-003, BLK-013–BLK-015 | UNK-014, UNK-020 | Complete API/error/sync/grouping and finalized-commit mapping | Slices C–E |
 | BLK-018 | SQLite/RocksDB versions, builds, bindings and configurations | Resolved as documentation design by [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md); toolchain, implementation, effective validation and evidence remain gated | BLK-014–BLK-015 | UNK-020, UNK-021 | Exact reproducible profiles with verified effective settings | Slices F/G; series freeze |
 | BLK-019 | Adapter mappings for every baseline | Design complete: B0/B1 by R5 and B2/B3 by [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md); implementation and empirical validation open | BLK-001, BLK-004–BLK-005, BLK-011–BLK-012, BLK-016–BLK-018 | UNK-020, UNK-021 | Versioned semantic-to-physical mapping and equivalence classification per baseline | Baseline equivalence |
-| BLK-020 | Benchmark harness architecture | Resolved by [R9](R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) only for the Slice A validation-harness subset; executable benchmark/capture/adapter/analysis architecture remains open | BLK-009–BLK-010, BLK-019 | UNK-020, UNK-022 | Experimental component and dependency-boundary design | Slice A authorization; later slices separately gated |
+| BLK-020 | Benchmark harness architecture | Resolved by R9 only for Slice A and extended through the three reviewed correctness crates; R19 freezes a maximum descriptive D1 candidate but blocks executable capture/harness architecture pending the capture-interface/identity decision | BLK-009–BLK-010, BLK-019 | UNK-020, UNK-022 | Experimental component and dependency-boundary design | Slice A authorization; later slices separately gated |
 | BLK-021 | Instrumentation and overhead method | Resolved as documentation design by R7; implementation/effective capture remains gated | BLK-014, BLK-020 | UNK-022 | Named instruments, scope, calibration/bounding and loss rules | Descriptive/confirmatory execution |
 | BLK-022 | Fault-injection mechanisms | Process termination and offline-condition design resolved by R7; kernel crash, physical power/reset and I/O-error apparatus remain owner/BLK-015 blocked | BLK-013–BLK-015, BLK-017–BLK-019 | UNK-015, UNK-021 | Injection-point mapping, apparatus validation and coverage | Recovery readiness |
 | BLK-023 | Numeric threshold registry and rationale | Resolved for this documentation decision by the prospective owner-approved R8 `thresholds-v1`; implementation and admissibility remain gated | Primary-cell design, baseline profiles | UNK-008 | Reviewed versioned per-cell values with evidence/rationale | Confirmatory execution only |
 | BLK-024 | Estimator, interval, repetitions, stopping and run order | Resolved as documentation design by [R8](R8-PRIMARY-MATRIX-THRESHOLDS-AND-STATISTICAL-PLAN.md); implementation/effective validation remain gated | BLK-014, primary-cell design | UNK-008 | Frozen analysis specification | Confirmatory execution only |
 | BLK-025 | Artifact storage and retention | Resolved as documentation design by R7; external service/provisioning deliberately unselected | BLK-008, repository constraints | UNK-019, UNK-022 | Layout, durable references, retention/redaction and supersession rules | Execution/result admissibility |
-| BLK-026 | Reproducible toolchain/build configuration | R9 is resolved for Slice A; R10 reused it unchanged for the now-reviewed bounded Slice B, while later/native/benchmark-series builds remain open | BLK-014, BLK-018 | UNK-020, UNK-022 | Rust 1.89.0, target, flags, lock/build identity and offline reproduction procedure | Slice A authorization; series separately gated |
-| BLK-027 | Cargo/workspace and CI bootstrap authorization | Resolved by merged R9 for its exact workspace; R10 permitted unchanged reuse for bounded Slice B; R11 authorizes no executable reuse or expansion | BLK-020, BLK-026, section 6 | UNK-020, UNK-022 | Reviewed layout, empty dependency allowlist, exact CI plan, and approval record | First Slice A code creation after R9 merge |
+| BLK-026 | Reproducible toolchain/build configuration | Resolved through the existing three-member Rust 1.89.0 correctness workspace; R19 does not authorize a fourth member and later/native/benchmark-series builds remain open | BLK-014, BLK-018 | UNK-020, UNK-022 | Rust 1.89.0, target, flags, lock/build identity and offline reproduction procedure | Slice A authorization; series separately gated |
+| BLK-027 | Cargo/workspace and CI bootstrap authorization | Resolved only through the reviewed three-member correctness workspace; R19 does not authorize the candidate fourth member or executable capture expansion | BLK-020, BLK-026, section 6 | UNK-020, UNK-022 | Reviewed layout, empty dependency allowlist, exact CI plan, and approval record | First Slice A code creation after R9 merge |
 
 ## 3. Dependency ordering
 
@@ -175,7 +175,7 @@ an untested performance candidate into validated architecture; empirical promoti
 
 Phase 0's documented exit criteria are now satisfied: EXP-0000 is complete, EXP-0001 has a reproducible semantic benchmark plan and
 correctness criteria, baseline families are identified, and target environments can be recorded consistently. The project therefore
-enters **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, and A2 provide bounded implementation/correctness-validation evidence only. R18 authorizes raw D1 append/replay correctness; EXP-0001 remains non-executable as a workload or benchmark.
+enters **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and raw D1 append/replay provide bounded implementation/correctness-validation evidence only. R19 closes that correctness tranche; EXP-0001 remains non-executable as a workload or benchmark.
 
 R1 is complete through the [physical-record, integrity, and recovery requirements](R1-PHYSICAL-RECORD-INTEGRITY-RECOVERY-REQUIREMENTS.md). It resolved BLK-002 and BLK-013 while leaving later decisions; R3 subsequently resolved BLK-011/012 and R5 resolved BLK-001/003 as documentation design. Platform evidence and concrete fault mechanisms remain open. [R2](R2-DETERMINISTIC-WORKLOAD-BYTES-IDENTITY-REFERENCES-DIGEST-REQUIREMENTS.md) is complete as requirements/reference-vector planning and constrains BLK-006–009; BLK-006/007 are resolved by R12 and BLK-008 by R14 as documentation design; BLK-009 is resolved as documentation design by R16; dependency-free generator/manifest conformance implementation exists, while generated workload and benchmark execution remain absent. [R3](R3-IDENTITY-TIME-SEQUENCING-RETRY-LIFECYCLE.md) is complete: it resolves BLK-004/005/011/012 and further constrains open BLK-007.
 
@@ -200,7 +200,7 @@ passed, and PR #68 merged as `79cbd64a436b104835a4279c07ba2777fb06cddb`; Slice A
 bounded correctness evidence. Corrected M01 remains the canonical positively valid R7-backed
 vector with its 1,274-byte stream and independent 1,152-byte workload-manifest artifact fixtures.
 
-R18 prospectively authorizes only Slice C's raw D1 append plus reopen/replay correctness subset in a
+R18 historically authorized the now-closed Slice C raw D1 append plus reopen/replay correctness subset in a
 third external-dependency-free workspace member with exactly one reviewed workspace path dependency on `exp1-record-format` under the unchanged R9 toolchain and CI. This limited reuse
 extends BLK-017 implementation and BLK-020/026/027 only to that crate. It intentionally stays below
 BLK-015: no synchronization, canonical recovery, D2/D3, survival, fault, workload/benchmark
@@ -212,3 +212,20 @@ This closes only the raw D1 append/physical replay implementation subset of BLK-
 existing workspace validation boundary to the third member. BLK-015 and all synchronization,
 stable-storage, canonical recovery, D2/D3, generated workload, execution, benchmark/capture, fault,
 adapter, production, performance, and later-tranche work remain open or unauthorized.
+
+
+### R19 — Slice C/B1 closure and blocked descriptive D1 harness
+
+[R19](R19-SLICE-C-B1-CLOSURE-AND-DESCRIPTIVE-D1-HARNESS-READINESS.md) binds R18 to PR #71
+reviewed head/merge and closes PR #74 reviewed head
+`5c448695f4e460cab57eaadd7f7a83bfce1559ab` at merge
+`ef29804347faa812502f855e5cc3ffee6f4901c2`; both exact-head workflows passed. This is only raw
+D1 append and deterministic physical replay implementation/correctness evidence.
+
+R19 finds the maximum candidate fourth binary and its three reviewed path dependencies, M01/D1
+sequence, replay oracle, R7 artifact graph, lifecycle, tests, and exclusions sufficiently bounded.
+It does not authorize implementation because R7's named Linux capture interfaces have no uniquely
+selected safe realization under the empty external-dependency allowlist and unsafe-code prohibition,
+and evidence UUIDv4 assignment is not frozen. BLK-020/021/026/027 and UNK-022 remain open for that
+exact owner-reviewed decision. No workload materialization, capture, execution, or later tranche is
+authorized.
