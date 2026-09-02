@@ -4,7 +4,7 @@
 |---|---|---|---|
 | RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
 | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
-| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R23 closes reference-context governance after R22 resolves cross-segment references; R24 authorizes the bounded pure implementation, which remains pending; descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+| RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R25 records the R12/R16/R21–R24 bootstrap contradiction and supersedes R24 implementation authorization; separate v2 conformance and later reference-context authorizations are required; descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
 
 “Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
@@ -52,9 +52,20 @@ member list binds every R16 manifest and R14 WS1 stream and is committed by a do
 digest. Omitted, extra, substituted, duplicate, foreign, or mismatched inputs fail context
 construction. This closes governance only; implementation and evidence remain absent.
 
-### R24 implementation-authorization note
+### R24 implementation-authorization note (superseded)
 
-R24 authorizes only the pending pure R21–R23 reference-context extension of the existing R20 mapper.
+R24 historically authorized only the pending pure R21–R23 reference-context extension of the existing R20 mapper; R25 supersedes that implementation authorization after the v1 bootstrap contradiction was verified.
 Its closed-scope construction, immutable catalog, opaque accepted-prefix state, transactional mapping,
 resource/precedence tests, documentation synchronization, exact-head review, and both existing CI
 workflows must close before correctness evidence exists. It does not authorize capture or execution.
+
+
+### R25 governance-correction note
+
+Closed, unmerged PR #91 falsified the assumption that the uniform R16 v1 causal profile could both
+map each segment's first operation and later carry a valid R12/R22 prior reference. R25 preserves all
+v1 vectors and freezes only a prospective v2 zero-target bootstrap plus positive subsequent
+same-segment-reference policy with an explicit per-segment manifest representation. It supersedes
+R24 implementation authorization only and adds no implementation or correctness evidence. RQ-003's
+complete R20, capture, and execution questions remain open pending separately authorized v2
+conformance and a later bounded reference-context implementation.

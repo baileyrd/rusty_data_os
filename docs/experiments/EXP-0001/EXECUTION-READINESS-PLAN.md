@@ -235,18 +235,18 @@ authorized.
 
 [R20](R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) resolves R19's semantic-operation-to-physical-record blocker as documentation design. It freezes exactly one validated SOP1 to one `STRUCTURAL-0` RF1 type-3 provisional record, with complete SOP1 stable-core preservation and later-ingestion sequence/physical-ordinal inputs. A later pure public `exp1-raw-append-replay::mapping` implementation is prospectively authorized with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only its manifest and the matching lock entry may change, the other crates remain unchanged, and append integration is excluded. That mapper must pass R20's independent correctness gate. The live Linux capture-interface/dependency-or-bounded-unsafe decision remains open, so descriptive D1 harness implementation and all execution remain blocked. No fourth crate, external dependency, D2/D3, `fsync`, canonical recovery, fault work, workload/benchmark execution, or evidence claim is authorized.
 
-The pure mapper and its deterministic tests implement only the locally decidable subset of that gate. Duplicate reference bytes reject through SOP1 validation, but future, self, and cross-stream checks require prior-event membership and stream-locality context that R20 did not freeze. R21 freezes the locally decidable subset of that context, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof, and R24 separately authorizes only the still-pending bounded implementation; the complete R20 gate remains open. This is bounded implementation/correctness-validation evidence only; it does not alter the still-open live Linux capture decision or authorize harness construction or execution.
+The pure mapper and its deterministic tests implement only the locally decidable subset of that gate. Duplicate reference bytes reject through SOP1 validation, but future, self, and cross-stream checks require prior-event membership and stream-locality context that R20 did not freeze. R21 freezes the locally decidable subset of that context, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof. R25 records that R24’s prospective implementation authorization is superseded because the unchanged v1 authorities cannot form its required valid bootstrap-to-reference stream; the complete R20 gate remains open. This is bounded implementation/correctness-validation evidence only; it does not alter the still-open live Linux capture decision or authorize harness construction or execution.
 
 ## R21 reference-context gate update
 
-[R21](R21-REFERENCE-VALIDATION-CONTEXT.md) freezes an immutable typed identity catalog constructed from supplied conformance-validated semantic streams and a separate mutable accepted-prefix state for one selected stream. It fixes bounds, collision rules, transactional state advance, and locally decidable precedence. R22 supersedes the cross-segment ambiguity, and R23 now proves complete closed stream scope. R24 prospectively authorizes only the bounded pure implementation; it remains pending, and the full R20 gate remains open. Live Linux capture remains an independent blocker and no descriptive D1 harness is authorized.
+[R21](R21-REFERENCE-VALIDATION-CONTEXT.md) freezes an immutable typed identity catalog constructed from supplied conformance-validated semantic streams and a separate mutable accepted-prefix state for one selected stream. It fixes bounds, collision rules, transactional state advance, and locally decidable precedence. R22 supersedes the cross-segment ambiguity, and R23 now proves complete closed stream scope. R25 supersedes R24’s bounded implementation authorization after its v1 bootstrap premise failed; the full R20 gate remains open. Live Linux capture remains an independent blocker and no descriptive D1 harness is authorized.
 
 ## R22 cross-segment gate update
 
 [R22](R22-CROSS-SEGMENT-REFERENCE-RULE.md) fully resolves only the cross-segment governance question:
 references are same-stream and strictly segment-local, and known same-stream targets in the other
 segment receive the new `E-REFERENCE-CROSS-SEGMENT` disposition. Total WS1 position remains the
-accepted-prefix order and is not reference eligibility. At the R22 checkpoint the complete closed stream-scope proof was unresolved. R23 now resolves it, and R24 authorizes only the still-pending bounded reference-context implementation; complete R20 closure, live Linux capture, descriptive D1 harness, workload or benchmark execution, and later tranches remain gated or unauthorized.
+accepted-prefix order and is not reference eligibility. At the R22 checkpoint the complete closed stream-scope proof was unresolved. R23 resolves it, but R25 supersedes R24’s still-pending bounded implementation authorization; complete R20 closure, live Linux capture, descriptive D1 harness, workload or benchmark execution, and later tranches remain gated or unauthorized.
 
 ## R23 closed stream-scope gate update
 
@@ -256,7 +256,7 @@ fail-closed construction, and `CrossStream`/`Missing` classification boundary. T
 blocker is fully closed. A later pure reference-context implementation remains subject to separate
 authorization, exact-head review, and CI; no harness, capture, execution, or later work follows.
 
-## R24 reference-context implementation gate update
+## R24 reference-context implementation gate update (superseded authorization)
 
 [R24](R24-REFERENCE-CONTEXT-IMPLEMENTATION-AUTHORIZATION.md) confirms that R21–R23 close all
 reference-context governance prerequisites and prospectively authorizes exactly one bounded pure
@@ -264,4 +264,17 @@ extension in the existing `exp1-raw-append-replay` mapper. Only its frozen sourc
 change; manifests, lockfile, authority crates, dependencies, append/reopen, Linux capture, harnesses,
 and execution remain unchanged or excluded. Completion requires the implementation, every frozen
 synthetic correctness class, synchronized documentation, exact-head review, and both existing CI
-workflows green. Until then the complete R20 correctness gate remains open.
+workflows green. R25 supersedes this prospective authorization after closed PR #91 proved its valid-reference gate impossible under v1; R24 is not complete or merged evidence, and the complete R20 correctness gate remains open.
+
+
+## R25 bootstrap causal-reference governance correction
+
+[R25](R25-BOOTSTRAP-CAUSAL-REFERENCE-GOVERNANCE.md) records the failed R24 assumption exposed by
+closed, unmerged PR #91: R16's uniform envelope and positive scalar causal cardinality, R12's
+positive-target rule, R21's first-operation accepted prefix, and R22's segment locality make a valid
+bootstrap-to-reference v1 stream impossible; R23 forbids repairing that stream outside its exact
+manifest binding. All v1 vectors and bytes remain unchanged. R25 freezes only prospective v2
+semantics and a per-segment bootstrap/subsequent cardinality-policy representation. It supersedes
+R24 for implementation authorization only, authorizes no code, and requires first a separate v2
+conformance/validator-and-vector authorization and then a separate bounded reference-context
+implementation authorization. The complete R20 gate, capture, harness, and execution remain open.
