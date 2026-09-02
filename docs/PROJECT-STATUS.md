@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R24 authorizes the bounded pure reference-context implementation; implementation is pending, live capture remains blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R25 corrects the bootstrap causal-reference governance contradiction; R24 implementation authorization is superseded, the complete R20 gate and live capture remain blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -131,7 +131,7 @@ reference-context governance blocker and makes absence classifiable as `E-REFERE
 after successful complete-scope construction. It authorizes no implementation; the full R20 gate
 still requires a separate increment, review, and CI. All execution and capture exclusions remain.
 
-## R24 reference-context implementation authorization
+## R24 reference-context implementation authorization (superseded)
 
 [R24](experiments/EXP-0001/R24-REFERENCE-CONTEXT-IMPLEMENTATION-AUTHORIZATION.md) confirms that
 R21–R23 collectively close the governance prerequisites and prospectively authorizes exactly one
@@ -140,5 +140,23 @@ closed-scope constructor, immutable catalog, opaque caller-owned accepted-prefix
 transactional mapper, errors, bounds, precedence, exact source/test paths, and completion gate. The
 existing manifests, lockfile, authority crates, dependencies, append/reopen boundary, and all
 execution/capture exclusions remain unchanged. R24 contains no Rust implementation or correctness
-evidence; the complete R20 gate remains open until implementation, synchronized documentation,
-exact-head review, tests, and both existing workflows are green.
+evidence. R25 supersedes its implementation authorization because the required valid v1 bootstrap-to-reference gate is impossible; the complete R20 gate remains open.
+
+
+## R25 bootstrap causal-reference governance correction
+
+[R25](experiments/EXP-0001/R25-BOOTSTRAP-CAUSAL-REFERENCE-GOVERNANCE.md) records as a failed
+governance assumption the contradiction verified while developing closed, unmerged PR #91. R16
+requires one envelope profile and a positive scalar cardinality for a causal manifest, R12 requires
+at least one causal target, R22 leaves each segment ordinal 0 without an eligible prior target, R21
+maps from that first operation, and R23 admits only exact valid manifest-bound streams. R25 preserves
+all R12/R14/R16 v1 vectors and bytes while freezing prospective v2 causal semantics: each segment
+ordinal 0 has exactly zero targets and later operations have one or more prior same-stream,
+same-segment ordinary EventIds. The v2 manifest uses an explicit per-segment
+bootstrap/subsequent-cardinality policy rather than the contradictory v1 scalar.
+
+R25 supersedes R24 only for prospective implementation authorization. R24 and PR #91 remain
+historical, incomplete, unmerged records; no correctness evidence follows. R25 authorizes no code.
+A separate v2 conformance/validator-and-vector authorization must precede a separate new bounded
+reference-context implementation authorization. The complete R20 gate, live Linux capture, harness,
+workload/benchmark execution, durability, recovery, and every existing exclusion remain open.

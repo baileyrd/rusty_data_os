@@ -26,7 +26,7 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-010 | Resolved by R3: capture once after semantic validation and immediately before event construction, then reserve sequence after construction. |
 | UNK-011 | Observation-side metadata retention, observer/context identity and multiplicity rules, and criteria for appending an observation as a separate canonical event. |
 | UNK-012 | Resolved for EXP-0001 B1 by R5: structural-only provisional use and the versioned CRC-32C error-detecting profile, coverage, encoding, limits, and vectors are frozen. |
-| UNK-013 | Resolved as governance design by R21–R23: R21 freezes the immutable typed catalog and accepted prefix, R22 selects segment-local eligibility, and R23 freezes a canonical manifest-bound descriptor and digest proving complete cell scope. Implementation and the complete correctness gate remain open. |
+| UNK-013 | Reopened/corrected by R25: R21–R23 freeze catalog, segment-local eligibility, and closed-scope proof, but closed unmerged PR #91 falsified the assumption that unchanged R12/R16 v1 can bootstrap a causal stream. R25 freezes prospective v2 semantics only; v2 conformance and later reference-context implementation need separate authorization, and the complete correctness gate remains open. |
 | UNK-014 | R4 selects bare-metal Bosgame M5/Fedora 44 and four intended paths. The owner accepts externally reviewed but unretained host, 1 ns clock-resolution, nearest-parent XFS/LVM/NVMe, write-back, FUA, and volatile-write-cache observations for conditional planning. BLK-014 is closed for R4 planning; final placement, complete execution provenance, exact PLP/controller protection, and empirical survival remain unresolved for execution and dependent claims. |
 | UNK-015 | Concrete crash/fault-injection mechanisms and implementation of physical validity detection for partial, torn, truncated, or uncertain outcomes. EXP-0000 defines the semantic procedure and R1 defines minimum deterministic classifications and fail-closed scan/recovery policy; mechanisms remain open. |
 | UNK-016 | Resolved by R3: durable binding, explicit reconciliation, exact-candidate retry, conflict handling, and commit-before-ack uncertainty rules. |
@@ -88,3 +88,14 @@ authorization in `exp1-raw-append-replay`. It freezes no-manifest/no-dependency 
 boundaries, transactional APIs and errors, exact bounds and precedence, required synthetic tests,
 and exact-head CI closure. Implementation and correctness evidence remain pending; capture, harness,
 execution, durability, recovery, and performance remain open or unauthorized.
+
+
+### R25 disposition
+
+R25 records the R24 bootstrap-to-reference premise as a failed governance assumption and preserves
+closed PR #91 as unmerged negative evidence. It does not change any v1 bytes. Prospective v2 gives
+each segment ordinal 0 exactly zero causal targets and requires positive prior same-segment targets
+after bootstrap, represented by explicit per-segment bootstrap/subsequent cardinalities. R24 is
+superseded for implementation authorization only. V2 conformance/validator changes and vectors, then
+a new bounded reference-context implementation, each require separate authorization; UNK-013 and the
+complete R20 gate remain open at those implementation/evidence boundaries.
