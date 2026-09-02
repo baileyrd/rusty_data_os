@@ -271,3 +271,7 @@ append/reopen integration; a fourth crate; Linux capture/harness work; workload 
 execution; benchmarks/results; D2/D3, `fsync`, durability, recovery, faults, adapters, production
 code, server/network/query/distributed work, unsafe code, and performance or architecture claims.
 The descriptive D1 harness remains blocked on the independently required live Linux capture freeze.
+
+## 11. Active implementation closure record
+
+The authorized implementation is present on the active PR branch. It adds only the pure v2 closed-scope/catalog/accepted-prefix mapper and tests in the existing raw-append crate, preserves the context-free v1 mapper, and adds no dependency or I/O integration. This record does not claim merge or exact-head evidence: the R20 reference-context correctness gate closes only after review, both exact-head workflows, and merge.

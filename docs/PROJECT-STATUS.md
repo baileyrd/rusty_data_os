@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R27 closes R26 v2 conformance as bounded correctness evidence and authorizes the pure v2 reference-context mapper; the complete R20 gate remains open pending that implementation, live capture remains blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — the R27-authorized pure v2 reference-context mapper is implemented on the active closure branch and awaits exact-head review, CI, and merge; the complete R20 gate remains open until merge, live capture remains blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -184,7 +184,10 @@ closes the R26 implementation from PR #95 reviewed head
 conformance/correctness evidence. It versions R23's descriptor minimally for exact v2
 manifest/WS2/artifact/digest membership, preserves v1 unchanged, and rejects mixed membership. It
 prospectively authorizes exactly one pure contextual v2 mapper/catalog/state implementation in
-`exp1-raw-append-replay`, using the merged R26 literals as its independent oracle. No such R27
-implementation exists; complete R20 closure awaits implementation, review, and exact-head CI. Live
+`exp1-raw-append-replay`, using the merged R26 literals as its independent oracle. The R27 implementation is present on the active closure branch; complete R20 closure awaits review, exact-head CI, and merge. Live
 Linux capture, append/reopen integration, workloads, benchmarks, durability, faults, and all later
 work remain blocked or unauthorized.
+
+## R27 active implementation closure
+
+The active closure branch implements the pure homogeneous-v2 closed-scope catalog, private caller-owned accepted prefix, and transactional contextual mapper. This remains bounded correctness-validation work and closes no execution, capture, durability, recovery, or performance gate before exact-head review, CI, and merge.

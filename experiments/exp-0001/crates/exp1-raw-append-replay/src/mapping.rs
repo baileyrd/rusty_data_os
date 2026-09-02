@@ -125,6 +125,53 @@ pub fn map_semantic_operation(
     })
 }
 
+/// The common, already-semantically-validated RF1 construction boundary used by the
+/// versioned contextual mapper.  Keeping it here ensures SOP1 and SOP2 use precisely
+/// the same R20 state and codec checks without making the legacy entry point accept v2.
+pub(crate) fn map_validated_core(
+    semantic_operation: &[u8],
+    event_id: [u8; 16],
+    assigned_sequence: u64,
+    physical_ordinal: u64,
+    previous_sequence: u64,
+    previous_physical_ordinal: u64,
+) -> Result<MappedRecord, MappingError> {
+    let state = MappingState {
+        previous_sequence,
+        previous_physical_ordinal,
+    };
+    validate_state(assigned_sequence, physical_ordinal, state)?;
+    let event_id = Uuid(event_id);
+    event_id
+        .validate_v4()
+        .map_err(|error| MappingError::Extraction(ExtractionError::InvalidEventUuid(error)))?;
+    let record = Record {
+        physical_ordinal,
+        integrity: IntegrityProfile::Structural,
+        body: Body::Provisional {
+            event_id,
+            sequence: assigned_sequence,
+            group_id: 0,
+            member_index: 0,
+            member_count: 1,
+            stable_core: semantic_operation.to_vec(),
+        },
+    };
+    let frame = encode(&record).map_err(classify_encode)?;
+    let decoded = decode(&frame).map_err(MappingError::Decode)?;
+    if decoded != record {
+        return Err(MappingError::RoundTripMismatch);
+    }
+    Ok(MappedRecord {
+        frame,
+        record,
+        next_state: MappingState {
+            previous_sequence: assigned_sequence,
+            previous_physical_ordinal: physical_ordinal,
+        },
+    })
+}
+
 fn validate_state(sequence: u64, ordinal: u64, state: MappingState) -> Result<(), MappingError> {
     if sequence == 0 {
         return Err(MappingError::State(StateError::ZeroSequence));
