@@ -14,7 +14,31 @@ fn decode_hex(s: &str) -> Vec<u8> {
         .collect()
 }
 
-fn fixture() -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
+fn metadata(id: &str, bytes: &[u8], role: &str, media: &str) -> Vec<u8> {
+    format!(concat!(
+        "{{\"body\":{{\"artifacts\":[{{\"artifact_id\":\"{}\",\"byte_length\":\"{}\",",
+        "\"created_by_record_id\":\"16000000-0000-4000-8000-000000000006\",",
+        "\"logical_path\":\"exp-0001/artifacts/{}\",\"media_type\":\"{}\",\"retention_state\":\"published\",",
+        "\"role\":\"{}\",\"sensitivity\":\"public\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/{}\",\"validation_report_ids\":[]}}],",
+        "\"provenance_edges\":[],\"publication_state\":\"published\",\"scope\":\"run\",\"series_freeze\":{{\"state\":\"not_applicable\"}}}},",
+        "\"correction_reason\":{{\"state\":\"not_applicable\"}},\"created_at_utc_ns\":\"1788134400000000000\",",
+        "\"record_id\":\"16000000-0000-4000-8000-000000000010\",\"record_kind\":\"artifact_manifest\",",
+        "\"run_id\":{{\"state\":\"present\",\"value\":\"16000000-0000-4000-8000-000000000008\"}},",
+        "\"schema_version\":\"EXP1-R7-JSON-JCS-1\",\"series_id\":\"16000000-0000-4000-8000-000000000007\",",
+        "\"supersedes_record_id\":{{\"state\":\"not_applicable\"}}}}"),
+        id, bytes.len(), id, media, role, hex(&sha256(bytes)), id).into_bytes()
+}
+
+struct Fixture {
+    ws: Vec<u8>,
+    descriptor: Vec<u8>,
+    scope_digest: Vec<u8>,
+    manifest_digest: Vec<u8>,
+    manifest_meta: Vec<u8>,
+    stream_meta: Vec<u8>,
+}
+
+fn fixture() -> Fixture {
     let ws = decode_hex(WS_HEX);
     let descriptor = format!(
         concat!(
@@ -36,23 +60,49 @@ fn fixture() -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
     };
     let scope_digest = format!(concat!(
         "{{\"algorithm\":\"SHA-256/FIPS-180-4\",\"domain\":\"rusty-data-os/exp1/closed-stream-scope/v2\",",
-        "\"profile\":\"EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v2\",\"scope_ref\":{{}},\"value\":\"{}\"}}"
-    ), scope_value).into_bytes();
+        "\"profile\":\"EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v2\",\"scope_ref\":{{\"artifact_id\":\"27000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope.jcs\"}},\"value\":\"{}\"}}"
+    ), descriptor.len(), hex(&sha256(&descriptor)), scope_value).into_bytes();
     let manifest_digest = format!(
-        "{{\"domain\":\"rusty-data-os/exp1/workload-manifest/v2\",\"profile\":\"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v2\",\"value\":\"{}\"}}",
-        hex(&manifest_digest_v2(MANIFEST))
+        "{{\"algorithm\":\"SHA-256/FIPS-180-4\",\"domain\":\"rusty-data-os/exp1/workload-manifest/v2\",\"manifest_ref\":{{\"artifact_id\":\"16000000-0000-4000-8000-000000000001\",\"byte_length\":\"{}\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/16000000-0000-4000-8000-000000000001\"}},\"profile\":\"EXP-0001-WORKLOAD-MANIFEST-DIGEST-v2\",\"value\":\"{}\"}}",
+        MANIFEST.len(), hex(&sha256(MANIFEST)), hex(&manifest_digest_v2(MANIFEST))
     ).into_bytes();
-    (ws, descriptor, scope_digest, manifest_digest)
+    let manifest_meta = metadata(
+        "16000000-0000-4000-8000-000000000001",
+        MANIFEST,
+        "workload_manifest",
+        "application/vnd.rusty-data-os.exp1-workload-manifest+jcs",
+    );
+    let stream_meta = metadata(
+        "16000000-0000-4000-8000-000000000002",
+        &ws,
+        "configuration",
+        "application/vnd.rusty-data-os.exp1-workload-stream",
+    );
+    Fixture {
+        ws,
+        descriptor,
+        scope_digest,
+        manifest_digest,
+        manifest_meta,
+        stream_meta,
+    }
 }
 
 fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
-    let (ws, descriptor, scope_digest, manifest_digest) = fixture();
+    let Fixture {
+        ws,
+        descriptor,
+        scope_digest,
+        manifest_digest,
+        manifest_meta,
+        stream_meta,
+    } = fixture();
     let binding = ManifestBindingInput {
         manifest: MANIFEST,
         manifest_digest_descriptor: &manifest_digest,
-        manifest_artifact_metadata: b"{}",
+        manifest_artifact_metadata: &manifest_meta,
         stream: &ws,
-        stream_artifact_metadata: b"{}",
+        stream_artifact_metadata: &stream_meta,
     };
     let context = construct_reference_context_v2(
         ClosedScopeInputV2 {
@@ -78,13 +128,20 @@ fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
 
 #[test]
 fn r26_literals_construct_an_immutable_catalog_and_initial_state() {
-    let (ws, descriptor, scope_digest, manifest_digest) = fixture();
+    let Fixture {
+        ws,
+        descriptor,
+        scope_digest,
+        manifest_digest,
+        manifest_meta,
+        stream_meta,
+    } = fixture();
     let binding = ManifestBindingInput {
         manifest: MANIFEST,
         manifest_digest_descriptor: &manifest_digest,
-        manifest_artifact_metadata: b"{}",
+        manifest_artifact_metadata: &manifest_meta,
         stream: &ws,
-        stream_artifact_metadata: b"{}",
+        stream_artifact_metadata: &stream_meta,
     };
     let context = construct_reference_context_v2(
         ClosedScopeInputV2 {
@@ -106,14 +163,21 @@ fn r26_literals_construct_an_immutable_catalog_and_initial_state() {
 
 #[test]
 fn construction_is_closed_and_digest_bound() {
-    let (ws, descriptor, mut scope_digest, manifest_digest) = fixture();
+    let Fixture {
+        ws,
+        descriptor,
+        mut scope_digest,
+        manifest_digest,
+        manifest_meta,
+        stream_meta,
+    } = fixture();
     *scope_digest.last_mut().unwrap() = b'!';
     let binding = ManifestBindingInput {
         manifest: MANIFEST,
         manifest_digest_descriptor: &manifest_digest,
-        manifest_artifact_metadata: b"{}",
+        manifest_artifact_metadata: &manifest_meta,
         stream: &ws,
-        stream_artifact_metadata: b"{}",
+        stream_artifact_metadata: &stream_meta,
     };
     assert_eq!(
         construct_reference_context_v2(

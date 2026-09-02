@@ -63,10 +63,14 @@ enum FactClass {
 }
 #[derive(Clone, Debug)]
 struct IdentityBinding {
+    id: [u8; 16],
     role: Role,
     namespace: [u8; 16],
+    total_position: u64,
     segment: Segment,
     ordinal: u64,
+    producer: [u8; 16],
+    producer_ordinal: u64,
     fact: Option<FactClass>,
 }
 #[derive(Clone, Debug)]
@@ -75,6 +79,7 @@ struct Operation {
     namespace: [u8; 16],
     segment: Segment,
     ordinal: u64,
+    total_position: u64,
     producer: [u8; 16],
     producer_ordinal: u64,
     request: [u8; 16],
@@ -233,10 +238,26 @@ impl P<'_> {
                                 .map_err(|_| ())?;
                             self.p += 4;
                             let n = u16::from_str_radix(h, 16).map_err(|_| ())?;
-                            if (0xd800..=0xdfff).contains(&n) {
+                            let cp = if (0xd800..=0xdbff).contains(&n) {
+                                if self.b.get(self.p..self.p + 2) != Some(b"\\u") {
+                                    return Err(());
+                                }
+                                self.p += 2;
+                                let h =
+                                    std::str::from_utf8(self.b.get(self.p..self.p + 4).ok_or(())?)
+                                        .map_err(|_| ())?;
+                                self.p += 4;
+                                let low = u16::from_str_radix(h, 16).map_err(|_| ())?;
+                                if !(0xdc00..=0xdfff).contains(&low) {
+                                    return Err(());
+                                }
+                                0x10000 + (((n as u32 - 0xd800) << 10) | (low as u32 - 0xdc00))
+                            } else if (0xdc00..=0xdfff).contains(&n) {
                                 return Err(());
-                            }
-                            s.push(char::from_u32(n.into()).ok_or(())?)
+                            } else {
+                                n as u32
+                            };
+                            s.push(char::from_u32(cp).ok_or(())?)
                         }
                         _ => return Err(()),
                     }
@@ -339,7 +360,9 @@ fn canon(j: &J, o: &mut String) {
         }
         J::O(m) => {
             o.push('{');
-            for (i, (k, v)) in m.iter().enumerate() {
+            let mut entries: Vec<_> = m.iter().collect();
+            entries.sort_by(|a, b| a.0.encode_utf16().cmp(b.0.encode_utf16()));
+            for (i, (k, v)) in entries.into_iter().enumerate() {
                 if i > 0 {
                     o.push(',')
                 }
@@ -444,6 +467,97 @@ fn hex_digest(domain: &str, b: &[u8]) -> String {
     p.push(0);
     p.extend(b);
     hex(&sha256(&p))
+}
+
+fn required_string<'a>(o: &'a BTreeMap<String, J>, key: &str) -> Result<&'a str, ()> {
+    strv(o.get(key).ok_or(())?)
+}
+
+/// Resolve one immutable, published R7 artifact entry.  This deliberately validates the
+/// complete closed R7 shapes used here rather than treating metadata as an opaque digest bag.
+fn r7_artifact(metadata: &[u8], artifact_id: &str) -> Result<BTreeMap<String, J>, ()> {
+    let root = parse(metadata)?;
+    let root = obj(&root)?;
+    exact(
+        root,
+        &[
+            "body",
+            "correction_reason",
+            "created_at_utc_ns",
+            "record_id",
+            "record_kind",
+            "run_id",
+            "schema_version",
+            "series_id",
+            "supersedes_record_id",
+        ],
+    )?;
+    if required_string(root, "record_kind")? != "artifact_manifest"
+        || required_string(root, "schema_version")? != "EXP1-R7-JSON-JCS-1"
+    {
+        return Err(());
+    }
+    let body = obj(root.get("body").ok_or(())?)?;
+    exact(
+        body,
+        &[
+            "artifacts",
+            "provenance_edges",
+            "publication_state",
+            "scope",
+            "series_freeze",
+        ],
+    )?;
+    if required_string(body, "publication_state")? != "published" {
+        return Err(());
+    }
+    let artifacts = arr(body.get("artifacts").ok_or(())?)?;
+    let mut found = None;
+    for value in artifacts {
+        let entry = obj(value)?;
+        exact(
+            entry,
+            &[
+                "artifact_id",
+                "byte_length",
+                "created_by_record_id",
+                "logical_path",
+                "media_type",
+                "retention_state",
+                "role",
+                "sensitivity",
+                "sha256",
+                "uri",
+                "validation_report_ids",
+            ],
+        )?;
+        if required_string(entry, "artifact_id")? == artifact_id {
+            if found.is_some() || required_string(entry, "retention_state")? != "published" {
+                return Err(());
+            }
+            found = Some(entry.clone());
+        }
+    }
+    found.ok_or(())
+}
+
+fn ref_matches(
+    reference: &BTreeMap<String, J>,
+    entry: &BTreeMap<String, J>,
+    bytes: &[u8],
+) -> Result<(), ()> {
+    exact(reference, &["artifact_id", "byte_length", "sha256", "uri"])?;
+    for key in ["artifact_id", "byte_length", "sha256", "uri"] {
+        if required_string(reference, key)? != required_string(entry, key)? {
+            return Err(());
+        }
+    }
+    if dec(required_string(reference, "byte_length")?)? != bytes.len() as u64
+        || required_string(reference, "sha256")? != hex(&sha256(bytes))
+    {
+        return Err(());
+    }
+    Ok(())
 }
 
 struct Member {
@@ -602,7 +716,31 @@ pub fn construct_reference_context_v2(
     if strv(&o["value"]).ok() != Some(hex_digest(SCOPE_DOMAIN, input.scope.descriptor).as_str()) {
         return Err(ContextConstructionError::InvalidScopeDigest);
     }
-    obj(&o["scope_ref"]).map_err(|_| ContextConstructionError::ScopeReferenceFailure)?;
+    let scope_ref =
+        obj(&o["scope_ref"]).map_err(|_| ContextConstructionError::ScopeReferenceFailure)?;
+    exact(scope_ref, &["artifact_id", "byte_length", "sha256", "uri"])
+        .map_err(|_| ContextConstructionError::ScopeReferenceFailure)?;
+    if uuid(
+        required_string(scope_ref, "artifact_id")
+            .map_err(|_| ContextConstructionError::ScopeReferenceFailure)?,
+    )
+    .is_err()
+        || dec(required_string(scope_ref, "byte_length")
+            .map_err(|_| ContextConstructionError::ScopeReferenceFailure)?)
+        .ok()
+            != Some(input.scope.descriptor.len() as u64)
+        || required_string(scope_ref, "sha256").ok()
+            != Some(hex(&sha256(input.scope.descriptor)).as_str())
+        || required_string(scope_ref, "uri").map_or(true, |u| {
+            !(u.starts_with("https:") || u.starts_with("file:"))
+        })
+    {
+        return Err(ContextConstructionError::ScopeReferenceFailure);
+    }
+    // R27 authorizes this reviewed R8 cell only; a syntactically plausible caller label is not authority.
+    if cell != "PC-D1-raw-v2" {
+        return Err(ContextConstructionError::InvalidCellAuthority);
+    }
     let manifest_bytes = input
         .members
         .iter()
@@ -615,12 +753,6 @@ pub fn construct_reference_context_v2(
         .ok_or(ContextConstructionError::ResourceLimit)?;
     if manifest_bytes > 1_048_576 || stream_bytes > 16_777_216 {
         return Err(ContextConstructionError::ResourceLimit);
-    }
-    if input.members.len() < members.len() {
-        return Err(ContextConstructionError::OmittedStream);
-    }
-    if input.members.len() > members.len() {
-        return Err(ContextConstructionError::ExtraStream);
     }
     let mut supplied = Vec::new();
     for bind in input.members {
@@ -654,19 +786,73 @@ pub fn construct_reference_context_v2(
         supplied.push((ns, bind, workload, manifest));
     }
     supplied.sort_by_key(|x| x.0);
-    if supplied.windows(2).any(|x| x[0].0 == x[1].0) {
-        return Err(ContextConstructionError::DuplicateStreamNamespace);
-    }
     let mut identities = BTreeMap::new();
     let mut selected_ops = vec![];
     let mut operation_count = 0usize;
-    for (expected, (ns, bind, workload, manifest)) in members.iter().zip(supplied) {
-        if expected.ns != ns {
-            return Err(ContextConstructionError::SubstitutedStream);
+    for (ns, bind, _workload, _manifest) in &supplied {
+        let expected = members.iter().find(|m| m.ns == *ns);
+        // Resolve the manifest descriptor and both independent R7 artifact records before set equality.
+        let descriptor = parse(bind.manifest_digest_descriptor)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let dd = obj(&descriptor).map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        exact(
+            dd,
+            &["algorithm", "domain", "manifest_ref", "profile", "value"],
+        )
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        if required_string(dd, "algorithm").ok() != Some("SHA-256/FIPS-180-4")
+            || required_string(dd, "profile").ok() != Some(MANIFEST_DIGEST_PROFILE_V2)
+            || required_string(dd, "domain").ok() != Some(MANIFEST_DOMAIN_V2)
+        {
+            return Err(ContextConstructionError::UnsupportedScopeProfile);
         }
-        if workload != expected.workload || manifest != expected.manifest {
-            return Err(ContextConstructionError::ForeignWorkloadOrCell);
+        let manifest_ref = obj(dd
+            .get("manifest_ref")
+            .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let manifest_artifact_id = required_string(manifest_ref, "artifact_id")
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let manifest_entry = r7_artifact(bind.manifest_artifact_metadata, manifest_artifact_id)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        ref_matches(manifest_ref, &manifest_entry, bind.manifest)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        if required_string(&manifest_entry, "role").ok() != Some("workload_manifest")
+            || required_string(&manifest_entry, "media_type").ok()
+                != Some("application/vnd.rusty-data-os.exp1-workload-manifest+jcs")
+        {
+            return Err(ContextConstructionError::InvalidMemberBinding);
         }
+        let mt =
+            obj(&parse(bind.manifest)
+                .map_err(|_| ContextConstructionError::InvalidMemberBinding)?)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?
+            .clone();
+        let stream_ref = obj(mt
+            .get("stream_ref")
+            .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let stream_artifact_id = required_string(stream_ref, "artifact_id")
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let stream_entry = r7_artifact(bind.stream_artifact_metadata, stream_artifact_id)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        if required_string(&stream_entry, "role").ok() != Some("configuration")
+            || required_string(&stream_entry, "media_type").ok()
+                != Some("application/vnd.rusty-data-os.exp1-workload-stream")
+            || required_string(&stream_entry, "byte_length")
+                .and_then(dec)
+                .ok()
+                != Some(bind.stream.len() as u64)
+            || required_string(&stream_entry, "sha256").ok()
+                != Some(hex(&sha256(bind.stream)).as_str())
+        {
+            return Err(ContextConstructionError::InvalidMemberBinding);
+        }
+        if required_string(dd, "value").ok()
+            != Some(hex(&manifest_digest_v2(bind.manifest)).as_str())
+        {
+            return Err(ContextConstructionError::InvalidMemberBinding);
+        }
+        let Some(expected) = expected else { continue };
         if expected.md != hex(&manifest_digest_v2(bind.manifest))
             || expected.sd != hex(&workload_digest_v2(bind.stream))
             || expected.len != bind.stream.len() as u64
@@ -674,13 +860,35 @@ pub fn construct_reference_context_v2(
         {
             return Err(ContextConstructionError::InvalidMemberBinding);
         }
-        let descriptor = parse(bind.manifest_digest_descriptor)
-            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
-        let dd = obj(&descriptor).map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let policy = obj(obj(mt
+            .get("generator_inputs")
+            .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?
+        .get("reference_cardinality_policy")
+        .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let warm = dec(required_string(
+            obj(policy
+                .get("warm_up")
+                .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?,
+            "subsequent",
+        )
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
+        let measured = dec(required_string(
+            obj(policy
+                .get("measured")
+                .ok_or(ContextConstructionError::InvalidMemberBinding)?)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?,
+            "subsequent",
+        )
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?)
+        .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
         let ctx = ValidationContextV2 {
             stream: bind.stream,
-            warm_up_subsequent: 1,
-            measured_subsequent: 1,
+            warm_up_subsequent: warm,
+            measured_subsequent: measured,
             manifest_artifact_sha256: &hex(&sha256(bind.manifest)),
             manifest_artifact_length: bind.manifest.len() as u64,
             descriptor_profile: strv(
@@ -706,7 +914,7 @@ pub fn construct_reference_context_v2(
         }
         validate_manifest_v2(bind.manifest, &ctx)
             .map_err(ContextConstructionError::SemanticValidation)?;
-        let (n, _, _) = validate_stream_v2(bind.stream, 1, 1)
+        let (n, _, _) = validate_stream_v2(bind.stream, warm, measured)
             .map_err(ContextConstructionError::SemanticValidation)?;
         operation_count = operation_count
             .checked_add(n as usize)
@@ -724,10 +932,14 @@ pub fn construct_reference_context_v2(
                     .insert(
                         id,
                         IdentityBinding {
+                            id,
                             role,
                             namespace: op.namespace,
+                            total_position: op.total_position,
                             segment: op.segment,
                             ordinal: op.ordinal,
+                            producer: op.producer,
+                            producer_ordinal: op.producer_ordinal,
                             fact,
                         },
                     )
@@ -736,9 +948,27 @@ pub fn construct_reference_context_v2(
                     return Err(ContextConstructionError::IdentityCollision);
                 }
             }
-            if ns == selected_stream_namespace {
+            if *ns == selected_stream_namespace {
                 selected_ops.push(op)
             }
+        }
+    }
+    // Exact supplied-set classification belongs after complete resolution and semantic validation.
+    if supplied.windows(2).any(|x| x[0].0 == x[1].0) {
+        return Err(ContextConstructionError::DuplicateStreamNamespace);
+    }
+    if supplied.len() < members.len() {
+        return Err(ContextConstructionError::OmittedStream);
+    }
+    if supplied.len() > members.len() {
+        return Err(ContextConstructionError::ExtraStream);
+    }
+    for (expected, actual) in members.iter().zip(&supplied) {
+        if expected.ns != actual.0 {
+            return Err(ContextConstructionError::SubstitutedStream);
+        }
+        if expected.workload != actual.2 || expected.manifest != actual.3 {
+            return Err(ContextConstructionError::ForeignWorkloadOrCell);
         }
     }
     if !members.iter().any(|m| m.ns == selected_stream_namespace) {
@@ -770,11 +1000,13 @@ fn stream_operations(b: &[u8]) -> Option<Vec<Operation>> {
     let n = u64::from_be_bytes(b.get(h.len()..h.len() + 8)?.try_into().ok()?);
     let mut p = h.len() + 24;
     let mut out = vec![];
-    for _ in 0..n {
+    for total_position in 0..n {
         let z = usize::try_from(u64::from_be_bytes(b.get(p..p + 8)?.try_into().ok()?)).ok()?;
         p += 8;
         let e = p.checked_add(z)?;
-        out.push(extract(b.get(p..e)?)?);
+        let mut operation = extract(b.get(p..e)?)?;
+        operation.total_position = total_position;
+        out.push(operation);
         p = e
     }
     Some(out)
@@ -788,6 +1020,7 @@ fn extract(b: &[u8]) -> Option<Operation> {
         namespace: d.namespace,
         segment: d.segment,
         ordinal: d.ordinal,
+        total_position: 0,
         producer: op[11].try_into().ok()?,
         producer_ordinal: u64::from_be_bytes(op[12].try_into().ok()?),
         request: s[4].try_into().ok()?,
@@ -816,19 +1049,28 @@ pub fn map_semantic_operation_v2_with_context(
     catalog: &ReferenceCatalogV2,
     state: &AcceptedPrefixStateV2,
 ) -> Result<ContextualMappedRecordV2, ContextualMappingError> {
+    // The encoded count is knowable without allocating the decoded target vector.
+    let encoded_reference_count = fields(semantic_operation, b"RDOS-SOP2", 13)
+        .and_then(|s| fields(s[8], b"RDOS-ENV2", 13))
+        .and_then(|env| env[12].get(..4))
+        .and_then(|v| <[u8; 4]>::try_from(v).ok())
+        .map(u32::from_be_bytes);
+    if encoded_reference_count.is_some_and(|count| count > 65_536) {
+        return Err(ContextualMappingError::ResourceLimit);
+    }
     let decoded = validate_semantic_operation_v2(semantic_operation)
         .map_err(ContextualMappingError::SemanticValidation)?;
     if decoded.references.len() > 65_536 {
         return Err(ContextualMappingError::ResourceLimit);
-    }
-    if state.scope_id != catalog.scope_id || state.namespace != catalog.selected {
-        return Err(ContextualMappingError::Discontinuity);
     }
     let pos = usize::try_from(state.accepted).map_err(|_| ContextualMappingError::Exhaustion)?;
     let expected = catalog
         .selected_operations
         .get(pos)
         .ok_or(ContextualMappingError::Exhaustion)?;
+    if state.scope_id != catalog.scope_id || state.namespace != catalog.selected {
+        return Err(ContextualMappingError::Discontinuity);
+    }
     let offered = extract(semantic_operation).ok_or(ContextualMappingError::Extraction)?;
     if offered.bytes != expected.bytes
         || offered.namespace != expected.namespace
@@ -851,6 +1093,8 @@ pub fn map_semantic_operation_v2_with_context(
         let Some(x) = catalog.identities.get(target) else {
             return Err(ContextualMappingError::Reference(ReferenceError::Missing));
         };
+        debug_assert_eq!(x.id, *target);
+        let _provenance = (x.total_position, x.producer, x.producer_ordinal);
         if x.role != Role::Event {
             return Err(ContextualMappingError::Reference(ReferenceError::WrongKind));
         }
