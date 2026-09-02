@@ -1,4 +1,10 @@
 use super::{
+    ENVELOPE_GENERATOR_V2, ENVELOPE_PROFILE_V2, MANIFEST_DIGEST_PROFILE_V2, MANIFEST_DOMAIN_V2,
+    MANIFEST_PROFILE_V2, REFERENCE_GENERATOR_V2, SEMANTIC_OPERATION_V2, STREAM_DOMAIN_V2,
+    WORKLOAD_CONTRACT_V2, WORKLOAD_STREAM_V2, manifest_digest_v2, sha256, validate_stream_v2,
+    workload_digest_v2,
+};
+use super::{
     Error, artifact_digest, hex, manifest_digest, parse_uuid, stream_bindings, validate_stream,
     workload_digest,
 };
@@ -205,6 +211,169 @@ fn parse(b: &[u8]) -> Result<Json, Error> {
         return Err(Error::JsonSyntax);
     }
     Ok(v)
+}
+
+fn exact(o: &BTreeMap<String, Json>, keys: &[&str]) -> Result<(), Error> {
+    for key in o.keys() {
+        if !keys.contains(&key.as_str()) {
+            return Err(Error::UnknownField);
+        }
+    }
+    if keys.iter().any(|key| !o.contains_key(*key)) {
+        return Err(Error::MissingField);
+    }
+    Ok(())
+}
+
+/// External immutable bindings needed to validate an R26 manifest.
+pub struct ValidationContextV2<'a> {
+    pub stream: &'a [u8],
+    pub warm_up_subsequent: u64,
+    pub measured_subsequent: u64,
+    pub manifest_artifact_sha256: &'a str,
+    pub manifest_artifact_length: u64,
+    pub descriptor_profile: &'a str,
+    pub descriptor_domain: &'a str,
+    pub descriptor_value: &'a str,
+}
+
+/// Validates the R26 closed v2 ledger, policy, profiles, stream and external digest.
+pub fn validate_manifest_v2(candidate: &[u8], ctx: &ValidationContextV2<'_>) -> Result<(), Error> {
+    let root = parse(candidate)?;
+    let mut rendered = String::new();
+    canonical(&root, &mut rendered);
+    if rendered.as_bytes() != candidate {
+        return Err(Error::Noncanonical);
+    }
+    let t = obj(&root)?;
+    exact(
+        t,
+        &[
+            "authority_revisions",
+            "counts",
+            "created_at_utc_ns",
+            "generator_inputs",
+            "manifest_id",
+            "profiles",
+            "record_kind",
+            "schema_version",
+            "stream_digest",
+            "stream_ref",
+            "supersession",
+            "workload_id",
+        ],
+    )?;
+    if t.values().any(|x| matches!(x, Json::Number)) {
+        return Err(Error::Type);
+    }
+    if strv(&t["record_kind"])? != "workload_manifest"
+        || strv(&t["schema_version"])? != MANIFEST_PROFILE_V2
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    let p = obj(&t["profiles"])?;
+    exact(
+        p,
+        &[
+            "digest",
+            "envelope",
+            "envelope_generator",
+            "identity_generator",
+            "logical_time_generator",
+            "manifest",
+            "payload_content",
+            "payload_generator",
+            "payload_size",
+            "reference_generator",
+            "semantic_operation",
+            "size_class_order",
+            "temporal",
+            "workload_contract",
+            "workload_stream",
+        ],
+    )?;
+    let required = [
+        ("digest", "SHA-256/FIPS-180-4"),
+        ("envelope", ENVELOPE_PROFILE_V2),
+        ("envelope_generator", ENVELOPE_GENERATOR_V2),
+        ("identity_generator", "EXP-0001-UUID4-SHA256-v1"),
+        ("logical_time_generator", "EXP-0001-LOGICAL-TIME-v1"),
+        ("manifest", MANIFEST_PROFILE_V2),
+        ("reference_generator", REFERENCE_GENERATOR_V2),
+        ("semantic_operation", SEMANTIC_OPERATION_V2),
+        ("workload_contract", WORKLOAD_CONTRACT_V2),
+        ("workload_stream", WORKLOAD_STREAM_V2),
+    ];
+    for (k, v) in required {
+        if strv(&p[k])? != v {
+            return Err(Error::ProfileMismatch);
+        }
+    }
+    let g = obj(&t["generator_inputs"])?;
+    if g.contains_key("reference_cardinality") {
+        return Err(Error::ProfileMismatch);
+    }
+    let policy = obj(g
+        .get("reference_cardinality_policy")
+        .ok_or(Error::MissingField)?)?;
+    exact(policy, &["kind", "measured", "warm_up"])?;
+    if strv(&policy["kind"])? != "segment_bootstrap_then_prior_v2" {
+        return Err(Error::ProfileMismatch);
+    }
+    for (name, expected) in [
+        ("warm_up", ctx.warm_up_subsequent),
+        ("measured", ctx.measured_subsequent),
+    ] {
+        let s = obj(&policy[name])?;
+        exact(s, &["bootstrap", "subsequent"])?;
+        if strv(&s["bootstrap"])? != "0" {
+            return Err(Error::Range);
+        }
+        let n = parse_u64_text(strv(&s["subsequent"])?)?;
+        if n == 0 {
+            return Err(Error::Range);
+        }
+        if n != expected {
+            return Err(Error::CountMismatch);
+        }
+    }
+    validate_stream_v2(ctx.stream, ctx.warm_up_subsequent, ctx.measured_subsequent)?;
+    let sd = obj(&t["stream_digest"])?;
+    exact(sd, &["algorithm", "domain", "value"])?;
+    if strv(&sd["algorithm"])? != "SHA-256/FIPS-180-4" || strv(&sd["domain"])? != STREAM_DOMAIN_V2 {
+        return Err(Error::ProfileMismatch);
+    }
+    if strv(&sd["value"])? != hex(&workload_digest_v2(ctx.stream)) {
+        return Err(Error::Digest);
+    }
+    let sr = obj(&t["stream_ref"])?;
+    let length = parse_u64_text(strv(sr.get("byte_length").ok_or(Error::MissingField)?)?)?;
+    if length != ctx.stream.len() as u64 {
+        return Err(Error::CountMismatch);
+    }
+    if strv(sr.get("sha256").ok_or(Error::MissingField)?)? != hex(&sha256(ctx.stream)) {
+        return Err(Error::Digest);
+    }
+    if ctx.descriptor_profile != MANIFEST_DIGEST_PROFILE_V2
+        || ctx.descriptor_domain != MANIFEST_DOMAIN_V2
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    if ctx.manifest_artifact_length != candidate.len() as u64
+        || ctx.manifest_artifact_sha256 != hex(&sha256(candidate))
+        || ctx.descriptor_value != hex(&manifest_digest_v2(candidate))
+    {
+        return Err(Error::Digest);
+    }
+    Ok(())
+}
+
+fn parse_u64_text(s: &str) -> Result<u64, Error> {
+    if s.is_empty() || (s.len() > 1 && s.starts_with('0')) || !s.bytes().all(|x| x.is_ascii_digit())
+    {
+        return Err(Error::Range);
+    }
+    s.parse().map_err(|_| Error::Range)
 }
 fn obj(v: &Json) -> Result<&BTreeMap<String, Json>, Error> {
     if let Json::Object(x) = v {
