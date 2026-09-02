@@ -88,6 +88,38 @@ fn fixture() -> Fixture {
     }
 }
 
+fn refresh_scope_digest(f: &mut Fixture) {
+    let mut preimage = b"rusty-data-os/exp1/closed-stream-scope/v2\0".to_vec();
+    preimage.extend(&f.descriptor);
+    f.scope_digest = format!(concat!(
+        "{{\"algorithm\":\"SHA-256/FIPS-180-4\",\"domain\":\"rusty-data-os/exp1/closed-stream-scope/v2\",",
+        "\"profile\":\"EXP-0001-R23-CLOSED-STREAM-SCOPE-DIGEST-v2\",\"scope_ref\":{{\"artifact_id\":\"27000000-0000-4000-8000-000000000002\",\"byte_length\":\"{}\",\"sha256\":\"{}\",\"uri\":\"https://example.invalid/scope.jcs\"}},\"value\":\"{}\"}}"
+    ), f.descriptor.len(), hex(&sha256(&f.descriptor)), hex(&sha256(&preimage))).into_bytes();
+}
+
+fn construct(
+    f: &Fixture,
+    selected: [u8; 16],
+) -> Result<ReferenceContextV2, ContextConstructionError> {
+    let binding = ManifestBindingInput {
+        manifest: MANIFEST,
+        manifest_digest_descriptor: &f.manifest_digest,
+        manifest_artifact_metadata: &f.manifest_meta,
+        stream: &f.ws,
+        stream_artifact_metadata: &f.stream_meta,
+    };
+    construct_reference_context_v2(
+        ClosedScopeInputV2 {
+            scope: ScopeDigestInput {
+                descriptor: &f.descriptor,
+                artifact_metadata: &f.scope_digest,
+            },
+            members: &[binding],
+        },
+        selected,
+    )
+}
+
 fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
     let Fixture {
         ws,
@@ -196,9 +228,127 @@ fn construction_is_closed_and_digest_bound() {
 }
 
 #[test]
+fn construction_errors_are_distinct_at_their_precedence_boundaries() {
+    let mut bad_reference = fixture();
+    bad_reference.scope_digest = String::from_utf8(bad_reference.scope_digest)
+        .unwrap()
+        .replace(
+            "https://example.invalid/scope.jcs",
+            "http://example.invalid/scope.jcs",
+        )
+        .into_bytes();
+    assert_eq!(
+        construct(&bad_reference, NS).unwrap_err(),
+        ContextConstructionError::ScopeReferenceFailure
+    );
+
+    let mut bad_authority = fixture();
+    bad_authority.descriptor = String::from_utf8(bad_authority.descriptor)
+        .unwrap()
+        .replace("PC-D1-raw-v2", "PC-D1-raw-XX")
+        .into_bytes();
+    refresh_scope_digest(&mut bad_authority);
+    // A validly bound descriptor naming an unreviewed cell is not a member failure.
+    assert_eq!(
+        construct(&bad_authority, NS).unwrap_err(),
+        ContextConstructionError::InvalidCellAuthority
+    );
+
+    let mut bad_member = fixture();
+    bad_member.manifest_meta = String::from_utf8(bad_member.manifest_meta)
+        .unwrap()
+        .replace(
+            "\"publication_state\":\"published\"",
+            "\"publication_state\":\"staged\"",
+        )
+        .into_bytes();
+    assert_eq!(
+        construct(&bad_member, NS).unwrap_err(),
+        ContextConstructionError::InvalidMemberBinding
+    );
+}
+
+#[test]
+fn r7_metadata_rejects_invalid_supersession_provenance_identity_and_closed_fields() {
+    let cases = [
+        (
+            "\"supersedes_record_id\":{\"state\":\"not_applicable\"}",
+            "\"supersedes_record_id\":{\"state\":\"present\"}",
+        ),
+        ("\"provenance_edges\":[]", "\"provenance_edges\":[{}]"),
+        (
+            "\"record_id\":\"16000000-0000-4000-8000-000000000010\"",
+            "\"record_id\":\"not-a-uuid\"",
+        ),
+        (
+            "\"series_freeze\":{\"state\":\"not_applicable\"}",
+            "\"series_freeze\":{\"extra\":\"x\",\"state\":\"not_applicable\"}",
+        ),
+        (
+            "\"created_by_record_id\":\"16000000-0000-4000-8000-000000000006\"",
+            "\"created_by_record_id\":\"not-a-uuid\"",
+        ),
+    ];
+    for (valid, invalid) in cases {
+        let mut f = fixture();
+        f.manifest_meta = String::from_utf8(f.manifest_meta)
+            .unwrap()
+            .replace(valid, invalid)
+            .into_bytes();
+        assert_eq!(
+            construct(&f, NS).unwrap_err(),
+            ContextConstructionError::InvalidMemberBinding,
+            "mutation {invalid} must be rejected"
+        );
+    }
+}
+
+#[test]
+fn duplicate_supplied_member_precedes_typed_identity_collision() {
+    let f = fixture();
+    let binding = || ManifestBindingInput {
+        manifest: MANIFEST,
+        manifest_digest_descriptor: &f.manifest_digest,
+        manifest_artifact_metadata: &f.manifest_meta,
+        stream: &f.ws,
+        stream_artifact_metadata: &f.stream_meta,
+    };
+    assert_eq!(
+        construct_reference_context_v2(
+            ClosedScopeInputV2 {
+                scope: ScopeDigestInput {
+                    descriptor: &f.descriptor,
+                    artifact_metadata: &f.scope_digest,
+                },
+                members: &[binding(), binding()],
+            },
+            NS,
+        )
+        .unwrap_err(),
+        ContextConstructionError::DuplicateStreamNamespace
+    );
+}
+
+#[test]
+fn missing_selected_stream_is_checked_before_catalog_publication() {
+    let mut absent = NS;
+    absent[15] = 2;
+    assert_eq!(
+        construct(&fixture(), absent).unwrap_err(),
+        ContextConstructionError::SelectedStreamMissing
+    );
+}
+
+#[test]
 fn both_segment_bootstraps_and_prior_references_map_transactionally() {
     let (context, operations) = context();
     let mut state = context.initial_state().clone();
+    let frame_digests = [
+        "5822e65071f5ed4a17865d96c60247639bf11fe7fb6421efc139181510a1333a",
+        "2a293b9f09924711c476d0892abfb296a04e8b31a1b6649b1e2c6906d714dd87",
+        "cc1293aed2c195cb047b0bbe607979074369993946b757914b14d7c0b9f44f1a",
+        "fb5d0a896bb841aae4045e6dfd2a6369d0d2095e74aae18c8234f39011cd83f3",
+    ];
     for (index, operation) in operations.iter().enumerate() {
         let before = state.clone();
         let mapped = map_semantic_operation_v2_with_context(
@@ -223,6 +373,9 @@ fn both_segment_bootstraps_and_prior_references_map_transactionally() {
             exp1_record_format::decode(mapped.frame()).unwrap(),
             *mapped.record()
         );
+        // Checked-in hashes make the RF1 assertion independent of the decoder
+        // and cover both segment bootstraps and both ordinal-one references.
+        assert_eq!(hex(&sha256(mapped.frame())), frame_digests[index]);
         state = mapped.next_state().clone();
     }
     assert_eq!(
@@ -230,4 +383,50 @@ fn both_segment_bootstraps_and_prior_references_map_transactionally() {
             .unwrap_err(),
         ContextualMappingError::Exhaustion
     );
+}
+
+#[test]
+fn mapping_precedence_and_failures_are_transactional() {
+    let (context, operations) = context();
+    let initial = context.initial_state().clone();
+
+    assert_eq!(
+        map_semantic_operation_v2_with_context(&operations[1], 1, 1, context.catalog(), &initial,)
+            .unwrap_err(),
+        ContextualMappingError::Discontinuity
+    );
+    assert_eq!(initial, *context.initial_state());
+
+    assert!(matches!(
+        map_semantic_operation_v2_with_context(&operations[0], 0, 1, context.catalog(), &initial,),
+        Err(ContextualMappingError::Mapping(_))
+    ));
+    assert_eq!(initial, *context.initial_state());
+
+    let mut state = initial;
+    for (index, operation) in operations.iter().enumerate() {
+        state = map_semantic_operation_v2_with_context(
+            operation,
+            (index + 1) as u64,
+            (index + 1) as u64,
+            context.catalog(),
+            &state,
+        )
+        .unwrap()
+        .next_state()
+        .clone();
+    }
+    let exhausted = state.clone();
+    // Semantic validation is stage one and therefore wins even at exhaustion.
+    assert!(matches!(
+        map_semantic_operation_v2_with_context(
+            b"not-an-operation",
+            5,
+            5,
+            context.catalog(),
+            &state,
+        ),
+        Err(ContextualMappingError::SemanticValidation(_))
+    ));
+    assert_eq!(state, exhausted);
 }

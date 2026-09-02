@@ -473,6 +473,13 @@ fn required_string<'a>(o: &'a BTreeMap<String, J>, key: &str) -> Result<&'a str,
     strv(o.get(key).ok_or(())?)
 }
 
+fn exact_state(o: &BTreeMap<String, J>, state: &str) -> Result<(), ()> {
+    exact(o, &["state"])?;
+    (required_string(o, "state")? == state)
+        .then_some(())
+        .ok_or(())
+}
+
 /// Resolve one immutable, published R7 artifact entry.  This deliberately validates the
 /// complete closed R7 shapes used here rather than treating metadata as an opaque digest bag.
 fn r7_artifact(metadata: &[u8], artifact_id: &str) -> Result<BTreeMap<String, J>, ()> {
@@ -494,6 +501,23 @@ fn r7_artifact(metadata: &[u8], artifact_id: &str) -> Result<BTreeMap<String, J>
     )?;
     if required_string(root, "record_kind")? != "artifact_manifest"
         || required_string(root, "schema_version")? != "EXP1-R7-JSON-JCS-1"
+        || uuid(required_string(root, "record_id")?).is_err()
+        || uuid(required_string(root, "series_id")?).is_err()
+        || dec(required_string(root, "created_at_utc_ns")?).is_err()
+    {
+        return Err(());
+    }
+    exact_state(
+        obj(root.get("correction_reason").ok_or(())?)?,
+        "not_applicable",
+    )?;
+    exact_state(
+        obj(root.get("supersedes_record_id").ok_or(())?)?,
+        "not_applicable",
+    )?;
+    let run = obj(root.get("run_id").ok_or(())?)?;
+    exact(run, &["state", "value"])?;
+    if required_string(run, "state")? != "present" || uuid(required_string(run, "value")?).is_err()
     {
         return Err(());
     }
@@ -508,8 +532,37 @@ fn r7_artifact(metadata: &[u8], artifact_id: &str) -> Result<BTreeMap<String, J>
             "series_freeze",
         ],
     )?;
-    if required_string(body, "publication_state")? != "published" {
+    if required_string(body, "publication_state")? != "published"
+        || required_string(body, "scope")? != "run"
+    {
         return Err(());
+    }
+    exact_state(obj(body.get("series_freeze").ok_or(())?)?, "not_applicable")?;
+    let edges = arr(body.get("provenance_edges").ok_or(())?)?;
+    let mut previous_edge: Option<(&str, &str, &str)> = None;
+    for edge in edges {
+        let edge = obj(edge)?;
+        exact(edge, &["from_artifact_id", "relation", "to_artifact_id"])?;
+        let from = required_string(edge, "from_artifact_id")?;
+        let relation = required_string(edge, "relation")?;
+        let to = required_string(edge, "to_artifact_id")?;
+        if uuid(from).is_err()
+            || uuid(to).is_err()
+            || !matches!(
+                relation,
+                "generated-by"
+                    | "captured-from"
+                    | "configured-by"
+                    | "derived-from"
+                    | "validated-by"
+                    | "supersedes"
+                    | "generated_from"
+            )
+            || previous_edge.is_some_and(|previous| previous >= (from, relation, to))
+        {
+            return Err(());
+        }
+        previous_edge = Some((from, relation, to));
     }
     let artifacts = arr(body.get("artifacts").ok_or(())?)?;
     let mut found = None;
@@ -531,6 +584,21 @@ fn r7_artifact(metadata: &[u8], artifact_id: &str) -> Result<BTreeMap<String, J>
                 "validation_report_ids",
             ],
         )?;
+        if uuid(required_string(entry, "artifact_id")?).is_err()
+            || uuid(required_string(entry, "created_by_record_id")?).is_err()
+            || dec(required_string(entry, "byte_length")?).is_err()
+            || required_string(entry, "logical_path")?.is_empty()
+            || required_string(entry, "media_type")?.is_empty()
+            || required_string(entry, "sensitivity")? != "public"
+            || !sha(required_string(entry, "sha256")?)
+            || !matches!(
+                required_string(entry, "uri")?,
+                uri if uri.starts_with("https:") || uri.starts_with("file:")
+            )
+            || !arr(entry.get("validation_report_ids").ok_or(())?)?.is_empty()
+        {
+            return Err(());
+        }
         if required_string(entry, "artifact_id")? == artifact_id {
             if found.is_some() || required_string(entry, "retention_state")? != "published" {
                 return Err(());
@@ -786,8 +854,13 @@ pub fn construct_reference_context_v2(
         supplied.push((ns, bind, workload, manifest));
     }
     supplied.sort_by_key(|x| x.0);
-    let mut identities = BTreeMap::new();
-    let mut selected_ops = vec![];
+    // Do not publish identities while resolving members.  In particular, two
+    // otherwise-valid bindings for the same namespace necessarily contain the
+    // same identities; R27 requires that condition to be classified as a
+    // duplicate supplied member, not as an identity collision.  Retain only
+    // the validated/extracted operations until supplied-set classification is
+    // complete.
+    let mut resolved_operations = Vec::with_capacity(supplied.len());
     let mut operation_count = 0usize;
     for (ns, bind, _workload, _manifest) in &supplied {
         let expected = members.iter().find(|m| m.ns == *ns);
@@ -922,7 +995,43 @@ pub fn construct_reference_context_v2(
         if operation_count > 65_536 {
             return Err(ContextConstructionError::ResourceLimit);
         }
-        for op in stream_operations(bind.stream).ok_or(ContextConstructionError::Extraction)? {
+        let operations =
+            stream_operations(bind.stream).ok_or(ContextConstructionError::Extraction)?;
+        // Classification is part of semantic extraction and must also finish
+        // before supplied-set errors are considered.
+        for operation in &operations {
+            classify(operation)?;
+        }
+        resolved_operations.push((*ns, operations));
+    }
+    // Exact supplied-set classification belongs after complete resolution and semantic validation.
+    if supplied.windows(2).any(|x| x[0].0 == x[1].0) {
+        return Err(ContextConstructionError::DuplicateStreamNamespace);
+    }
+    if supplied.len() < members.len() {
+        return Err(ContextConstructionError::OmittedStream);
+    }
+    if supplied.len() > members.len() {
+        return Err(ContextConstructionError::ExtraStream);
+    }
+    for (expected, actual) in members.iter().zip(&supplied) {
+        if expected.ns != actual.0 {
+            return Err(ContextConstructionError::SubstitutedStream);
+        }
+        if expected.workload != actual.2 || expected.manifest != actual.3 {
+            return Err(ContextConstructionError::ForeignWorkloadOrCell);
+        }
+    }
+    if !members.iter().any(|m| m.ns == selected_stream_namespace) {
+        return Err(ContextConstructionError::SelectedStreamMissing);
+    }
+    // Only an exactly classified supplied set may contribute to the global
+    // typed identity catalog.  This is deliberately after selected-namespace
+    // enforcement, as prescribed by R27 section 5.
+    let mut identities = BTreeMap::new();
+    let mut selected_ops = vec![];
+    for (ns, operations) in resolved_operations {
+        for op in operations {
             for (role, id, fact) in [
                 (Role::Request, op.request, None),
                 (Role::Event, op.event, Some(classify(&op)?)),
@@ -948,31 +1057,10 @@ pub fn construct_reference_context_v2(
                     return Err(ContextConstructionError::IdentityCollision);
                 }
             }
-            if *ns == selected_stream_namespace {
-                selected_ops.push(op)
+            if ns == selected_stream_namespace {
+                selected_ops.push(op);
             }
         }
-    }
-    // Exact supplied-set classification belongs after complete resolution and semantic validation.
-    if supplied.windows(2).any(|x| x[0].0 == x[1].0) {
-        return Err(ContextConstructionError::DuplicateStreamNamespace);
-    }
-    if supplied.len() < members.len() {
-        return Err(ContextConstructionError::OmittedStream);
-    }
-    if supplied.len() > members.len() {
-        return Err(ContextConstructionError::ExtraStream);
-    }
-    for (expected, actual) in members.iter().zip(&supplied) {
-        if expected.ns != actual.0 {
-            return Err(ContextConstructionError::SubstitutedStream);
-        }
-        if expected.workload != actual.2 || expected.manifest != actual.3 {
-            return Err(ContextConstructionError::ForeignWorkloadOrCell);
-        }
-    }
-    if !members.iter().any(|m| m.ns == selected_stream_namespace) {
-        return Err(ContextConstructionError::SelectedStreamMissing);
     }
     let initial = AcceptedPrefixStateV2 {
         accepted: 0,
