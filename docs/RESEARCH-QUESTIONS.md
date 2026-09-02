@@ -67,5 +67,13 @@ map each segment's first operation and later carry a valid R12/R22 prior referen
 v1 vectors and freezes only a prospective v2 zero-target bootstrap plus positive subsequent
 same-segment-reference policy with an explicit per-segment manifest representation. It supersedes
 R24 implementation authorization only and adds no implementation or correctness evidence. RQ-003's
-complete R20, capture, and execution questions remain open pending separately authorized v2
-conformance and a later bounded reference-context implementation.
+complete R20, capture, and execution questions remain open; R26 now authorizes v2 conformance,
+while a later bounded reference-context implementation still requires separate authorization.
+
+
+## R26 disposition
+
+R26 narrows RQ-003 only as governance: the R25 v2 causal stream is now completely conformance-
+decidable and one later validator implementation is bounded. Whether the implementation passes its
+gate, whether R21–R23 context can then close R20, and every ingest, durability, recovery, and
+performance question remain unanswered. No workload or benchmark was executed.
