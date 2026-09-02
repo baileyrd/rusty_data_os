@@ -314,10 +314,12 @@ pub fn validate_stream_v2(
             return Err(Error::ProfileMismatch);
         }
         namespace = Some(d.namespace);
-        if (ord == 0 && !d.references.is_empty())
-            || (ord > 0
-                && d.references.len() != usize::try_from(k).map_err(|_| Error::ResourceLimit)?)
-        {
+        if ord == 0 && !d.references.is_empty() {
+            // A target-bearing bootstrap must be classified with reference context; it is
+            // never rewritten into the zero-target bootstrap or called a cardinality error.
+            return Err(Error::ContextRequired);
+        }
+        if ord > 0 && d.references.len() != usize::try_from(k).map_err(|_| Error::ResourceLimit)? {
             return Err(Error::ReferenceCardinality);
         }
         if ord > 0 && k > ord {
@@ -406,10 +408,8 @@ pub fn accept_transactionally(
     if op.ordinal != expected {
         return Err(Error::Ordering);
     }
-    if (expected == 0 && !op.references.is_empty())
-        || (expected > 0
-            && op.references.len()
-                != usize::try_from(subsequent).map_err(|_| Error::ResourceLimit)?)
+    if expected > 0
+        && op.references.len() != usize::try_from(subsequent).map_err(|_| Error::ResourceLimit)?
     {
         return Err(Error::ReferenceCardinality);
     }
