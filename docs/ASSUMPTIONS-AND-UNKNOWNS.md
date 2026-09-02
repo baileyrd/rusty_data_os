@@ -26,7 +26,7 @@ These assumptions are neither benchmark evidence nor accepted empirical conclusi
 | UNK-010 | Resolved by R3: capture once after semantic validation and immediately before event construction, then reserve sequence after construction. |
 | UNK-011 | Observation-side metadata retention, observer/context identity and multiplicity rules, and criteria for appending an observation as a separate canonical event. |
 | UNK-012 | Resolved for EXP-0001 B1 by R5: structural-only provisional use and the versioned CRC-32C error-detecting profile, coverage, encoding, limits, and vectors are frozen. |
-| UNK-013 | Reopened/corrected by R25: R21–R23 freeze catalog, segment-local eligibility, and closed-scope proof, but closed unmerged PR #91 falsified the assumption that unchanged R12/R16 v1 can bootstrap a causal stream. R25 freezes prospective v2 semantics; R26 now freezes and authorizes the bounded v2 conformance/validator increment, while later reference-context implementation still needs separate authorization and the complete correctness gate remains open. |
+| UNK-013 | Reopened/corrected by R25: R21–R23 freeze catalog, segment-local eligibility, and closed-scope proof, but closed unmerged PR #91 falsified the assumption that unchanged R12/R16 v1 can bootstrap a causal stream. R25 freezes prospective v2 semantics; R26 freezes the v2 contract and its PR #95 implementation is now closed by R27 as bounded conformance/correctness evidence. R27 authorizes the still-unimplemented pure v2 reference-context mapper; the complete correctness gate remains open pending that implementation. |
 | UNK-014 | R4 selects bare-metal Bosgame M5/Fedora 44 and four intended paths. The owner accepts externally reviewed but unretained host, 1 ns clock-resolution, nearest-parent XFS/LVM/NVMe, write-back, FUA, and volatile-write-cache observations for conditional planning. BLK-014 is closed for R4 planning; final placement, complete execution provenance, exact PLP/controller protection, and empirical survival remain unresolved for execution and dependent claims. |
 | UNK-015 | Concrete crash/fault-injection mechanisms and implementation of physical validity detection for partial, torn, truncated, or uncertain outcomes. EXP-0000 defines the semantic procedure and R1 defines minimum deterministic classifications and fail-closed scan/recovery policy; mechanisms remain open. |
 | UNK-016 | Resolved by R3: durable binding, explicit reconciliation, exact-candidate retry, conflict handling, and commit-before-ack uncertainty rules. |
@@ -109,3 +109,15 @@ bindings, dispositions, precedence, and literal-vector requirements. Its prospec
 authorization is limited to the existing workload-conformance crate and supplies no implementation
 evidence. The contextual R21–R23 implementation, complete R20 closure, workload generation or
 execution, and all capture/durability/performance unknowns remain open.
+
+## R27 update
+
+R26 conformance implementation is no longer an unknown: PR #95 reviewed head
+`35f9a0f245ac488828df4f639263edb3fb50be86`, merged as
+`f4ed0c310fa46c6de209ea0f776c4749e31cdd34` with exact-head successful CI, supplies bounded v2
+conformance/correctness evidence. The assumption that a closed scope may silently combine v1 and
+v2 is rejected: R27 requires a distinct exact v2 scope profile and homogeneous membership while
+preserving v1 unchanged. The remaining R20 unknown is whether the authorized pure v2 contextual
+mapper satisfies the frozen construction, precedence, bounds, and transactional tests; no evidence
+exists until its reviewed exact head passes CI. The live Linux capture/API decision remains open
+and independently blocks a descriptive D1 harness.

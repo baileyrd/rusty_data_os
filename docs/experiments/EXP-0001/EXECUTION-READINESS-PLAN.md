@@ -290,3 +290,15 @@ workspace, toolchain, or workflow change. Passing the unchanged R9 gate would pr
 conformance correctness evidence only. Reference-context implementation, complete R20 closure, live
 Linux capture, harness construction, workload or benchmark execution, and every later tranche remain
 separately gated or unauthorized.
+
+## R27 R26 closure and v2 reference-context gate update
+
+[R27](R27-R26-CLOSURE-AND-V2-REFERENCE-CONTEXT-AUTHORIZATION.md) closes PR #95 reviewed head
+`35f9a0f245ac488828df4f639263edb3fb50be86` (merge
+`f4ed0c310fa46c6de209ea0f776c4749e31cdd34`) with exact-head successful CI as bounded R26
+conformance/correctness evidence. It freezes a side-by-side v2 R23 scope profile accepting only
+exact v2 manifest/WS2/artifact/digest bindings, with v1 unchanged and mixed membership rejected.
+Exactly one later pure implementation in `exp1-raw-append-replay` may build the immutable v2
+catalog, caller-owned accepted prefix, and contextual mapper against the merged literal oracle.
+Complete R20 closure requires that implementation, review, and exact-head CI. Capture, harness,
+append integration, execution, benchmarks, durability, faults, and later work remain excluded.
