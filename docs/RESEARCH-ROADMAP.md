@@ -243,3 +243,12 @@ bindings, validator precedence, and literal-vector coverage are fixed. It author
 side-by-side v2 extension of the existing workload-conformance crate with unchanged dependencies and
 R9 validation. Reference-context code, the complete R20 gate, capture, harnesses, execution, and all
 later phases remain gated.
+
+## R27 checkpoint: v2 reference-context implementation authorized
+
+R27 closes the merged R26 v2 conformance implementation as bounded correctness evidence and freezes
+the minimum versioned R23 scope extension. The next and only authorized implementation increment is
+the pure v2 catalog/accepted-prefix/contextual mapper in `exp1-raw-append-replay`; its completion may
+close the remaining R20 reference-context correctness gate. The independent live Linux capture
+freeze still precedes any descriptive D1 harness, and workload/benchmark execution and later
+roadmap slices remain unauthorized.

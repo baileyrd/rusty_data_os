@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R26-authorized v2 causal-reference conformance is implemented as bounded correctness evidence; the complete R20 gate and live capture remain blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R27 closes R26 v2 conformance as bounded correctness evidence and authorizes the pure v2 reference-context mapper; the complete R20 gate remains open pending that implementation, live capture remains blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -173,3 +173,18 @@ PR must preserve all v1 bytes and vectors and pass the unchanged R9 gate. R26 co
 fixture, execution, or correctness evidence and does not authorize R21–R23 context implementation.
 The complete R20 gate, live Linux capture, harness, execution, durability, recovery, benchmarks,
 and every existing exclusion remain open.
+
+
+## R27 R26 closure and v2 reference-context authorization
+
+[R27](experiments/EXP-0001/R27-R26-CLOSURE-AND-V2-REFERENCE-CONTEXT-AUTHORIZATION.md)
+closes the R26 implementation from PR #95 reviewed head
+`35f9a0f245ac488828df4f639263edb3fb50be86`, merge
+`f4ed0c310fa46c6de209ea0f776c4749e31cdd34`, and successful exact-head CI as bounded
+conformance/correctness evidence. It versions R23's descriptor minimally for exact v2
+manifest/WS2/artifact/digest membership, preserves v1 unchanged, and rejects mixed membership. It
+prospectively authorizes exactly one pure contextual v2 mapper/catalog/state implementation in
+`exp1-raw-append-replay`, using the merged R26 literals as its independent oracle. No such R27
+implementation exists; complete R20 closure awaits implementation, review, and exact-head CI. Live
+Linux capture, append/reopen integration, workloads, benchmarks, durability, faults, and all later
+work remain blocked or unauthorized.

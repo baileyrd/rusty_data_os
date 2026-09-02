@@ -67,13 +67,24 @@ map each segment's first operation and later carry a valid R12/R22 prior referen
 v1 vectors and freezes only a prospective v2 zero-target bootstrap plus positive subsequent
 same-segment-reference policy with an explicit per-segment manifest representation. It supersedes
 R24 implementation authorization only and adds no implementation or correctness evidence. RQ-003's
-complete R20, capture, and execution questions remain open; R26 now authorizes v2 conformance,
-while a later bounded reference-context implementation still requires separate authorization.
+complete R20, capture, and execution questions remain open; R27 closes the merged R26 conformance
+implementation and now authorizes the still-absent bounded v2 reference-context implementation.
 
 
 ## R26 disposition
 
-R26 narrows RQ-003 only as governance: the R25 v2 causal stream is now completely conformance-
-decidable and one later validator implementation is bounded. Whether the implementation passes its
-gate, whether R21–R23 context can then close R20, and every ingest, durability, recovery, and
-performance question remain unanswered. No workload or benchmark was executed.
+R26 made the R25 v2 causal stream completely conformance-decidable. R27 records that its merged
+validator passed review and exact-head CI as bounded correctness evidence, and authorizes the next
+pure v2 reference-context implementation. Whether that implementation passes its gate and closes
+R20, and every ingest, durability, recovery, and performance question remain unanswered. No
+workload or benchmark was executed.
+
+## R27 update
+
+R27 answers the R26 implementation question affirmatively only for bounded conformance correctness:
+merged PR #95 implements the frozen v2 formats, validator, and literal oracle with exact-head CI.
+It also answers the scope-governance question by selecting a homogeneous versioned v2 extension of
+R23. The active bounded question is whether one pure `exp1-raw-append-replay` implementation can
+construct the complete immutable v2 identity catalog and transactionally map zero-target
+bootstraps and later same-stream/same-segment prior references with every frozen disposition and
+resource bound. That implementation remains absent, so the complete R20 gate remains open.
