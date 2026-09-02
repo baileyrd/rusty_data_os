@@ -73,6 +73,17 @@ struct IdentityBinding {
     producer_ordinal: u64,
     fact: Option<FactClass>,
 }
+
+fn insert_identity(
+    identities: &mut BTreeMap<[u8; 16], IdentityBinding>,
+    binding: IdentityBinding,
+) -> Result<(), ContextConstructionError> {
+    if identities.insert(binding.id, binding).is_some() {
+        Err(ContextConstructionError::IdentityCollision)
+    } else {
+        Ok(())
+    }
+}
 #[derive(Clone, Debug)]
 struct Operation {
     bytes: Vec<u8>,
@@ -747,6 +758,10 @@ fn scope_descriptor(
     Ok((id, cell.to_owned(), out))
 }
 
+fn over_limit(value: usize, inclusive_limit: usize) -> bool {
+    value > inclusive_limit
+}
+
 pub fn construct_reference_context_v2(
     input: ClosedScopeInputV2<'_>,
     selected_stream_namespace: [u8; 16],
@@ -766,7 +781,7 @@ pub fn construct_reference_context_v2(
                 .ok_or(ContextConstructionError::ResourceLimit)?,
         )
         .ok_or(ContextConstructionError::ResourceLimit)?;
-    if metadata > 4_194_304 {
+    if over_limit(metadata, 4_194_304) {
         return Err(ContextConstructionError::ResourceLimit);
     }
     let (scope_id, cell, members) = scope_descriptor(input.scope.descriptor)?;
@@ -819,7 +834,7 @@ pub fn construct_reference_context_v2(
         .iter()
         .try_fold(0usize, |a, m| a.checked_add(m.stream.len()))
         .ok_or(ContextConstructionError::ResourceLimit)?;
-    if manifest_bytes > 1_048_576 || stream_bytes > 16_777_216 {
+    if over_limit(manifest_bytes, 1_048_576) || over_limit(stream_bytes, 16_777_216) {
         return Err(ContextConstructionError::ResourceLimit);
     }
     let mut supplied = Vec::new();
@@ -1025,6 +1040,12 @@ pub fn construct_reference_context_v2(
     if !members.iter().any(|m| m.ns == selected_stream_namespace) {
         return Err(ContextConstructionError::SelectedStreamMissing);
     }
+    let identity_count = operation_count
+        .checked_mul(3)
+        .ok_or(ContextConstructionError::ResourceLimit)?;
+    if over_limit(identity_count, 196_608) {
+        return Err(ContextConstructionError::ResourceLimit);
+    }
     // Only an exactly classified supplied set may contribute to the global
     // typed identity catalog.  This is deliberately after selected-namespace
     // enforcement, as prescribed by R27 section 5.
@@ -1037,25 +1058,20 @@ pub fn construct_reference_context_v2(
                 (Role::Event, op.event, Some(classify(&op)?)),
                 (Role::Information, op.information, None),
             ] {
-                if identities
-                    .insert(
+                insert_identity(
+                    &mut identities,
+                    IdentityBinding {
                         id,
-                        IdentityBinding {
-                            id,
-                            role,
-                            namespace: op.namespace,
-                            total_position: op.total_position,
-                            segment: op.segment,
-                            ordinal: op.ordinal,
-                            producer: op.producer,
-                            producer_ordinal: op.producer_ordinal,
-                            fact,
-                        },
-                    )
-                    .is_some()
-                {
-                    return Err(ContextConstructionError::IdentityCollision);
-                }
+                        role,
+                        namespace: op.namespace,
+                        total_position: op.total_position,
+                        segment: op.segment,
+                        ordinal: op.ordinal,
+                        producer: op.producer,
+                        producer_ordinal: op.producer_ordinal,
+                        fact,
+                    },
+                )?;
             }
             if ns == selected_stream_namespace {
                 selected_ops.push(op);
@@ -1232,4 +1248,435 @@ pub fn map_semantic_operation_v2_with_context(
         record: mapped.record,
         next,
     })
+}
+
+#[cfg(test)]
+mod completion_matrix {
+    //! White-box rows for R27 section 10 cases which cannot be represented by
+    //! the single reviewed R26 closed-scope fixture.  These tests start with a
+    //! valid R26 operation and vary only catalog context; they never forge an
+    //! authority document.
+    use super::*;
+    use exp1_workload_conformance::{
+        Content, Envelope, EnvelopeInput, EnvelopeInputV2, IdentityKind, OperationInput,
+        ReferenceSemantics, SemanticOperationV2, Temporal, envelope_input_v2, identity, payload,
+    };
+
+    const NS_A: [u8; 16] = [0x25, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+    const NS_B: [u8; 16] = [0x25, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 2];
+
+    fn generated(
+        namespace: [u8; 16],
+        segment: Segment,
+        ordinal: u64,
+        references: &[[u8; 16]],
+    ) -> Vec<u8> {
+        let operation = OperationInput {
+            segment,
+            seed: 25,
+            ordinal,
+            size_class: 1,
+            content: Content::High,
+            envelope: Envelope::Causal,
+            temporal: Temporal::Monotonic,
+            stream_namespace: namespace,
+            producer_id: [0x25, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 9],
+            producer_ordinal: ordinal,
+            controlled_schedule: None,
+        };
+        let request_id = identity(&operation, IdentityKind::Request).unwrap();
+        let event_id = identity(&operation, IdentityKind::Event).unwrap();
+        let information_id = identity(&operation, IdentityKind::Information).unwrap();
+        let env2 = envelope_input_v2(&EnvelopeInputV2 {
+            common: EnvelopeInput {
+                operation: &operation,
+                semantic_version: "2",
+                fact_type: "fact-A",
+                schema_id: [
+                    0xee, 0xee, 0xee, 0xee, 0xee, 0xee, 0x4e, 0xee, 0x8e, 0xee, 0xee, 0xee, 0xee,
+                    0xee, 0xee, 0xee,
+                ],
+                schema_version: "1",
+                source: None,
+                actor: None,
+                request_id,
+                event_id,
+                information_id,
+                effective_time: 1000 + ordinal as i64 * 10,
+                semantics: ReferenceSemantics::Causal,
+                references,
+            },
+        })
+        .unwrap();
+        SemanticOperationV2 {
+            op1: operation.encode().unwrap(),
+            payload_profile: "EXP-0001-SHA256-CTR-v1",
+            payload: payload(&operation).unwrap(),
+            request_id,
+            event_id,
+            information_id,
+            env2,
+            base_ns: 1000,
+            unit_ns: 10,
+        }
+        .encode()
+        .unwrap()
+    }
+
+    fn binding(
+        id: [u8; 16],
+        role: Role,
+        namespace: [u8; 16],
+        segment: Segment,
+        ordinal: u64,
+        fact: Option<FactClass>,
+    ) -> IdentityBinding {
+        IdentityBinding {
+            id,
+            role,
+            namespace,
+            total_position: ordinal,
+            segment,
+            ordinal,
+            producer: [0x25, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 9],
+            producer_ordinal: ordinal,
+            fact,
+        }
+    }
+
+    fn case(
+        reference: [u8; 16],
+        target: Option<IdentityBinding>,
+        segment: Segment,
+        ordinal: u64,
+    ) -> (ReferenceCatalogV2, AcceptedPrefixStateV2, Vec<u8>) {
+        let bytes = generated(NS_A, segment, ordinal, &[reference]);
+        let op = extract(&bytes).unwrap();
+        let mut identities = BTreeMap::new();
+        if let Some(target) = target {
+            identities.insert(target.id, target);
+        }
+        let scope_id = [7; 16];
+        (
+            ReferenceCatalogV2 {
+                scope_id,
+                cell_id: "test-context-only".into(),
+                selected: NS_A,
+                stream_count: 1,
+                source_bytes: bytes.len(),
+                operation_count: 1,
+                identities,
+                selected_operations: vec![op],
+            },
+            AcceptedPrefixStateV2 {
+                accepted: 0,
+                sequence: 0,
+                ordinal: 0,
+                scope_id,
+                namespace: NS_A,
+            },
+            bytes,
+        )
+    }
+
+    fn assert_reference_error(
+        reference: [u8; 16],
+        target: Option<IdentityBinding>,
+        segment: Segment,
+        ordinal: u64,
+        expected: ReferenceError,
+    ) {
+        let (catalog, state, bytes) = case(reference, target, segment, ordinal);
+        let before = state.clone();
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bytes, 1, 1, &catalog, &state),
+            Err(ContextualMappingError::Reference(expected))
+        );
+        assert_eq!(
+            state, before,
+            "every classification failure is transactional"
+        );
+        assert_eq!(
+            catalog.selected_operations[0].bytes, bytes,
+            "catalog is immutable"
+        );
+    }
+
+    #[test]
+    fn every_reference_error_and_cross_segment_direction_is_directly_asserted() {
+        let missing = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+        assert_reference_error(missing, None, Segment::WarmUp, 1, ReferenceError::Missing);
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_A,
+                Segment::WarmUp,
+                2,
+                Some(FactClass::Ordinary),
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::Future,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Request,
+                NS_A,
+                Segment::WarmUp,
+                0,
+                None,
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::WrongKind,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Information,
+                NS_A,
+                Segment::WarmUp,
+                0,
+                None,
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::WrongKind,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_A,
+                Segment::WarmUp,
+                0,
+                Some(FactClass::Correction),
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::WrongFact,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_A,
+                Segment::WarmUp,
+                0,
+                Some(FactClass::Retraction),
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::WrongFact,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_B,
+                Segment::WarmUp,
+                0,
+                Some(FactClass::Ordinary),
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::CrossStream,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_A,
+                Segment::Measured,
+                0,
+                Some(FactClass::Ordinary),
+            )),
+            Segment::WarmUp,
+            1,
+            ReferenceError::CrossSegment,
+        );
+        assert_reference_error(
+            missing,
+            Some(binding(
+                missing,
+                Role::Event,
+                NS_A,
+                Segment::WarmUp,
+                0,
+                Some(FactClass::Ordinary),
+            )),
+            Segment::Measured,
+            1,
+            ReferenceError::CrossSegment,
+        );
+
+        let self_bytes = generated(NS_A, Segment::WarmUp, 1, &[]);
+        let self_id = validate_semantic_operation_v2(&self_bytes)
+            .unwrap()
+            .event_id;
+        assert_reference_error(
+            self_id,
+            None,
+            Segment::WarmUp,
+            1,
+            ReferenceError::SelfReference,
+        );
+    }
+
+    #[test]
+    fn mapping_precedence_adjacencies_and_failure_immutability_are_direct() {
+        let target = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+        let (catalog, state, bytes) = case(target, None, Segment::WarmUp, 1);
+        // Exact-next/discontinuity precedes target lookup.
+        let mut wrong_state = state.clone();
+        wrong_state.accepted = 1;
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bytes, 1, 1, &catalog, &wrong_state),
+            Err(ContextualMappingError::Exhaustion)
+        );
+        // Physical mapping is after target classification.
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bytes, 0, 1, &catalog, &state),
+            Err(ContextualMappingError::Reference(ReferenceError::Missing))
+        );
+        // Malformed semantic input precedes exhaustion.
+        assert!(matches!(
+            map_semantic_operation_v2_with_context(b"bad", 1, 1, &catalog, &wrong_state),
+            Err(ContextualMappingError::SemanticValidation(_))
+        ));
+    }
+
+    #[test]
+    fn duplicate_before_lookup_target_bootstrap_and_first_invalid_encoded_order() {
+        let a = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+        let b = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 2];
+        let bytes = generated(NS_A, Segment::WarmUp, 1, &[a, b]);
+        let op = extract(&bytes).unwrap();
+        let scope_id = [7; 16];
+        let mut identities = BTreeMap::new();
+        identities.insert(b, binding(b, Role::Request, NS_A, Segment::WarmUp, 0, None));
+        let catalog = ReferenceCatalogV2 {
+            scope_id,
+            cell_id: "test-context-only".into(),
+            selected: NS_A,
+            stream_count: 1,
+            source_bytes: bytes.len(),
+            operation_count: 1,
+            identities,
+            selected_operations: vec![op],
+        };
+        let state = AcceptedPrefixStateV2 {
+            accepted: 0,
+            sequence: 0,
+            ordinal: 0,
+            scope_id,
+            namespace: NS_A,
+        };
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bytes, 1, 1, &catalog, &state),
+            Err(ContextualMappingError::Reference(ReferenceError::Missing)),
+            "the first encoded invalid target wins over the later wrong-kind target"
+        );
+
+        // Turn the second target into a duplicate without disturbing framing. Semantic
+        // validation must reject it before either catalog lookup.
+        let mut duplicate = bytes.clone();
+        let second = duplicate.windows(16).rposition(|x| x == b).unwrap();
+        duplicate[second..second + 16].copy_from_slice(&a);
+        assert!(matches!(
+            map_semantic_operation_v2_with_context(&duplicate, 1, 1, &catalog, &state),
+            Err(ContextualMappingError::SemanticValidation(
+                SemanticError::ReferenceDuplicate
+            ))
+        ));
+
+        let bootstrap = generated(NS_A, Segment::WarmUp, 0, &[a]);
+        let bootstrap_op = extract(&bootstrap).unwrap();
+        let bootstrap_catalog = ReferenceCatalogV2 {
+            selected_operations: vec![bootstrap_op],
+            source_bytes: bootstrap.len(),
+            ..catalog
+        };
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bootstrap, 1, 1, &bootstrap_catalog, &state),
+            Err(ContextualMappingError::Reference(ReferenceError::Missing)),
+            "a target-bearing bootstrap is classified, not discarded"
+        );
+    }
+
+    #[test]
+    fn request_event_information_typed_collisions_are_actual_insertions() {
+        let id = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+        for (first, second) in [
+            (Role::Request, Role::Event),
+            (Role::Request, Role::Information),
+            (Role::Event, Role::Request),
+            (Role::Event, Role::Information),
+            (Role::Information, Role::Request),
+            (Role::Information, Role::Event),
+        ] {
+            let mut identities = BTreeMap::new();
+            insert_identity(
+                &mut identities,
+                binding(
+                    id,
+                    first,
+                    NS_A,
+                    Segment::WarmUp,
+                    0,
+                    (first == Role::Event).then_some(FactClass::Ordinary),
+                ),
+            )
+            .unwrap();
+            assert_eq!(
+                insert_identity(
+                    &mut identities,
+                    binding(
+                        id,
+                        second,
+                        NS_A,
+                        Segment::WarmUp,
+                        0,
+                        (second == Role::Event).then_some(FactClass::Ordinary)
+                    )
+                ),
+                Err(ContextConstructionError::IdentityCollision),
+                "{first:?}/{second:?}"
+            );
+            assert_eq!(identities.len(), 1);
+        }
+    }
+
+    #[test]
+    fn every_inclusive_limit_one_over_and_checked_overflow_invariant() {
+        for limit in [
+            262_144, 256, 1_048_576, 4_194_304, 16_777_216, 65_536, 196_608,
+        ] {
+            assert!(!over_limit(limit, limit), "inclusive {limit}");
+            assert!(
+                over_limit(limit.checked_add(1).unwrap(), limit),
+                "one over {limit}"
+            );
+        }
+        assert_eq!(usize::MAX.checked_add(1), None, "sum overflow is rejected");
+        assert_eq!(
+            usize::MAX.checked_mul(3),
+            None,
+            "product overflow is rejected"
+        );
+        assert!(!over_limit(65_536, 65_536), "reference count is inclusive");
+        assert!(over_limit(65_537, 65_536), "reference count one-over fails");
+        // A valid authority document at each enormous exact boundary does not exist in R26.
+        // R27 forbids forging one, so these are the nearest reachable arithmetic invariants;
+        // constructor integration rows below exercise the real one-over byte paths.
+    }
 }

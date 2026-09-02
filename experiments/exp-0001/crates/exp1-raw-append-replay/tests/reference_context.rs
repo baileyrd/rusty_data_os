@@ -158,6 +158,36 @@ fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
     (context, operations)
 }
 
+fn replace_once(bytes: &[u8], from: &str, to: &str) -> Vec<u8> {
+    let text = std::str::from_utf8(bytes).unwrap();
+    assert_eq!(text.matches(from).count(), 1, "mutation must be singular");
+    text.replacen(from, to, 1).into_bytes()
+}
+
+// R27 section 10 executable checklist (one row per requirement sentence/clause):
+// - valid bootstraps/references, byte-exact RF1, three watermarks:
+//   `both_segment_bootstraps_and_prior_references_map_transactionally`.
+// - manifest/WS2/artifact/manifest-digest/scope-digest binding and mixed-version positions:
+//   `every_external_binding_and_mixed_version_position_is_rejected`.
+// - unchanged v1 behavior: the legacy `tests/mapping.rs` suite (also run by R9).
+// - omitted/extra/duplicate/substituted/foreign/digest/noncanonical scope:
+//   `closed_scope_set_classification_rows_are_direct` plus
+//   `duplicate_supplied_member_precedes_typed_identity_collision`.
+// - construction-error adjacency/precedence:
+//   `construction_precedence_adjacency_table` and
+//   `construction_errors_are_distinct_at_their_precedence_boundaries`.
+// - Request/Event/Information typed collisions: source unit test
+//   `completion_matrix::request_event_information_typed_collisions_are_actual_insertions`.
+// - inclusive/one-over/overflow limits: `resource_limit_boundary_table`; authority-dependent
+//   unreachable maxima are explicitly represented by the nearest reachable checked invariant.
+// - every ReferenceError, both cross-segment directions, and failure immutability: source unit test
+//   `completion_matrix::every_reference_error_and_cross_segment_direction_is_directly_asserted`.
+// - duplicate-before-lookup, target-bearing bootstrap, and first-invalid encoded ordering:
+//   source unit test `completion_matrix::duplicate_before_lookup_target_bootstrap_and_first_invalid_encoded_order`.
+// - mapping precedence, discontinuity, exhaustion, and transactional failures:
+//   `mapping_precedence_and_failures_are_transactional` and source unit test
+//   `completion_matrix::mapping_precedence_adjacencies_and_failure_immutability_are_direct`.
+
 #[test]
 fn r26_literals_construct_an_immutable_catalog_and_initial_state() {
     let Fixture {
@@ -224,6 +254,257 @@ fn construction_is_closed_and_digest_bound() {
         )
         .unwrap_err(),
         ContextConstructionError::InvalidScopeDigest
+    );
+}
+
+#[test]
+fn every_external_binding_and_mixed_version_position_is_rejected() {
+    type MutationCase = (&'static str, fn(&mut Fixture), ContextConstructionError);
+    let cases: &[MutationCase] = &[
+        (
+            "manifest metadata bytes",
+            |f| f.manifest_meta.push(b' '),
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "WS2 bytes",
+            |f| f.ws[0] ^= 1,
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "manifest artifact",
+            |f| f.manifest_meta[0] ^= 1,
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "stream artifact",
+            |f| f.stream_meta[0] ^= 1,
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "manifest digest",
+            |f| f.manifest_digest[0] ^= 1,
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "scope digest",
+            |f| f.scope_digest[0] ^= 1,
+            ContextConstructionError::InvalidScopeDigest,
+        ),
+        (
+            "scope v1 profile",
+            |f| {
+                f.descriptor = replace_once(&f.descriptor, "JCS-v2", "JCS-v1");
+                refresh_scope_digest(f);
+            },
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "manifest v1 profile",
+            |f| f.manifest_digest = replace_once(&f.manifest_digest, "DIGEST-v2", "DIGEST-v1"),
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "WS1 in WS2 position",
+            |f| f.ws[7] = b'1',
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+    ];
+    for (name, mutate, expected) in cases {
+        let mut f = fixture();
+        mutate(&mut f);
+        assert_eq!(construct(&f, NS).unwrap_err(), *expected, "{name}");
+    }
+
+    let f = fixture();
+    let mut changed_manifest = MANIFEST.to_vec();
+    *changed_manifest.last_mut().unwrap() = b'!';
+    let binding = ManifestBindingInput {
+        manifest: &changed_manifest,
+        manifest_digest_descriptor: &f.manifest_digest,
+        manifest_artifact_metadata: &f.manifest_meta,
+        stream: &f.ws,
+        stream_artifact_metadata: &f.stream_meta,
+    };
+    assert_eq!(
+        construct_reference_context_v2(
+            ClosedScopeInputV2 {
+                scope: ScopeDigestInput {
+                    descriptor: &f.descriptor,
+                    artifact_metadata: &f.scope_digest,
+                },
+                members: &[binding],
+            },
+            NS,
+        )
+        .unwrap_err(),
+        ContextConstructionError::InvalidMemberBinding,
+        "exact manifest bytes are bound"
+    );
+}
+
+#[test]
+fn closed_scope_set_classification_rows_are_direct() {
+    let f = fixture();
+    assert_eq!(
+        construct_reference_context_v2(
+            ClosedScopeInputV2 {
+                scope: ScopeDigestInput {
+                    descriptor: &f.descriptor,
+                    artifact_metadata: &f.scope_digest
+                },
+                members: &[],
+            },
+            NS
+        )
+        .unwrap_err(),
+        ContextConstructionError::OmittedStream
+    );
+
+    let mut substituted = fixture();
+    substituted.descriptor = replace_once(
+        &substituted.descriptor,
+        "25000000-0000-4000-8000-000000000001",
+        "25000000-0000-4000-8000-000000000002",
+    );
+    refresh_scope_digest(&mut substituted);
+    assert_eq!(
+        construct(&substituted, NS).unwrap_err(),
+        ContextConstructionError::SubstitutedStream
+    );
+
+    let mut foreign = fixture();
+    foreign.descriptor = replace_once(
+        &foreign.descriptor,
+        "16000000-0000-4000-8000-000000000003",
+        "16000000-0000-4000-8000-000000000004",
+    );
+    refresh_scope_digest(&mut foreign);
+    assert_eq!(
+        construct(&foreign, NS).unwrap_err(),
+        ContextConstructionError::ForeignWorkloadOrCell
+    );
+
+    let mut digest = fixture();
+    digest.descriptor = replace_once(
+        &digest.descriptor,
+        "f1d0d28189680504617bd22c581ba12dab29bb6858909768c2f21180133845f7",
+        "f1d0d28189680504617bd22c581ba12dab29bb6858909768c2f21180133845f0",
+    );
+    refresh_scope_digest(&mut digest);
+    assert_eq!(
+        construct(&digest, NS).unwrap_err(),
+        ContextConstructionError::InvalidMemberBinding
+    );
+
+    let mut noncanonical = fixture();
+    noncanonical.descriptor = replace_once(
+        &noncanonical.descriptor,
+        "{\"cell_id\":\"PC-D1-raw-v2\",\"members\":",
+        "{\"members\":",
+    );
+    assert_eq!(
+        construct(&noncanonical, NS).unwrap_err(),
+        ContextConstructionError::InvalidScopeEncoding
+    );
+}
+
+#[test]
+fn resource_limit_boundary_table() {
+    let mut descriptor = fixture();
+    descriptor.descriptor.resize(262_145, b' ');
+    assert_eq!(
+        construct(&descriptor, NS).unwrap_err(),
+        ContextConstructionError::ResourceLimit
+    );
+
+    let mut metadata = fixture();
+    metadata.scope_digest.resize(4_194_305, b' ');
+    assert_eq!(
+        construct(&metadata, NS).unwrap_err(),
+        ContextConstructionError::ResourceLimit
+    );
+
+    let f = fixture();
+    let oversized_manifest = vec![b' '; 1_048_577];
+    let binding = ManifestBindingInput {
+        manifest: &oversized_manifest,
+        manifest_digest_descriptor: &f.manifest_digest,
+        manifest_artifact_metadata: &f.manifest_meta,
+        stream: &f.ws,
+        stream_artifact_metadata: &f.stream_meta,
+    };
+    assert_eq!(
+        construct_reference_context_v2(
+            ClosedScopeInputV2 {
+                scope: ScopeDigestInput {
+                    descriptor: &f.descriptor,
+                    artifact_metadata: &f.scope_digest
+                },
+                members: &[binding]
+            },
+            NS
+        )
+        .unwrap_err(),
+        ContextConstructionError::ResourceLimit
+    );
+
+    let mut ws = fixture();
+    ws.ws.resize(16_777_217, 0);
+    assert_eq!(
+        construct(&ws, NS).unwrap_err(),
+        ContextConstructionError::ResourceLimit
+    );
+    // Exact inclusive arithmetic, member/operation/identity/reference maxima, and checked
+    // overflow are white-box asserted by `completion_matrix::every_inclusive_limit...`.
+}
+
+#[test]
+fn construction_precedence_adjacency_table() {
+    let mut early_and_late = fixture();
+    early_and_late.scope_digest[0] ^= 1;
+    early_and_late.manifest_meta[0] ^= 1;
+    assert_eq!(
+        construct(&early_and_late, NS).unwrap_err(),
+        ContextConstructionError::InvalidScopeDigest
+    );
+
+    let mut authority_and_member = fixture();
+    authority_and_member.descriptor = replace_once(
+        &authority_and_member.descriptor,
+        "PC-D1-raw-v2",
+        "PC-D1-raw-XX",
+    );
+    refresh_scope_digest(&mut authority_and_member);
+    authority_and_member.manifest_meta[0] ^= 1;
+    assert_eq!(
+        construct(&authority_and_member, NS).unwrap_err(),
+        ContextConstructionError::InvalidCellAuthority
+    );
+
+    // Member semantic resolution precedes supplied-set classification.
+    let mut bad_member = fixture();
+    bad_member.manifest_meta[0] ^= 1;
+    let binding = || ManifestBindingInput {
+        manifest: MANIFEST,
+        manifest_digest_descriptor: &bad_member.manifest_digest,
+        manifest_artifact_metadata: &bad_member.manifest_meta,
+        stream: &bad_member.ws,
+        stream_artifact_metadata: &bad_member.stream_meta,
+    };
+    assert_eq!(
+        construct_reference_context_v2(
+            ClosedScopeInputV2 {
+                scope: ScopeDigestInput {
+                    descriptor: &bad_member.descriptor,
+                    artifact_metadata: &bad_member.scope_digest
+                },
+                members: &[binding(), binding()]
+            },
+            NS
+        )
+        .unwrap_err(),
+        ContextConstructionError::InvalidMemberBinding
     );
 }
 
