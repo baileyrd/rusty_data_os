@@ -50,23 +50,26 @@ implementation increment.
 The prospective uniform causal profile is `envelope-causal-reference-v2`. For each
 `(stream_namespace, segment)` independently:
 
-- segment ordinal 0 is the **only bootstrap position** and MUST use causal semantics with exactly
-  zero targets;
+- segment ordinal 0 is the **only bootstrap position** and is valid with causal semantics when it
+  has exactly zero targets;
 - every operation at segment ordinal greater than 0 MUST contain one or more ordered targets selected
   from prior ordinary EventIds in that same stream and segment;
 - warm-up ordinal 0 and measured ordinal 0 therefore each bootstrap independently;
 - measured bootstrap MUST NOT refer to warm-up, because R22's segment boundary remains absolute;
 - no cross-stream or cross-segment bootstrap exception exists;
-- bootstrap is a cardinality rule, not permission to target self, future, missing, wrong-kind,
-  wrong-fact, duplicate, cross-stream, or cross-segment identities; and
+- bootstrap is not permission to target self, future, missing, wrong-kind, wrong-fact, duplicate,
+  cross-stream, or cross-segment identities; and
 - all non-bootstrap causal target ordering and prior-reference rules remain those of R12 as narrowed
   by R21–R23.
 
-Zero targets at a non-bootstrap causal operation fail `E-REFERENCE-CARDINALITY`. Any target at a
-bootstrap position also violates the v2 cardinality rule, but target-bearing invalid inputs retain
-the R21–R23 classification and precedence needed to distinguish duplicate, self, future, wrong-kind,
-wrong-fact, cross-stream, cross-segment, and missing targets. Validation never filters a bad target
-to turn the operation into a bootstrap.
+`E-REFERENCE-CARDINALITY` applies only when a non-bootstrap causal operation has zero targets. A
+bootstrap with zero targets is valid. At any position, malformed target encoding or duplicate target
+bytes retain the unchanged semantic-validation precedence from R21. After that validation, a
+syntactically valid target-bearing bootstrap is classified by applying the unchanged R21–R23 ordered
+target rules; its mere presence at the bootstrap position does not produce an earlier cardinality
+error. Thus cross-stream and cross-segment targets at bootstrap produce their respective ordered
+errors, as V25-06a and V25-06b require. Validation never filters a bad target to turn the operation
+into a valid zero-target bootstrap.
 
 ## 4. Required v2 manifest and generator representation
 
@@ -112,8 +115,10 @@ each a literal operation/stream/manifest vector and digest without altering v1 v
 | V25-06a | measured ordinal 0 | warm-up ordinary EventId | `E-REFERENCE-CROSS-SEGMENT`; no bootstrap exception |
 | V25-06b | either segment ordinal 0 | ordinary EventId from another stream | `E-REFERENCE-CROSS-STREAM`; no bootstrap exception |
 
-The later vectors must additionally retain R21–R23 tests for duplicate, self, future, wrong-kind,
-wrong-fact, missing, precedence, exact closed scope, and transactional accepted-prefix behavior.
+V25-06a and V25-06b are ordered-target classifications, not cardinality failures. The later vectors
+must additionally retain R21–R23 tests for malformed and duplicate target semantic-validation
+precedence and for self, future, wrong-kind, wrong-fact, missing, ordered-target precedence, exact
+closed scope, and transactional accepted-prefix behavior.
 
 ## 6. Authorization and gates
 
