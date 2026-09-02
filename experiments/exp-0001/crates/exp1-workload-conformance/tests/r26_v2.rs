@@ -2,6 +2,67 @@
 use exp1_workload_conformance::*;
 use std::collections::BTreeMap;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum EventKind {
+    Ordinary,
+    Other,
+}
+#[derive(Clone, Debug)]
+struct ReferenceEntry {
+    namespace: [u8; 16],
+    segment: Segment,
+    ordinal: u64,
+    kind: EventKind,
+    fact_type: &'static str,
+}
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct AcceptedPrefix {
+    warm_up: u64,
+    measured: u64,
+}
+
+fn accept_with_oracle(
+    state: &mut AcceptedPrefix,
+    op: &DecodedV2,
+    catalog: &BTreeMap<[u8; 16], ReferenceEntry>,
+    complete: bool,
+) -> Result<(), Error> {
+    let expected = match op.segment {
+        Segment::WarmUp => state.warm_up,
+        Segment::Measured => state.measured,
+    };
+    if op.ordinal != expected {
+        return Err(Error::Ordering);
+    }
+    if expected > 0 && op.references.len() != 1 {
+        return Err(Error::ReferenceCardinality);
+    }
+    for id in &op.references {
+        if id == &op.event_id {
+            return Err(Error::ReferenceSelf);
+        }
+        match catalog.get(id) {
+            Some(entry) if entry.kind != EventKind::Ordinary => {
+                return Err(Error::ReferenceWrongKind);
+            }
+            Some(entry) if entry.fact_type != "fact-A" => return Err(Error::ReferenceWrongFact),
+            Some(entry) if entry.namespace != op.namespace => {
+                return Err(Error::ReferenceCrossStream);
+            }
+            Some(entry) if entry.segment != op.segment => return Err(Error::ReferenceCrossSegment),
+            Some(entry) if entry.ordinal >= op.ordinal => return Err(Error::ReferenceFuture),
+            Some(_) => {}
+            None if complete => return Err(Error::ReferenceMissing),
+            None => return Err(Error::ContextRequired),
+        }
+    }
+    match op.segment {
+        Segment::WarmUp => state.warm_up += 1,
+        Segment::Measured => state.measured += 1,
+    }
+    Ok(())
+}
+
 const DATA: &str = "data/r26-v2/";
 const REF2_BOOTSTRAP_HEX: &str = include_str!("data/r26-v2/ref-bootstrap.hex");
 const REF2_W1_HEX: &str = include_str!("data/r26-v2/ref-w1.hex");
@@ -26,6 +87,28 @@ const MANIFEST_DIGEST_V2: &str = "41207781b774ad8e8543b24f7228262cb16c94d9905eba
 
 fn literal(s: &str) -> Vec<u8> {
     decode_hex(s.trim()).unwrap()
+}
+fn validate_manifest_candidate(candidate: &[u8], stream: &[u8]) -> Result<(), Error> {
+    let raw = hex(&sha256(candidate));
+    let descriptor = hex(&manifest_digest_v2(candidate));
+    validate_manifest_v2(
+        candidate,
+        &ValidationContextV2 {
+            stream,
+            warm_up_subsequent: 1,
+            measured_subsequent: 1,
+            manifest_artifact_sha256: &raw,
+            manifest_artifact_length: candidate.len() as u64,
+            descriptor_profile: MANIFEST_DIGEST_PROFILE_V2,
+            descriptor_domain: MANIFEST_DOMAIN_V2,
+            descriptor_value: &descriptor,
+        },
+    )
+}
+fn replace_once(source: &[u8], from: &str, to: &str) -> Vec<u8> {
+    let text = std::str::from_utf8(source).unwrap();
+    assert_eq!(text.matches(from).count(), 1, "mutation must be singular");
+    text.replacen(from, to, 1).into_bytes()
 }
 fn operation(segment: Segment, ordinal: u64) -> OperationInput {
     OperationInput {
@@ -138,13 +221,13 @@ fn literal_manifest_and_external_digest_oracles_validate() {
 }
 
 fn entry(id: [u8; 16], namespace: [u8; 16], segment: Segment) -> ReferenceEntry {
+    let _ = id;
     ReferenceEntry {
-        id,
         namespace,
         segment,
         ordinal: 0,
         kind: EventKind::Ordinary,
-        fact_type: "fact-A".into(),
+        fact_type: "fact-A",
     }
 }
 fn assert_transactional_error(
@@ -155,7 +238,7 @@ fn assert_transactional_error(
 ) {
     let mut actual = state.clone();
     assert_eq!(
-        accept_transactionally(&mut actual, op, "fact-A", catalog, true, 1),
+        accept_with_oracle(&mut actual, op, catalog, true),
         Err(expected)
     );
     assert_eq!(actual, state);
@@ -256,7 +339,7 @@ fn malformed_duplicate_and_ordered_precedence_fail_without_state_advance() {
         target,
         ReferenceEntry {
             kind: EventKind::Other,
-            fact_type: "fact-B".into(),
+            fact_type: "fact-B",
             ordinal: 2,
             ..entry(target, namespace, Segment::WarmUp)
         },
@@ -268,12 +351,12 @@ fn malformed_duplicate_and_ordered_precedence_fail_without_state_advance() {
     assert_transactional_error(&op, &catalog, state.clone(), Error::ReferenceWrongKind);
     catalog.get_mut(&target).unwrap().kind = EventKind::Ordinary;
     assert_transactional_error(&op, &catalog, state.clone(), Error::ReferenceWrongFact);
-    catalog.get_mut(&target).unwrap().fact_type = "fact-A".into();
+    catalog.get_mut(&target).unwrap().fact_type = "fact-A";
     assert_transactional_error(&op, &catalog, state.clone(), Error::ReferenceFuture);
     catalog.clear();
     let mut incomplete = state.clone();
     assert_eq!(
-        accept_transactionally(&mut incomplete, &op, "fact-A", &catalog, false, 1),
+        accept_with_oracle(&mut incomplete, &op, &catalog, false),
         Err(Error::ContextRequired)
     );
     assert_eq!(incomplete, state);
@@ -311,4 +394,183 @@ fn v1_and_v2_are_strictly_incompatible() {
     let mut mixed = op;
     mixed[5] = b'1';
     assert_eq!(validate_semantic_operation_v2(&mixed), Err(Error::Encoding));
+}
+
+#[test]
+fn manifest_is_closed_and_number_free_at_every_depth() {
+    let ws = literal(WS2_HEX);
+    for candidate in [
+        replace_once(
+            MANIFEST_JCS,
+            "\"authority\":\"EXP-0000-WORKLOADS\",\"revision\":{\"kind\"",
+            "\"authority\":\"EXP-0000-WORKLOADS\",\"revision\":{\"aaa\":\"x\",\"kind\"",
+        ),
+        replace_once(
+            MANIFEST_JCS,
+            "\"artifact_manifest_ref\":{\"artifact_id\"",
+            "\"artifact_manifest_ref\":{\"aaa\":\"x\",\"artifact_id\"",
+        ),
+    ] {
+        assert_eq!(
+            validate_manifest_candidate(&candidate, &ws),
+            Err(Error::UnknownField)
+        );
+    }
+    for candidate in [
+        replace_once(
+            MANIFEST_JCS,
+            "\"measured\":{\"bootstrap\":\"0\"",
+            "\"measured\":{\"bootstrap\":0",
+        ),
+        replace_once(
+            MANIFEST_JCS,
+            "\"count\":\"4\",\"profile\":\"envelope-causal-reference-v2\"",
+            "\"count\":4,\"profile\":\"envelope-causal-reference-v2\"",
+        ),
+    ] {
+        assert_eq!(
+            validate_manifest_candidate(&candidate, &ws),
+            Err(Error::Type)
+        );
+    }
+}
+
+#[test]
+fn every_manifest_v2_profile_position_rejects_v1() {
+    let ws = literal(WS2_HEX);
+    for (key, v2, v1) in [
+        (
+            "workload_contract",
+            WORKLOAD_CONTRACT_V2,
+            "EXP-0000-WORKLOADS-v1",
+        ),
+        ("envelope", ENVELOPE_PROFILE_V2, "envelope-causal-reference"),
+        (
+            "envelope_generator",
+            ENVELOPE_GENERATOR_V2,
+            "EXP-0001-ENVELOPE-INPUT-v1",
+        ),
+        (
+            "reference_generator",
+            REFERENCE_GENERATOR_V2,
+            "EXP-0001-PRIOR-EVENTS-v1",
+        ),
+        (
+            "semantic_operation",
+            SEMANTIC_OPERATION_V2,
+            "EXP-0001-SEMANTIC-OP-v1",
+        ),
+        (
+            "workload_stream",
+            WORKLOAD_STREAM_V2,
+            "EXP-0001-WORKLOAD-STREAM-v1",
+        ),
+        (
+            "manifest",
+            MANIFEST_PROFILE_V2,
+            "EXP-0001-WORKLOAD-MANIFEST-JCS-v1",
+        ),
+    ] {
+        let candidate = replace_once(
+            MANIFEST_JCS,
+            &format!("\"{key}\":\"{v2}\""),
+            &format!("\"{key}\":\"{v1}\""),
+        );
+        assert_eq!(
+            validate_manifest_candidate(&candidate, &ws),
+            Err(Error::ProfileMismatch)
+        );
+    }
+    let raw = hex(&sha256(MANIFEST_JCS));
+    let digest = hex(&manifest_digest_v2(MANIFEST_JCS));
+    for (profile, domain) in [
+        ("EXP-0001-WORKLOAD-MANIFEST-DIGEST-v1", MANIFEST_DOMAIN_V2),
+        (MANIFEST_DIGEST_PROFILE_V2, MANIFEST_DOMAIN),
+    ] {
+        assert_eq!(
+            validate_manifest_v2(
+                MANIFEST_JCS,
+                &ValidationContextV2 {
+                    stream: &ws,
+                    warm_up_subsequent: 1,
+                    measured_subsequent: 1,
+                    manifest_artifact_sha256: &raw,
+                    manifest_artifact_length: MANIFEST_JCS.len() as u64,
+                    descriptor_profile: profile,
+                    descriptor_domain: domain,
+                    descriptor_value: &digest,
+                }
+            ),
+            Err(Error::ProfileMismatch)
+        );
+    }
+}
+
+#[test]
+fn manifest_counts_stream_bindings_and_digests_are_exact() {
+    let ws = literal(WS2_HEX);
+    for (from, to, error) in [
+        (
+            "\"operation_count\":\"4\"",
+            "\"operation_count\":\"5\"",
+            Error::CountMismatch,
+        ),
+        (
+            "\"stream_namespace\":\"25000000-0000-4000-8000-000000000001\"",
+            "\"stream_namespace\":\"25000000-0000-4000-8000-000000000099\"",
+            Error::ProfileMismatch,
+        ),
+        (
+            WS2_RAW_SHA256,
+            "0f2942ff8e4719688c23ea6ff3507496ce397a8ef767d52d0500cf8a928ac91a",
+            Error::Digest,
+        ),
+        (
+            WS2_DIGEST_V2,
+            "01d0d28189680504617bd22c581ba12dab29bb6858909768c2f21180133845f7",
+            Error::Digest,
+        ),
+    ] {
+        let candidate = replace_once(MANIFEST_JCS, from, to);
+        assert_eq!(validate_manifest_candidate(&candidate, &ws), Err(error));
+    }
+    for (value, expected) in [
+        ("18446744073709551615", Error::CountMismatch),
+        ("18446744073709551616", Error::Range),
+        ("01", Error::Range),
+    ] {
+        let candidate = replace_once(
+            MANIFEST_JCS,
+            "\"measured\":{\"bootstrap\":\"0\",\"subsequent\":\"1\"}",
+            &format!("\"measured\":{{\"bootstrap\":\"0\",\"subsequent\":\"{value}\"}}"),
+        );
+        assert_eq!(validate_manifest_candidate(&candidate, &ws), Err(expected));
+    }
+    let mut bad_length = ws.clone();
+    let header = b"RDOS-WS2EXP-0001-SEMANTIC-OP-v2".len();
+    bad_length[header..header + 8].copy_from_slice(&u64::MAX.to_be_bytes());
+    assert_eq!(
+        validate_manifest_candidate(MANIFEST_JCS, &bad_length),
+        Err(Error::CountMismatch)
+    );
+}
+
+#[test]
+fn binary_v1_substitutions_are_rejected_at_each_versioned_layer() {
+    let mut sop = literal(SOP2_W0_HEX);
+    sop[8] = b'1';
+    let mut nested_env = literal(SOP2_W0_HEX);
+    let env_magic = nested_env
+        .windows(9)
+        .position(|part| part == b"RDOS-ENV2")
+        .unwrap();
+    nested_env[env_magic + 8] = b'1';
+    let mut ws = literal(WS2_HEX);
+    ws[7] = b'1';
+    assert_eq!(validate_semantic_operation_v2(&sop), Err(Error::Encoding));
+    assert_eq!(
+        validate_semantic_operation_v2(&nested_env),
+        Err(Error::Encoding)
+    );
+    assert_eq!(validate_stream_v2(&ws, 1, 1), Err(Error::Encoding));
 }

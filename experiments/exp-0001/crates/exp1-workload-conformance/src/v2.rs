@@ -1,7 +1,7 @@
 //! R26's side-by-side v2 causal-reference wire conformance.
 
 use super::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 pub const WORKLOAD_CONTRACT_V2: &str = "EXP-0000-WORKLOADS-v2-causal-reference";
 pub const ENVELOPE_PROFILE_V2: &str = "envelope-causal-reference-v2";
@@ -332,91 +332,92 @@ pub fn validate_stream_v2(
     Ok((n, w, m))
 }
 
+pub(crate) fn stream_namespace_v2(bytes: &[u8]) -> Result<Option<[u8; 16]>, Error> {
+    const HEADER: &[u8] = b"RDOS-WS2EXP-0001-SEMANTIC-OP-v2";
+    if bytes.len() < HEADER.len() + 24 {
+        return Err(Error::Encoding);
+    }
+    let total = u64::from_be_bytes(
+        bytes[HEADER.len()..HEADER.len() + 8]
+            .try_into()
+            .map_err(|_| Error::Encoding)?,
+    );
+    let mut position = HEADER.len() + 24;
+    let mut namespace = None;
+    for _ in 0..total {
+        let length_end = position.checked_add(8).ok_or(Error::Encoding)?;
+        let length = usize::try_from(u64::from_be_bytes(
+            bytes
+                .get(position..length_end)
+                .ok_or(Error::Encoding)?
+                .try_into()
+                .map_err(|_| Error::Encoding)?,
+        ))
+        .map_err(|_| Error::ResourceLimit)?;
+        position = length_end;
+        let end = position.checked_add(length).ok_or(Error::Encoding)?;
+        let decoded =
+            validate_semantic_operation_v2(bytes.get(position..end).ok_or(Error::Encoding)?)?;
+        namespace = Some(decoded.namespace);
+        position = end;
+    }
+    Ok(namespace)
+}
+
+pub(crate) fn stream_profile_bindings_v2(
+    bytes: &[u8],
+) -> Result<Vec<(String, String, String)>, Error> {
+    const HEADER: &[u8] = b"RDOS-WS2EXP-0001-SEMANTIC-OP-v2";
+    let total = u64::from_be_bytes(
+        bytes
+            .get(HEADER.len()..HEADER.len() + 8)
+            .ok_or(Error::Encoding)?
+            .try_into()
+            .map_err(|_| Error::Encoding)?,
+    );
+    let mut position = HEADER.len() + 24;
+    let mut result = Vec::new();
+    for _ in 0..total {
+        let length_end = position.checked_add(8).ok_or(Error::Encoding)?;
+        let length = usize::try_from(u64::from_be_bytes(
+            bytes
+                .get(position..length_end)
+                .ok_or(Error::Encoding)?
+                .try_into()
+                .map_err(|_| Error::Encoding)?,
+        ))
+        .map_err(|_| Error::ResourceLimit)?;
+        position = length_end;
+        let end = position.checked_add(length).ok_or(Error::Encoding)?;
+        let fields = fields(
+            bytes.get(position..end).ok_or(Error::Encoding)?,
+            b"RDOS-SOP2",
+            13,
+        )?;
+        let op = validate_op1(fields[0])?;
+        let size = format!("P{}", op[5][0]);
+        let temporal = match op[9][0] {
+            1 => "time-monotonic-effective",
+            2 => "time-equal-burst-v1",
+            3 => "time-late-arriving-v1",
+            4 => "time-out-of-effective-order-v1",
+            _ => return Err(Error::Encoding),
+        };
+        result.push((
+            std::str::from_utf8(fields[1])
+                .map_err(|_| Error::Encoding)?
+                .to_owned(),
+            size,
+            temporal.to_owned(),
+        ));
+        position = end;
+    }
+    Ok(result)
+}
+
 pub fn workload_digest_v2(bytes: &[u8]) -> [u8; 32] {
     domain_digest(STREAM_DOMAIN_V2, bytes)
 }
 pub fn manifest_digest_v2(bytes: &[u8]) -> [u8; 32] {
     domain_digest(MANIFEST_DOMAIN_V2, bytes)
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum EventKind {
-    Ordinary,
-    Other,
-}
-#[derive(Clone, Debug)]
-pub struct ReferenceEntry {
-    pub id: [u8; 16],
-    pub namespace: [u8; 16],
-    pub segment: Segment,
-    pub ordinal: u64,
-    pub kind: EventKind,
-    pub fact_type: String,
-}
-pub fn classify_references(
-    op: &DecodedV2,
-    fact_type: &str,
-    catalog: &BTreeMap<[u8; 16], ReferenceEntry>,
-    complete_scope: bool,
-) -> Result<(), Error> {
-    for id in &op.references {
-        if id == &op.event_id {
-            return Err(Error::ReferenceSelf);
-        };
-        if let Some(x) = catalog.get(id) {
-            if x.kind != EventKind::Ordinary {
-                return Err(Error::ReferenceWrongKind);
-            }
-            if x.fact_type != fact_type {
-                return Err(Error::ReferenceWrongFact);
-            }
-            if x.namespace != op.namespace {
-                return Err(Error::ReferenceCrossStream);
-            }
-            if x.segment != op.segment {
-                return Err(Error::ReferenceCrossSegment);
-            }
-            if x.ordinal >= op.ordinal {
-                return Err(Error::ReferenceFuture);
-            }
-        } else if complete_scope {
-            return Err(Error::ReferenceMissing);
-        } else {
-            return Err(Error::ContextRequired);
-        }
-    }
-    Ok(())
-}
-
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct AcceptedPrefix {
-    pub warm_up: u64,
-    pub measured: u64,
-}
-pub fn accept_transactionally(
-    state: &mut AcceptedPrefix,
-    op: &DecodedV2,
-    fact_type: &str,
-    catalog: &BTreeMap<[u8; 16], ReferenceEntry>,
-    complete_scope: bool,
-    subsequent: u64,
-) -> Result<(), Error> {
-    let expected = match op.segment {
-        Segment::WarmUp => state.warm_up,
-        Segment::Measured => state.measured,
-    };
-    if op.ordinal != expected {
-        return Err(Error::Ordering);
-    }
-    if expected > 0
-        && op.references.len() != usize::try_from(subsequent).map_err(|_| Error::ResourceLimit)?
-    {
-        return Err(Error::ReferenceCardinality);
-    }
-    classify_references(op, fact_type, catalog, complete_scope)?;
-    match op.segment {
-        Segment::WarmUp => state.warm_up = next_ordinal(state.warm_up)?,
-        Segment::Measured => state.measured = next_ordinal(state.measured)?,
-    };
-    Ok(())
 }
