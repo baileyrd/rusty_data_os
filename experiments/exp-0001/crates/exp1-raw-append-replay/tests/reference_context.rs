@@ -30,6 +30,7 @@ fn metadata(id: &str, bytes: &[u8], role: &str, media: &str) -> Vec<u8> {
 }
 
 struct Fixture {
+    manifest: Vec<u8>,
     ws: Vec<u8>,
     descriptor: Vec<u8>,
     scope_digest: Vec<u8>,
@@ -79,6 +80,7 @@ fn fixture() -> Fixture {
         "application/vnd.rusty-data-os.exp1-workload-stream",
     );
     Fixture {
+        manifest: MANIFEST.to_vec(),
         ws,
         descriptor,
         scope_digest,
@@ -102,7 +104,7 @@ fn construct(
     selected: [u8; 16],
 ) -> Result<ReferenceContextV2, ContextConstructionError> {
     let binding = ManifestBindingInput {
-        manifest: MANIFEST,
+        manifest: &f.manifest,
         manifest_digest_descriptor: &f.manifest_digest,
         manifest_artifact_metadata: &f.manifest_meta,
         stream: &f.ws,
@@ -122,6 +124,7 @@ fn construct(
 
 fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
     let Fixture {
+        manifest,
         ws,
         descriptor,
         scope_digest,
@@ -130,7 +133,7 @@ fn context() -> (ReferenceContextV2, Vec<Vec<u8>>) {
         stream_meta,
     } = fixture();
     let binding = ManifestBindingInput {
-        manifest: MANIFEST,
+        manifest: &manifest,
         manifest_digest_descriptor: &manifest_digest,
         manifest_artifact_metadata: &manifest_meta,
         stream: &ws,
@@ -172,14 +175,17 @@ fn replace_once(bytes: &[u8], from: &str, to: &str) -> Vec<u8> {
 // - unchanged v1 behavior: the legacy `tests/mapping.rs` suite (also run by R9).
 // - omitted/extra/duplicate/substituted/foreign/digest/noncanonical scope:
 //   `closed_scope_set_classification_rows_are_direct` plus
-//   `duplicate_supplied_member_precedes_typed_identity_collision`.
+//   `duplicate_supplied_member_precedes_typed_identity_collision` and source unit test
+//   `completion_matrix::supplied_set_classifier_reaches_extra_and_preserves_exact_order`.
 // - construction-error adjacency/precedence:
 //   `construction_precedence_adjacency_table` and
 //   `construction_errors_are_distinct_at_their_precedence_boundaries`.
 // - Request/Event/Information typed collisions: source unit test
 //   `completion_matrix::request_event_information_typed_collisions_are_actual_insertions`.
 // - inclusive/one-over/overflow limits: `resource_limit_boundary_table`; authority-dependent
-//   unreachable maxima are explicitly represented by the nearest reachable checked invariant.
+//   maxima and enforcing paths are source unit tests `descriptor_member_bound_runs_through_scope_descriptor`,
+//   `encoded_reference_bound_runs_through_mapper_prevalidation`, and
+//   `authority_unreachable_accumulation_and_identity_maxima_use_checked_helpers`.
 // - every ReferenceError, both cross-segment directions, and failure immutability: source unit test
 //   `completion_matrix::every_reference_error_and_cross_segment_direction_is_directly_asserted`.
 // - duplicate-before-lookup, target-bearing bootstrap, and first-invalid encoded ordering:
@@ -191,6 +197,7 @@ fn replace_once(bytes: &[u8], from: &str, to: &str) -> Vec<u8> {
 #[test]
 fn r26_literals_construct_an_immutable_catalog_and_initial_state() {
     let Fixture {
+        manifest,
         ws,
         descriptor,
         scope_digest,
@@ -199,7 +206,7 @@ fn r26_literals_construct_an_immutable_catalog_and_initial_state() {
         stream_meta,
     } = fixture();
     let binding = ManifestBindingInput {
-        manifest: MANIFEST,
+        manifest: &manifest,
         manifest_digest_descriptor: &manifest_digest,
         manifest_artifact_metadata: &manifest_meta,
         stream: &ws,
@@ -232,6 +239,7 @@ fn construction_is_closed_and_digest_bound() {
         manifest_digest,
         manifest_meta,
         stream_meta,
+        ..
     } = fixture();
     *scope_digest.last_mut().unwrap() = b'!';
     let binding = ManifestBindingInput {
@@ -300,13 +308,82 @@ fn every_external_binding_and_mixed_version_position_is_rejected() {
             ContextConstructionError::UnsupportedScopeProfile,
         ),
         (
+            "external scope digest v1 profile",
+            |f| f.scope_digest = replace_once(&f.scope_digest, "DIGEST-v2", "DIGEST-v1"),
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "external scope digest v1 domain",
+            |f| f.scope_digest = replace_once(&f.scope_digest, "scope/v2", "scope/v1"),
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
             "manifest v1 profile",
             |f| f.manifest_digest = replace_once(&f.manifest_digest, "DIGEST-v2", "DIGEST-v1"),
             ContextConstructionError::UnsupportedScopeProfile,
         ),
         (
+            "manifest digest v1 domain",
+            |f| f.manifest_digest = replace_once(&f.manifest_digest, "manifest/v2", "manifest/v1"),
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "manifest v1 schema",
+            |f| {
+                f.manifest = replace_once(
+                    MANIFEST,
+                    "\"schema_version\":\"EXP-0001-WORKLOAD-MANIFEST-JCS-v2\"",
+                    "\"schema_version\":\"EXP-0001-WORKLOAD-MANIFEST-JCS-v1\"",
+                )
+            },
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "manifest-declared v1 manifest profile",
+            |f| {
+                f.manifest = replace_once(
+                    MANIFEST,
+                    "\"manifest\":\"EXP-0001-WORKLOAD-MANIFEST-JCS-v2\"",
+                    "\"manifest\":\"EXP-0001-WORKLOAD-MANIFEST-JCS-v1\"",
+                )
+            },
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "manifest-declared WS1 profile",
+            |f| {
+                f.manifest = replace_once(
+                    MANIFEST,
+                    "\"workload_stream\":\"EXP-0001-WORKLOAD-STREAM-v2\"",
+                    "\"workload_stream\":\"EXP-0001-WORKLOAD-STREAM-v1\"",
+                )
+            },
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "manifest-declared stream digest v1 domain",
+            |f| f.manifest = replace_once(MANIFEST, "workload-stream/v2", "workload-stream/v1"),
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
             "WS1 in WS2 position",
             |f| f.ws[7] = b'1',
+            ContextConstructionError::UnsupportedScopeProfile,
+        ),
+        (
+            "artifact role corrupt binding",
+            |f| f.stream_meta = replace_once(&f.stream_meta, "configuration", "configuratioX"),
+            ContextConstructionError::InvalidMemberBinding,
+        ),
+        (
+            "artifact media corrupt binding",
+            |f| {
+                f.stream_meta = replace_once(
+                    &f.stream_meta,
+                    "application/vnd.rusty-data-os.exp1-workload-stream",
+                    "application/vnd.rusty-data-os.exp1-workload-streaX",
+                )
+            },
             ContextConstructionError::InvalidMemberBinding,
         ),
     ];
@@ -461,6 +538,50 @@ fn resource_limit_boundary_table() {
 
 #[test]
 fn construction_precedence_adjacency_table() {
+    let mut descriptor_before_digest = fixture();
+    descriptor_before_digest.descriptor =
+        replace_once(&descriptor_before_digest.descriptor, "JCS-v2", "JCS-v1");
+    descriptor_before_digest.scope_digest[0] ^= 1;
+    assert_eq!(
+        construct(&descriptor_before_digest, NS).unwrap_err(),
+        ContextConstructionError::UnsupportedScopeProfile
+    );
+
+    let mut digest_before_reference = fixture();
+    let value_nibble = digest_before_reference.scope_digest.len() - 3;
+    digest_before_reference.scope_digest[value_nibble] =
+        if digest_before_reference.scope_digest[value_nibble] == b'0' {
+            b'1'
+        } else {
+            b'0'
+        };
+    digest_before_reference.scope_digest = replace_once(
+        &digest_before_reference.scope_digest,
+        "https://example.invalid/scope.jcs",
+        "http://example.invalid/scope.jcs",
+    );
+    assert_eq!(
+        construct(&digest_before_reference, NS).unwrap_err(),
+        ContextConstructionError::InvalidScopeDigest
+    );
+
+    let mut reference_before_authority = fixture();
+    reference_before_authority.descriptor = replace_once(
+        &reference_before_authority.descriptor,
+        "PC-D1-raw-v2",
+        "PC-D1-raw-XX",
+    );
+    refresh_scope_digest(&mut reference_before_authority);
+    reference_before_authority.scope_digest = replace_once(
+        &reference_before_authority.scope_digest,
+        "https://example.invalid/scope.jcs",
+        "http://example.invalid/scope.jcs",
+    );
+    assert_eq!(
+        construct(&reference_before_authority, NS).unwrap_err(),
+        ContextConstructionError::ScopeReferenceFailure
+    );
+
     let mut early_and_late = fixture();
     early_and_late.scope_digest[0] ^= 1;
     early_and_late.manifest_meta[0] ^= 1;

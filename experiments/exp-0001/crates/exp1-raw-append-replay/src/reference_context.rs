@@ -639,6 +639,7 @@ fn ref_matches(
     Ok(())
 }
 
+#[derive(Debug)]
 struct Member {
     ns: [u8; 16],
     workload: String,
@@ -647,6 +648,60 @@ struct Member {
     sd: String,
     len: u64,
     raw: String,
+}
+
+#[derive(Clone)]
+struct SuppliedMember {
+    ns: [u8; 16],
+    workload: String,
+    manifest: String,
+}
+
+fn classify_supplied_set(
+    expected: &[Member],
+    supplied: &[SuppliedMember],
+) -> Result<(), ContextConstructionError> {
+    if supplied.windows(2).any(|x| x[0].ns == x[1].ns) {
+        return Err(ContextConstructionError::DuplicateStreamNamespace);
+    }
+    if supplied.len() < expected.len() {
+        return Err(ContextConstructionError::OmittedStream);
+    }
+    if supplied.len() > expected.len() {
+        return Err(ContextConstructionError::ExtraStream);
+    }
+    for (expected, actual) in expected.iter().zip(supplied) {
+        if expected.ns != actual.ns {
+            return Err(ContextConstructionError::SubstitutedStream);
+        }
+        if expected.workload != actual.workload || expected.manifest != actual.manifest {
+            return Err(ContextConstructionError::ForeignWorkloadOrCell);
+        }
+    }
+    Ok(())
+}
+
+fn checked_accumulate(total: usize, additional: usize) -> Result<usize, ContextConstructionError> {
+    total
+        .checked_add(additional)
+        .ok_or(ContextConstructionError::ResourceLimit)
+}
+
+fn checked_identity_count(operation_count: usize) -> Result<usize, ContextConstructionError> {
+    operation_count
+        .checked_mul(3)
+        .ok_or(ContextConstructionError::ResourceLimit)
+}
+
+fn ensure_selected(
+    members: &[Member],
+    selected_stream_namespace: [u8; 16],
+) -> Result<(), ContextConstructionError> {
+    members
+        .iter()
+        .any(|member| member.ns == selected_stream_namespace)
+        .then_some(())
+        .ok_or(ContextConstructionError::SelectedStreamMissing)
 }
 fn scope_descriptor(
     bytes: &[u8],
@@ -775,8 +830,9 @@ pub fn construct_reference_context_v2(
                 .members
                 .iter()
                 .try_fold(0usize, |a, m| {
-                    a.checked_add(m.manifest_artifact_metadata.len())?
-                        .checked_add(m.stream_artifact_metadata.len())
+                    checked_accumulate(a, m.manifest_artifact_metadata.len())
+                        .and_then(|a| checked_accumulate(a, m.stream_artifact_metadata.len()))
+                        .ok()
                 })
                 .ok_or(ContextConstructionError::ResourceLimit)?,
         )
@@ -879,6 +935,24 @@ pub fn construct_reference_context_v2(
     let mut operation_count = 0usize;
     for (ns, bind, _workload, _manifest) in &supplied {
         let expected = members.iter().find(|m| m.ns == *ns);
+        let mt =
+            obj(&parse(bind.manifest)
+                .map_err(|_| ContextConstructionError::InvalidMemberBinding)?)
+            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?
+            .clone();
+        let profiles = mt.get("profiles").and_then(|v| obj(v).ok());
+        let stream_digest = mt.get("stream_digest").and_then(|v| obj(v).ok());
+        if required_string(&mt, "schema_version").ok() == Some("EXP-0001-WORKLOAD-MANIFEST-JCS-v1")
+            || profiles.and_then(|p| required_string(p, "manifest").ok())
+                == Some("EXP-0001-WORKLOAD-MANIFEST-JCS-v1")
+            || profiles.and_then(|p| required_string(p, "workload_stream").ok())
+                == Some("EXP-0001-WORKLOAD-STREAM-v1")
+            || stream_digest.and_then(|d| required_string(d, "domain").ok())
+                == Some("rusty-data-os/exp1/workload-stream/v1")
+            || !bind.stream.starts_with(b"RDOS-WS2") && bind.stream.starts_with(b"RDOS-WS1")
+        {
+            return Err(ContextConstructionError::UnsupportedScopeProfile);
+        }
         // Resolve the manifest descriptor and both independent R7 artifact records before set equality.
         let descriptor = parse(bind.manifest_digest_descriptor)
             .map_err(|_| ContextConstructionError::InvalidMemberBinding)?;
@@ -910,11 +984,6 @@ pub fn construct_reference_context_v2(
         {
             return Err(ContextConstructionError::InvalidMemberBinding);
         }
-        let mt =
-            obj(&parse(bind.manifest)
-                .map_err(|_| ContextConstructionError::InvalidMemberBinding)?)
-            .map_err(|_| ContextConstructionError::InvalidMemberBinding)?
-            .clone();
         let stream_ref = obj(mt
             .get("stream_ref")
             .ok_or(ContextConstructionError::InvalidMemberBinding)?)
@@ -1004,9 +1073,7 @@ pub fn construct_reference_context_v2(
             .map_err(ContextConstructionError::SemanticValidation)?;
         let (n, _, _) = validate_stream_v2(bind.stream, warm, measured)
             .map_err(ContextConstructionError::SemanticValidation)?;
-        operation_count = operation_count
-            .checked_add(n as usize)
-            .ok_or(ContextConstructionError::ResourceLimit)?;
+        operation_count = checked_accumulate(operation_count, n as usize)?;
         if operation_count > 65_536 {
             return Err(ContextConstructionError::ResourceLimit);
         }
@@ -1020,29 +1087,17 @@ pub fn construct_reference_context_v2(
         resolved_operations.push((*ns, operations));
     }
     // Exact supplied-set classification belongs after complete resolution and semantic validation.
-    if supplied.windows(2).any(|x| x[0].0 == x[1].0) {
-        return Err(ContextConstructionError::DuplicateStreamNamespace);
-    }
-    if supplied.len() < members.len() {
-        return Err(ContextConstructionError::OmittedStream);
-    }
-    if supplied.len() > members.len() {
-        return Err(ContextConstructionError::ExtraStream);
-    }
-    for (expected, actual) in members.iter().zip(&supplied) {
-        if expected.ns != actual.0 {
-            return Err(ContextConstructionError::SubstitutedStream);
-        }
-        if expected.workload != actual.2 || expected.manifest != actual.3 {
-            return Err(ContextConstructionError::ForeignWorkloadOrCell);
-        }
-    }
-    if !members.iter().any(|m| m.ns == selected_stream_namespace) {
-        return Err(ContextConstructionError::SelectedStreamMissing);
-    }
-    let identity_count = operation_count
-        .checked_mul(3)
-        .ok_or(ContextConstructionError::ResourceLimit)?;
+    let supplied_set: Vec<_> = supplied
+        .iter()
+        .map(|(ns, _, workload, manifest)| SuppliedMember {
+            ns: *ns,
+            workload: workload.clone(),
+            manifest: manifest.clone(),
+        })
+        .collect();
+    classify_supplied_set(&members, &supplied_set)?;
+    ensure_selected(&members, selected_stream_namespace)?;
+    let identity_count = checked_identity_count(operation_count)?;
     if over_limit(identity_count, 196_608) {
         return Err(ContextConstructionError::ResourceLimit);
     }
@@ -1675,8 +1730,172 @@ mod completion_matrix {
         );
         assert!(!over_limit(65_536, 65_536), "reference count is inclusive");
         assert!(over_limit(65_537, 65_536), "reference count one-over fails");
-        // A valid authority document at each enormous exact boundary does not exist in R26.
-        // R27 forbids forging one, so these are the nearest reachable arithmetic invariants;
-        // constructor integration rows below exercise the real one-over byte paths.
+    }
+
+    #[test]
+    fn supplied_set_classifier_reaches_extra_and_preserves_exact_order() {
+        let member = |n| Member {
+            ns: [n; 16],
+            workload: format!("workload-{n}"),
+            manifest: format!("manifest-{n}"),
+            md: String::new(),
+            sd: String::new(),
+            len: 0,
+            raw: String::new(),
+        };
+        let supplied = |n| SuppliedMember {
+            ns: [n; 16],
+            workload: format!("workload-{n}"),
+            manifest: format!("manifest-{n}"),
+        };
+        let expected = [member(1)];
+        assert_eq!(
+            classify_supplied_set(&expected, &[supplied(1), supplied(2)]),
+            Err(ContextConstructionError::ExtraStream)
+        );
+        assert_eq!(
+            classify_supplied_set(&expected, &[supplied(1), supplied(1)]),
+            Err(ContextConstructionError::DuplicateStreamNamespace),
+            "duplicate precedes extra"
+        );
+        assert_eq!(
+            classify_supplied_set(&[member(1), member(2)], &[supplied(1)]),
+            Err(ContextConstructionError::OmittedStream)
+        );
+        let mut substitution = supplied(2);
+        substitution.workload = "workload-1".into();
+        substitution.manifest = "manifest-1".into();
+        assert_eq!(
+            classify_supplied_set(&expected, &[substitution]),
+            Err(ContextConstructionError::SubstitutedStream)
+        );
+        let mut foreign = supplied(1);
+        foreign.workload = "foreign".into();
+        assert_eq!(
+            classify_supplied_set(&expected, &[foreign]),
+            Err(ContextConstructionError::ForeignWorkloadOrCell)
+        );
+        // An authority-valid public extra cannot be assembled from the sole reviewed R26
+        // binding without forging another manifest/WS2/R7 authority tuple.  This direct test
+        // therefore exercises the exact private classifier used by construction.
+    }
+
+    fn descriptor_with_members(count: usize) -> Vec<u8> {
+        let mut members = Vec::with_capacity(count);
+        for n in 0..count {
+            members.push(format!(
+                concat!(
+                    "{{\"manifest_digest\":\"{:064x}\",\"manifest_id\":\"16000000-0000-4000-8000-{:012x}\",",
+                    "\"stream_artifact_sha256\":\"{:064x}\",\"stream_byte_length\":\"0\",\"stream_digest\":\"{:064x}\",",
+                    "\"stream_namespace\":\"25000000-0000-4000-8000-{:012x}\",\"workload_id\":\"26000000-0000-4000-8000-{:012x}\"}}"
+                ),
+                n + 1,
+                n + 1,
+                n + 1,
+                n + 1,
+                n + 1,
+                n + 1
+            ));
+        }
+        format!(
+            "{{\"cell_id\":\"PC-D1-raw-v2\",\"members\":[{}],\"record_kind\":\"closed_stream_scope\",\"schema_version\":\"{}\",\"scope_id\":\"27000000-0000-4000-8000-000000000001\"}}",
+            members.join(","),
+            SCOPE_PROFILE
+        )
+        .into_bytes()
+    }
+
+    #[test]
+    fn descriptor_member_bound_runs_through_scope_descriptor() {
+        assert_eq!(
+            scope_descriptor(&descriptor_with_members(256))
+                .unwrap()
+                .2
+                .len(),
+            256
+        );
+        assert_eq!(
+            scope_descriptor(&descriptor_with_members(257)).unwrap_err(),
+            ContextConstructionError::ResourceLimit
+        );
+    }
+
+    #[test]
+    fn encoded_reference_bound_runs_through_mapper_prevalidation() {
+        let id = [0x31, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+        let (catalog, state, mut bytes) = case(id, None, Segment::WarmUp, 1);
+        let count_offset = {
+            let sop = fields(&bytes, b"RDOS-SOP2", 13).unwrap();
+            let env = fields(sop[8], b"RDOS-ENV2", 13).unwrap();
+            env[12].as_ptr() as usize - bytes.as_ptr() as usize
+        };
+        bytes[count_offset..count_offset + 4].copy_from_slice(&65_536u32.to_be_bytes());
+        assert!(matches!(
+            map_semantic_operation_v2_with_context(&bytes, 1, 1, &catalog, &state),
+            Err(ContextualMappingError::SemanticValidation(_))
+        ));
+        bytes[count_offset..count_offset + 4].copy_from_slice(&65_537u32.to_be_bytes());
+        assert_eq!(
+            map_semantic_operation_v2_with_context(&bytes, 1, 1, &catalog, &state),
+            Err(ContextualMappingError::ResourceLimit)
+        );
+    }
+
+    #[test]
+    fn authority_unreachable_accumulation_and_identity_maxima_use_checked_helpers() {
+        assert_eq!(checked_accumulate(65_535, 1), Ok(65_536));
+        assert_eq!(
+            checked_accumulate(usize::MAX, 1),
+            Err(ContextConstructionError::ResourceLimit)
+        );
+        assert_eq!(checked_identity_count(65_536), Ok(196_608));
+        assert_eq!(
+            checked_identity_count(usize::MAX),
+            Err(ContextConstructionError::ResourceLimit)
+        );
+        // Reaching these maxima publicly requires authority-valid documents absent from R26;
+        // these are defensive tests of the exact helpers used before construction allocation.
+    }
+
+    #[test]
+    fn selected_missing_precedes_collision_and_collision_precedes_publication() {
+        let expected = [Member {
+            ns: NS_A,
+            workload: String::new(),
+            manifest: String::new(),
+            md: String::new(),
+            sd: String::new(),
+            len: 0,
+            raw: String::new(),
+        }];
+        assert_eq!(
+            ensure_selected(&expected, NS_B),
+            Err(ContextConstructionError::SelectedStreamMissing)
+        );
+
+        let id = [9; 16];
+        let mut unpublished = BTreeMap::new();
+        insert_identity(
+            &mut unpublished,
+            binding(id, Role::Request, NS_A, Segment::WarmUp, 0, None),
+        )
+        .unwrap();
+        assert_eq!(
+            insert_identity(
+                &mut unpublished,
+                binding(
+                    id,
+                    Role::Event,
+                    NS_A,
+                    Segment::WarmUp,
+                    0,
+                    Some(FactClass::Ordinary)
+                )
+            ),
+            Err(ContextConstructionError::IdentityCollision)
+        );
+        assert_eq!(unpublished.len(), 1, "collision cannot publish a catalog");
+        // A public collision requires forging an authority-valid R26 stream. These are the
+        // exact selected and insertion gates used immediately before catalog publication.
     }
 }
