@@ -235,7 +235,7 @@ authorized.
 
 [R20](R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) resolves R19's semantic-operation-to-physical-record blocker as documentation design. It freezes exactly one validated SOP1 to one `STRUCTURAL-0` RF1 type-3 provisional record, with complete SOP1 stable-core preservation and later-ingestion sequence/physical-ordinal inputs. A later pure public `exp1-raw-append-replay::mapping` implementation is prospectively authorized with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only its manifest and the matching lock entry may change, the other crates remain unchanged, and append integration is excluded. That mapper must pass R20's independent correctness gate. The live Linux capture-interface/dependency-or-bounded-unsafe decision remains open, so descriptive D1 harness implementation and all execution remain blocked. No fourth crate, external dependency, D2/D3, `fsync`, canonical recovery, fault work, workload/benchmark execution, or evidence claim is authorized.
 
-The pure mapper and its deterministic tests implement only the locally decidable subset of that gate. Duplicate reference bytes reject through SOP1 validation, but future, self, and cross-stream checks require prior-event membership and stream-locality context that R20 did not freeze. R21 freezes the locally decidable subset of that context, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof. R25 records that R24’s prospective implementation authorization is superseded because the unchanged v1 authorities cannot form its required valid bootstrap-to-reference stream; the complete R20 gate remains open. This is bounded implementation/correctness-validation evidence only; it does not alter the still-open live Linux capture decision or authorize harness construction or execution.
+The pure mapper and its deterministic tests implement only the locally decidable subset of that gate. Duplicate reference bytes reject through SOP1 validation, but future, self, and cross-stream checks require prior-event membership and stream-locality context that R20 did not freeze. R21 freezes the locally decidable subset of that context, R22 resolves cross-segment eligibility, and R23 freezes closed-scope proof. R25 records that R24’s prospective implementation authorization is superseded because the unchanged v1 authorities cannot form its required valid bootstrap-to-reference stream; R26 freezes and prospectively authorizes only the prerequisite v2 conformance/validator increment, and the complete R20 gate remains open. This is bounded implementation/correctness-validation evidence only; it does not alter the still-open live Linux capture decision or authorize harness construction or execution.
 
 ## R21 reference-context gate update
 
@@ -275,6 +275,18 @@ positive-target rule, R21's first-operation accepted prefix, and R22's segment l
 bootstrap-to-reference v1 stream impossible; R23 forbids repairing that stream outside its exact
 manifest binding. All v1 vectors and bytes remain unchanged. R25 freezes only prospective v2
 semantics and a per-segment bootstrap/subsequent cardinality-policy representation. It supersedes
-R24 for implementation authorization only, authorizes no code, and requires first a separate v2
-conformance/validator-and-vector authorization and then a separate bounded reference-context
-implementation authorization. The complete R20 gate, capture, harness, and execution remain open.
+R24 for implementation authorization only, authorizes no code. R26 now supplies the separate v2
+conformance/validator-and-vector authorization; a bounded reference-context implementation still
+requires another later authorization. The complete R20 gate, capture, harness, and execution remain open.
+
+
+## R26 v2 conformance/validator gate update
+
+[R26](R26-V2-CAUSAL-REFERENCE-CONFORMANCE-AND-VALIDATOR-AUTHORIZATION.md) freezes the exact v2
+profile tuple, binary and JCS encodings, digest domains, manifest policy and bindings, validator
+precedence, and literal V25/R21–R23 oracle coverage. It prospectively authorizes one later change
+only inside the existing `exp1-workload-conformance` crate with no manifest, dependency, lockfile,
+workspace, toolchain, or workflow change. Passing the unchanged R9 gate would provide bounded
+conformance correctness evidence only. Reference-context implementation, complete R20 closure, live
+Linux capture, harness construction, workload or benchmark execution, and every later tranche remain
+separately gated or unauthorized.

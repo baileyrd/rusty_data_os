@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R25 corrects the bootstrap causal-reference governance contradiction; R24 implementation authorization is superseded, the complete R20 gate and live capture remain blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R26 freezes the v2 causal-reference conformance contract and narrowly authorizes a later conformance-validator PR; the complete R20 gate and live capture remain blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -157,6 +157,19 @@ bootstrap/subsequent-cardinality policy rather than the contradictory v1 scalar.
 
 R25 supersedes R24 only for prospective implementation authorization. R24 and PR #91 remain
 historical, incomplete, unmerged records; no correctness evidence follows. R25 authorizes no code.
-A separate v2 conformance/validator-and-vector authorization must precede a separate new bounded
-reference-context implementation authorization. The complete R20 gate, live Linux capture, harness,
+R26 now supplies the separate v2 conformance/validator-and-vector authorization; a new bounded
+reference-context implementation still requires its own later authorization. The complete R20 gate, live Linux capture, harness,
 workload/benchmark execution, durability, recovery, and every existing exclusion remain open.
+
+
+## R26 v2 conformance and validator authorization
+
+[R26](experiments/EXP-0001/R26-V2-CAUSAL-REFERENCE-CONFORMANCE-AND-VALIDATOR-AUTHORIZATION.md)
+freezes the complete v2 profile family, binary/JCS encodings, digest domains, manifest policy,
+immutable bindings, validation precedence, and literal-vector oracle requirements needed by R25.
+It prospectively authorizes one later change only to the existing `exp1-workload-conformance`
+crate, with no new dependency, manifest, lockfile, workflow, crate, or authority change. That later
+PR must preserve all v1 bytes and vectors and pass the unchanged R9 gate. R26 contains no code,
+fixture, execution, or correctness evidence and does not authorize R21–R23 context implementation.
+The complete R20 gate, live Linux capture, harness, execution, durability, recovery, benchmarks,
+and every existing exclusion remain open.

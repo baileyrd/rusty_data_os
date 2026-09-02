@@ -220,7 +220,7 @@ live capture, harness construction, execution, and later phases remain separatel
 
 R24 prospectively authorizes the smallest pure reference-context extension in the existing mapper.
 Only the frozen mapper/context source and test paths may change; manifests, lockfile, authority crates,
-dependencies, append/reopen, capture, and execution remain unchanged or excluded. R25 supersedes this implementation authorization only after its required v1 bootstrap-to-reference gate proved impossible. R24 remains an incomplete historical record; the next work requires separate v2 conformance/validator authorization, not this bounded implementation.
+dependencies, append/reopen, capture, and execution remain unchanged or excluded. R25 supersedes this implementation authorization only after its required v1 bootstrap-to-reference gate proved impossible. R24 remains an incomplete historical record; R26 now supplies the separate v2 conformance/validator authorization, not a reference-context implementation.
 
 
 ### R25 Phase 1 bootstrap causal-reference correction
@@ -230,6 +230,16 @@ prospective v2 uniform causal profile: ordinal 0 bootstraps independently with z
 segment, and later operations require positive ordered prior same-stream, same-segment ordinary
 EventIds. A v2 manifest must encode separate bootstrap and subsequent cardinality for warm-up and
 measured segments rather than one scalar. R25 supersedes R24 implementation authorization only and
-authorizes no code. Separate authorization is required first for v2 conformance/validator changes
-and literal vectors, and then for a new bounded reference-context implementation. The complete R20
+authorizes no code. R26 now supplies the first, v2 conformance/validator-and-vector authorization;
+a new bounded reference-context implementation still requires a later separate authorization. The complete R20
 gate and every capture, harness, execution, durability, recovery, and benchmark gate remain open.
+
+
+### R26 Phase 1 v2 conformance checkpoint
+
+R26 completes the documentation freeze requested by R25: all version-sensitive profile identifiers,
+canonical binary and JCS encodings, digest domains, per-segment cardinality policy, immutable
+bindings, validator precedence, and literal-vector coverage are fixed. It authorizes only a later
+side-by-side v2 extension of the existing workload-conformance crate with unchanged dependencies and
+R9 validation. Reference-context code, the complete R20 gate, capture, harnesses, execution, and all
+later phases remain gated.
