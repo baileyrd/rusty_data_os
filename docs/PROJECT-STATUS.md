@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R26 freezes the v2 causal-reference conformance contract and narrowly authorizes a later conformance-validator PR; the complete R20 gate and live capture remain blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R26-authorized v2 causal-reference conformance is implemented as bounded correctness evidence; the complete R20 gate and live capture remain blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 

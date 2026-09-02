@@ -6,6 +6,8 @@ use std::collections::BTreeSet;
 pub const MAX_PAYLOAD: usize = 1_048_576;
 pub const STREAM_DOMAIN: &str = "rusty-data-os/exp1/workload-stream/v1";
 pub const MANIFEST_DOMAIN: &str = "rusty-data-os/exp1/workload-manifest/v1";
+pub const STREAM_DOMAIN_V2: &str = "rusty-data-os/exp1/workload-stream/v2";
+pub const MANIFEST_DOMAIN_V2: &str = "rusty-data-os/exp1/workload-manifest/v2";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Error {
@@ -34,7 +36,20 @@ pub enum Error {
     ImmutableState,
     Ordering,
     DuplicateOrConflict,
+    ReferenceDuplicate,
+    ReferenceCardinality,
+    ReferenceSelf,
+    ReferenceWrongKind,
+    ReferenceWrongFact,
+    ReferenceCrossStream,
+    ReferenceCrossSegment,
+    ReferenceFuture,
+    ReferenceMissing,
+    ContextRequired,
 }
+
+mod v2;
+pub use v2::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Segment {
@@ -858,7 +873,8 @@ pub use manifest::{
     ArtifactMetadata, ArtifactReference, AuthorityRevision, DigestValue, Distribution,
     GeneratorInputs, InputState, Manifest, ManifestCounts, ManifestDigestDescriptor,
     ManifestProfiles, ManifestReference, ProvenanceEdge, RevisionKind, StreamReference,
-    Supersession, SupersessionTarget, TypedManifest, ValidationContext, validate_manifest,
+    Supersession, SupersessionTarget, TypedManifest, ValidationContext, ValidationContextV2,
+    validate_manifest, validate_manifest_v2,
 };
 
 pub fn validate_supersession(

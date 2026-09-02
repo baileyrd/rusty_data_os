@@ -1,4 +1,10 @@
 use super::{
+    ENVELOPE_GENERATOR_V2, ENVELOPE_PROFILE_V2, MANIFEST_DIGEST_PROFILE_V2, MANIFEST_DOMAIN_V2,
+    MANIFEST_PROFILE_V2, REFERENCE_GENERATOR_V2, SEMANTIC_OPERATION_V2, STREAM_DOMAIN_V2,
+    WORKLOAD_CONTRACT_V2, WORKLOAD_STREAM_V2, manifest_digest_v2, sha256, stream_namespace_v2,
+    stream_profile_bindings_v2, validate_stream_v2, workload_digest_v2,
+};
+use super::{
     Error, artifact_digest, hex, manifest_digest, parse_uuid, stream_bindings, validate_stream,
     workload_digest,
 };
@@ -205,6 +211,399 @@ fn parse(b: &[u8]) -> Result<Json, Error> {
         return Err(Error::JsonSyntax);
     }
     Ok(v)
+}
+
+fn exact(o: &BTreeMap<String, Json>, keys: &[&str]) -> Result<(), Error> {
+    for key in o.keys() {
+        if !keys.contains(&key.as_str()) {
+            return Err(Error::UnknownField);
+        }
+    }
+    if keys.iter().any(|key| !o.contains_key(*key)) {
+        return Err(Error::MissingField);
+    }
+    Ok(())
+}
+
+fn reject_numbers(v: &Json) -> Result<(), Error> {
+    match v {
+        Json::Number => Err(Error::Type),
+        Json::Array(values) => values.iter().try_for_each(reject_numbers),
+        Json::Object(values) => values.values().try_for_each(reject_numbers),
+        _ => Ok(()),
+    }
+}
+
+/// External immutable bindings needed to validate an R26 manifest.
+pub struct ValidationContextV2<'a> {
+    pub stream: &'a [u8],
+    pub warm_up_subsequent: u64,
+    pub measured_subsequent: u64,
+    pub manifest_artifact_sha256: &'a str,
+    pub manifest_artifact_length: u64,
+    pub descriptor_profile: &'a str,
+    pub descriptor_domain: &'a str,
+    pub descriptor_value: &'a str,
+}
+
+/// Validates the R26 closed v2 ledger, policy, profiles, stream and external digest.
+pub fn validate_manifest_v2(candidate: &[u8], ctx: &ValidationContextV2<'_>) -> Result<(), Error> {
+    let root = parse(candidate)?;
+    reject_numbers(&root)?;
+    let mut rendered = String::new();
+    canonical(&root, &mut rendered);
+    if rendered.as_bytes() != candidate {
+        return Err(Error::Noncanonical);
+    }
+    let t = obj(&root)?;
+    exact(
+        t,
+        &[
+            "authority_revisions",
+            "counts",
+            "created_at_utc_ns",
+            "generator_inputs",
+            "manifest_id",
+            "profiles",
+            "record_kind",
+            "schema_version",
+            "stream_digest",
+            "stream_ref",
+            "supersession",
+            "workload_id",
+        ],
+    )?;
+    if strv(&t["record_kind"])? != "workload_manifest"
+        || strv(&t["schema_version"])? != MANIFEST_PROFILE_V2
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    let p = obj(&t["profiles"])?;
+    exact(
+        p,
+        &[
+            "digest",
+            "envelope",
+            "envelope_generator",
+            "identity_generator",
+            "logical_time_generator",
+            "manifest",
+            "payload_content",
+            "payload_generator",
+            "payload_size",
+            "reference_generator",
+            "semantic_operation",
+            "size_class_order",
+            "temporal",
+            "workload_contract",
+            "workload_stream",
+        ],
+    )?;
+    let required = [
+        ("digest", "SHA-256/FIPS-180-4"),
+        ("envelope", ENVELOPE_PROFILE_V2),
+        ("envelope_generator", ENVELOPE_GENERATOR_V2),
+        ("identity_generator", "EXP-0001-UUID4-SHA256-v1"),
+        ("logical_time_generator", "EXP-0001-LOGICAL-TIME-v1"),
+        ("manifest", MANIFEST_PROFILE_V2),
+        ("reference_generator", REFERENCE_GENERATOR_V2),
+        ("semantic_operation", SEMANTIC_OPERATION_V2),
+        ("workload_contract", WORKLOAD_CONTRACT_V2),
+        ("workload_stream", WORKLOAD_STREAM_V2),
+    ];
+    for (k, v) in required {
+        if strv(&p[k])? != v {
+            return Err(Error::ProfileMismatch);
+        }
+    }
+    let payload_generator = strv(&p["payload_generator"])?;
+    let expected_content = match payload_generator {
+        "EXP-0001-SHA256-CTR-v1" => "deterministic-high-variation",
+        "EXP-0001-SHA256-MOTIF-v1" => "repeated-low-variation",
+        "EXP-0001-ZERO-v1" => "all-zero",
+        _ => return Err(Error::ProfileMismatch),
+    };
+    if strv(&p["payload_content"])? != expected_content
+        || !matches!(
+            strv(&p["payload_size"])?,
+            "fixed-P0"
+                | "fixed-P1"
+                | "fixed-P2"
+                | "fixed-P3"
+                | "fixed-P4"
+                | "fixed-P5"
+                | "mixed-equal-P1-P4"
+                | "mixed-weighted-P1-P4-v1"
+        )
+        || strv(&p["size_class_order"])? != "EXP-0000-SIZE-CLASS-ORDER-v1"
+        || !matches!(
+            strv(&p["temporal"])?,
+            "time-monotonic-effective"
+                | "time-equal-burst-v1"
+                | "time-late-arriving-v1"
+                | "time-out-of-effective-order-v1"
+        )
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    uuid(strv(&t["manifest_id"])?)?;
+    uuid(strv(&t["workload_id"])?)?;
+    dec(strv(&t["created_at_utc_ns"])?, true)?;
+    let g = obj(&t["generator_inputs"])?;
+    exact(
+        g,
+        &[
+            "actor_provenance",
+            "base_ns",
+            "controlled_schedule",
+            "correction_fact_type",
+            "envelope_semantic_version",
+            "generator_version",
+            "ordinary_fact_type",
+            "producer_count",
+            "producer_id",
+            "reference_cardinality_policy",
+            "schema_id",
+            "schema_version",
+            "seed",
+            "source_provenance",
+            "stream_namespace",
+            "unit_ns",
+            "workload_contract_version",
+        ],
+    )?;
+    for key in ["producer_id", "schema_id", "stream_namespace"] {
+        uuid(strv(&g[key])?)?;
+    }
+    for key in [
+        "generator_version",
+        "producer_count",
+        "seed",
+        "workload_contract_version",
+    ] {
+        dec(strv(&g[key])?, false)?;
+    }
+    for key in ["base_ns", "unit_ns"] {
+        dec(strv(&g[key])?, true)?;
+    }
+    if strv(&g["generator_version"])? != "1"
+        || strv(&g["producer_count"])? != "1"
+        || strv(&g["workload_contract_version"])? != "1"
+        || strv(&g["envelope_semantic_version"])? != "2"
+        || strv(&g["unit_ns"])?
+            .parse::<i64>()
+            .map_or(true, |value| value <= 0)
+        || ["ordinary_fact_type", "schema_version"]
+            .iter()
+            .any(|key| strv(&g[*key]).is_ok_and(str::is_empty))
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    string_state(&g["actor_provenance"])?;
+    uuid_state(&g["controlled_schedule"])?;
+    string_state(&g["correction_fact_type"])?;
+    string_state(&g["source_provenance"])?;
+    let policy = obj(g
+        .get("reference_cardinality_policy")
+        .ok_or(Error::MissingField)?)?;
+    exact(policy, &["kind", "measured", "warm_up"])?;
+    if strv(&policy["kind"])? != "segment_bootstrap_then_prior_v2" {
+        return Err(Error::ProfileMismatch);
+    }
+    for (name, expected) in [
+        ("warm_up", ctx.warm_up_subsequent),
+        ("measured", ctx.measured_subsequent),
+    ] {
+        let s = obj(&policy[name])?;
+        exact(s, &["bootstrap", "subsequent"])?;
+        if strv(&s["bootstrap"])? != "0" {
+            return Err(Error::Range);
+        }
+        let n = parse_u64_text(strv(&s["subsequent"])?)?;
+        if n == 0 {
+            return Err(Error::Range);
+        }
+        if n != expected {
+            return Err(Error::CountMismatch);
+        }
+    }
+    let (total, warm, measured) =
+        validate_stream_v2(ctx.stream, ctx.warm_up_subsequent, ctx.measured_subsequent)?;
+    if stream_namespace_v2(ctx.stream)? != Some(parse_uuid(strv(&g["stream_namespace"])?)?) {
+        return Err(Error::ProfileMismatch);
+    }
+    validate_counts_v2(t, total, warm, measured)?;
+    for (payload, size, temporal) in stream_profile_bindings_v2(ctx.stream)? {
+        if payload != payload_generator
+            || size
+                != strv(&p["payload_size"])?
+                    .strip_prefix("fixed-")
+                    .unwrap_or("")
+            || temporal != strv(&p["temporal"])?
+        {
+            return Err(Error::ProfileMismatch);
+        }
+    }
+    let sd = obj(&t["stream_digest"])?;
+    exact(sd, &["algorithm", "domain", "value"])?;
+    if strv(&sd["algorithm"])? != "SHA-256/FIPS-180-4" || strv(&sd["domain"])? != STREAM_DOMAIN_V2 {
+        return Err(Error::ProfileMismatch);
+    }
+    if strv(&sd["value"])? != hex(&workload_digest_v2(ctx.stream)) {
+        return Err(Error::Digest);
+    }
+    let sr = obj(&t["stream_ref"])?;
+    reference(&t["stream_ref"])?;
+    let length = parse_u64_text(strv(sr.get("byte_length").ok_or(Error::MissingField)?)?)?;
+    if length != ctx.stream.len() as u64 {
+        return Err(Error::CountMismatch);
+    }
+    if strv(sr.get("sha256").ok_or(Error::MissingField)?)? != hex(&sha256(ctx.stream)) {
+        return Err(Error::Digest);
+    }
+    validate_authorities_and_supersession_v2(t)?;
+    if ctx.descriptor_profile != MANIFEST_DIGEST_PROFILE_V2
+        || ctx.descriptor_domain != MANIFEST_DOMAIN_V2
+    {
+        return Err(Error::ProfileMismatch);
+    }
+    if ctx.manifest_artifact_length != candidate.len() as u64
+        || ctx.manifest_artifact_sha256 != hex(&sha256(candidate))
+        || ctx.descriptor_value != hex(&manifest_digest_v2(candidate))
+    {
+        return Err(Error::Digest);
+    }
+    Ok(())
+}
+
+fn validate_counts_v2(
+    top: &BTreeMap<String, Json>,
+    total: u64,
+    warm: u64,
+    measured: u64,
+) -> Result<(), Error> {
+    let counts = closed(
+        &top["counts"],
+        &[
+            "by_envelope_profile",
+            "by_segment",
+            "by_size_class",
+            "by_temporal_profile",
+            "measured_operation_count",
+            "operation_count",
+            "warm_up_operation_count",
+        ],
+    )?;
+    for (key, expected) in [
+        ("operation_count", total),
+        ("warm_up_operation_count", warm),
+        ("measured_operation_count", measured),
+    ] {
+        dec(strv(&counts[key])?, false)?;
+        if strv(&counts[key])?.parse::<u64>().ok() != Some(expected) {
+            return Err(Error::CountMismatch);
+        }
+    }
+    let segments = arr(&counts["by_segment"])?;
+    if segments.len() != 2 {
+        return Err(Error::CountMismatch);
+    }
+    for (entry, name, expected) in [
+        (&segments[0], "warm_up", warm),
+        (&segments[1], "measured", measured),
+    ] {
+        let item = closed(entry, &["count", "segment"])?;
+        dec(strv(&item["count"])?, false)?;
+        if strv(&item["segment"])? != name || strv(&item["count"])?.parse().ok() != Some(expected) {
+            return Err(Error::CountMismatch);
+        }
+    }
+    let profiles = obj(&top["profiles"])?;
+    for (field, profile_key) in [
+        ("by_envelope_profile", "envelope"),
+        ("by_size_class", "payload_size"),
+        ("by_temporal_profile", "temporal"),
+    ] {
+        let entries = arr(&counts[field])?;
+        if entries.len() != usize::from(total != 0) {
+            return Err(Error::CountMismatch);
+        }
+        if let Some(entry) = entries.first() {
+            let item = closed(entry, &["count", "profile"])?;
+            dec(strv(&item["count"])?, false)?;
+            let declared = strv(&profiles[profile_key])?;
+            let expected_profile = if profile_key == "payload_size" {
+                declared.strip_prefix("fixed-").unwrap_or(declared)
+            } else {
+                declared
+            };
+            if strv(&item["count"])?.parse::<u64>().ok() != Some(total)
+                || strv(&item["profile"])? != expected_profile
+            {
+                return Err(Error::CountMismatch);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_authorities_and_supersession_v2(top: &BTreeMap<String, Json>) -> Result<(), Error> {
+    let required = [
+        "EXP-0000-WORKLOADS",
+        "EXP-0001-R12",
+        "EXP-0001-R14",
+        "EXP-0001-R16",
+        "EXP-0001-R2",
+        "EXP-0001-R7",
+    ];
+    let authorities = arr(&top["authority_revisions"])?;
+    if authorities.len() != required.len() {
+        return Err(Error::MissingField);
+    }
+    for (entry, expected) in authorities.iter().zip(required) {
+        let authority = closed(entry, &["authority", "revision"])?;
+        if strv(&authority["authority"])? != expected {
+            return Err(Error::Ordering);
+        }
+        let revision = closed(&authority["revision"], &["kind", "value"])?;
+        let kind = strv(&revision["kind"])?;
+        let value = strv(&revision["value"])?;
+        if kind == "git_sha" {
+            if value.len() != 40
+                || !value
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+            {
+                return Err(Error::Type);
+            }
+        } else if kind != "reviewed_authority_id" || value.is_empty() {
+            return Err(Error::Type);
+        }
+    }
+    let supersession = closed(&top["supersession"], &["reason", "supersedes_manifest_ids"])?;
+    let reason = string_state(&supersession["reason"])?;
+    let ids = arr(&supersession["supersedes_manifest_ids"])?;
+    if ids.is_empty() != reason.is_none() {
+        return Err(Error::ImmutableState);
+    }
+    let mut previous = "";
+    for id in ids {
+        let id = strv(id)?;
+        uuid(id)?;
+        if id <= previous || id == strv(&top["manifest_id"])? {
+            return Err(Error::DuplicateOrConflict);
+        }
+        previous = id;
+    }
+    Ok(())
+}
+
+fn parse_u64_text(s: &str) -> Result<u64, Error> {
+    if s.is_empty() || (s.len() > 1 && s.starts_with('0')) || !s.bytes().all(|x| x.is_ascii_digit())
+    {
+        return Err(Error::Range);
+    }
+    s.parse().map_err(|_| Error::Range)
 }
 fn obj(v: &Json) -> Result<&BTreeMap<String, Json>, Error> {
     if let Json::Object(x) = v {
