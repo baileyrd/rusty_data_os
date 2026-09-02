@@ -302,3 +302,7 @@ Exactly one later pure implementation in `exp1-raw-append-replay` may build the 
 catalog, caller-owned accepted prefix, and contextual mapper against the merged literal oracle.
 Complete R20 closure requires that implementation, review, and exact-head CI. Capture, harness,
 append integration, execution, benchmarks, durability, faults, and later work remain excluded.
+
+### R27 active implementation closure
+
+The active closure branch now contains R27's bounded pure v2 catalog, accepted-prefix, and contextual mapper implementation. It awaits exact-head review, CI, and merge; therefore the complete R20 gate and the independent capture/execution gates remain open.

@@ -5,6 +5,9 @@ use exp1_workload_conformance::{
     SemanticOperation, Temporal, envelope_input, hex, identity, parse_uuid, payload, sha256,
 };
 
+// R27 contextual mapping is exercised with its independently checked-in literal oracle in
+// `reference_context.rs`; these legacy imports and cases intentionally remain unchanged.
+
 #[allow(clippy::too_many_arguments)] // Mirrors the frozen EnvelopeInput fixture dimensions.
 fn operation(
     ordinal: u64,
