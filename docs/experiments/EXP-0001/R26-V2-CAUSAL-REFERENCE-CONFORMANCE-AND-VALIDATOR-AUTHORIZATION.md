@@ -1,9 +1,9 @@
 # EXP-0001 R26 — v2 causal-reference conformance and validator authorization
 
-**Contract:** `EXP-0001-CAUSAL-REFERENCE-CONFORMANCE-v2`  
-**Status:** frozen documentation design and prospective bounded implementation authorization  
+**Contract:** `EXP-0001-CAUSAL-REFERENCE-CONFORMANCE-v2`
+**Status:** frozen documentation design and prospective bounded implementation authorization
 **Evidence classification:** governance/conformance design only; not implementation, correctness,
-workload, benchmark, durability, recovery, or performance evidence  
+workload, benchmark, durability, recovery, or performance evidence
 **Decision date:** 2026-09-02
 
 ## 1. Question, decision, and boundary
