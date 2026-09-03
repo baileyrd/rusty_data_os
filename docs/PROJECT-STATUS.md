@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — the R28-authorized test-only end-to-end D1 correctness integration is implemented pending external review; live capture remains blocked and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R29 closes the R28 integration and freezes a bounded Linux clocks/resource/file/procfs preflight ABI; perf, tracefs, capture, and execution remain blocked or unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -104,7 +104,7 @@ materialization, capture, or execution is authorized.
 
 [R20](experiments/EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes one validated SOP1 operation to exactly one structural type-3 `EXP1-B1-RF1` provisional record. The complete SOP1 is the stable core; its event ID is duplicated in the type-3 body, and later ingestion supplies distinct nonzero assigned sequence and consecutive physical ordinal values. This resolves R19's mapping blocker as documentation design and prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only that crate's manifest and the matching lock entry may change, and append integration is excluded. The independent live-Linux-capture freeze remains open; no harness, execution, D2/D3, `fsync`, canonicality, durability, or recovery claim follows.
 
-The original pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable SOP1 mapping rules. R21 freezes the catalog/context subset, R22 resolves cross-segment eligibility, R23 freezes complete closed-scope proof, and R25–R27 supply the valid v2 bootstrap and implementation contract. R28 closes the merged contextual implementation and therefore the complete R20 reference-context correctness gate as bounded correctness evidence. It remains unintegrated with append/reopen and does not materialize or execute a workload or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
+The original pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable SOP1 mapping rules. R21 freezes the catalog/context subset, R22 resolves cross-segment eligibility, R23 freezes complete closed-scope proof, and R25–R27 supply the valid v2 bootstrap and implementation contract. R28 closes the merged contextual implementation and therefore the complete R20 reference-context correctness gate as bounded correctness evidence. R29 closes its test-only integration with append/reopen as bounded deterministic correctness evidence. It does not materialize or execute a workload or establish durability, recovery, performance, or capture evidence. R29 closes the R19 mapping blocker and freezes only the clocks/resource/file/procfs preflight ABI; perf, tracefs, effective instrumentation, capture, and descriptive harness execution remain blocked or unauthorized.
 
 ## R21 reference-context decision
 
@@ -205,6 +205,11 @@ The authorized integration test now exercises the four literal SOP2 operations t
 existing contextual mapper, reviewed RF1 expectations, one raw D1 appender, and deterministic
 physical reopen/replay. It includes the required discontinuity-before-append boundary, exact state,
 receipt, prefix, record, sequence, ordinal, offset, extent, byte, and order checks, and exclusive
-test-owned unwind-safe file cleanup. This records only implementation and local deterministic
-correctness validation pending external review; it does not claim merge, external review, workload
-execution, synchronization, durability, recovery, capture, benchmark, or performance evidence.
+test-owned unwind-safe file cleanup. R29 closes this merged path as bounded deterministic integration/correctness evidence after exact-head review and successful workflows. It does not claim workload execution, synchronization, durability, recovery, capture, benchmark, or performance evidence.
+
+
+## R29 R28 integration closure and Linux capture decision
+
+[R29](experiments/EXP-0001/R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes PR #101 reviewed head `b88908cb9cbba39774437e582308bab25a88482b`, merged as `2168839a70baebdea1773fc56e7b8aa0dc9a89e4`, after successful exact-head Documentation validation and EXP-0001 Slice A workflows. The R28 test-only path is bounded deterministic integration/correctness evidence only. The R19 semantic-to-physical mapping blocker is closed.
+
+R29 freezes an external-dependency-free Fedora 44 Linux/x86_64 preflight subset: exact glibc clock/resource/stat ABI, safe parsing of three named procfs files, typed outcomes, and a sole `statx`-`ENOSYS` `fstat` fallback. Existing crates retain `#![forbid(unsafe_code)]`; only one isolated module in a future fourth crate may contain the five reviewed glibc calls behind typed safe wrappers. Perf and tracefs have no authorized ABI and remain blocked with BLK-021/UNK-022. Exactly one `exp1-descriptive-d1-harness` PR may implement only this preflight subset and deterministic tests with one-way path dependencies. Live capture, M01 materialization, append/replay or R7 production, workload/benchmark execution, publication, durability, faults, machine changes, and performance conclusions remain unauthorized.
