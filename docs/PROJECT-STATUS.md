@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — the R27-authorized pure v2 reference-context mapper is implemented on the active closure branch and awaits exact-head review, CI, and merge; the complete R20 gate remains open until merge, live capture remains blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — R28 closes the merged R27 pure v2 reference-context mapper and the complete R20 reference-context correctness gate as bounded correctness evidence; one test-only end-to-end D1 correctness integration is authorized, live capture remains blocked, and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -104,7 +104,7 @@ materialization, capture, or execution is authorized.
 
 [R20](experiments/EXP-0001/R20-SEMANTIC-OPERATION-TO-PHYSICAL-RECORD-MAPPING.md) freezes one validated SOP1 operation to exactly one structural type-3 `EXP1-B1-RF1` provisional record. The complete SOP1 is the stable core; its event ID is duplicated in the type-3 body, and later ingestion supplies distinct nonzero assigned sequence and consecutive physical ordinal values. This resolves R19's mapping blocker as documentation design and prospectively authorizes only a pure public mapper module in `exp1-raw-append-replay`, with direct path dependencies on `exp1-record-format` and `exp1-workload-conformance`; only that crate's manifest and the matching lock entry may change, and append integration is excluded. The independent live-Linux-capture freeze remains open; no harness, execution, D2/D3, `fsync`, canonicality, durability, or recovery claim follows.
 
-The authorized pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable mapping rules; the complete R20 correctness gate is not closed. Duplicate reference bytes are rejected by SOP1 validation, but future, self, and cross-stream membership require prior-event and stream context absent from the frozen mapper state. R21 freezes the locally decidable catalog/context subset, R22 resolves cross-segment eligibility, and R23 freezes the complete closed-scope proof. Separate authorization and implementation are still required for full mapper closure. They do not integrate with append/reopen, materialize or execute a workload, or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
+The original pure mapper and deterministic tests provide bounded implementation/correctness-validation evidence only for locally decidable SOP1 mapping rules. R21 freezes the catalog/context subset, R22 resolves cross-segment eligibility, R23 freezes complete closed-scope proof, and R25–R27 supply the valid v2 bootstrap and implementation contract. R28 closes the merged contextual implementation and therefore the complete R20 reference-context correctness gate as bounded correctness evidence. It remains unintegrated with append/reopen and does not materialize or execute a workload or establish durability, recovery, performance, or capture evidence. The live-Linux-capture decision remains open and blocks a descriptive D1 harness.
 
 ## R21 reference-context decision
 
@@ -183,11 +183,20 @@ closes the R26 implementation from PR #95 reviewed head
 `f4ed0c310fa46c6de209ea0f776c4749e31cdd34`, and successful exact-head CI as bounded
 conformance/correctness evidence. It versions R23's descriptor minimally for exact v2
 manifest/WS2/artifact/digest membership, preserves v1 unchanged, and rejects mixed membership. It
-prospectively authorizes exactly one pure contextual v2 mapper/catalog/state implementation in
-`exp1-raw-append-replay`, using the merged R26 literals as its independent oracle. The R27 implementation is present on the active closure branch; complete R20 closure awaits review, exact-head CI, and merge. Live
-Linux capture, append/reopen integration, workloads, benchmarks, durability, faults, and all later
-work remain blocked or unauthorized.
+prospectively authorized exactly one pure contextual v2 mapper/catalog/state implementation in
+`exp1-raw-append-replay`, using the merged R26 literals as its independent oracle. R28 closes that
+implementation and the complete R20 reference-context correctness gate as bounded correctness
+evidence. Live Linux capture, the descriptive harness, workloads, benchmarks, durability, faults,
+and all later work remain blocked or unauthorized.
 
-## R27 active implementation closure
+## R28 R27 closure and test-only D1 integration authorization
 
-The active closure branch implements the pure homogeneous-v2 closed-scope catalog, private caller-owned accepted prefix, and transactional contextual mapper. This remains bounded correctness-validation work and closes no execution, capture, durability, recovery, or performance gate before exact-head review, CI, and merge.
+[R28](experiments/EXP-0001/R28-R27-CLOSURE-AND-END-TO-END-D1-INTEGRATION-AUTHORIZATION.md)
+closes PR #98 reviewed head `67715b3efc4732542152ea9d935d92ebdb2ca0d6`, merge
+`f5cde575cbd82bb788b9519c4efc56e4d1186131`, and both successful exact-head workflows as bounded
+R27 correctness evidence. It authorizes one test-only PR in the existing `reference_context.rs`
+integration test to connect all four merged literal SOP2 operations through contextual mapping,
+byte-exact RF1, `RawAppender`, and physical reopen/replay, including transactional pre-append
+failure and unwind-safe `std` cleanup. This is deterministic integration/correctness testing only.
+No production/configuration change, harness, capture, workload execution, durability, benchmark, or
+performance evidence is authorized.

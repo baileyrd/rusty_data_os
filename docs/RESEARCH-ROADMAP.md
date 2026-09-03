@@ -28,7 +28,7 @@ Phase 0 exited when EXP-0000 and these documentation criteria were completed. Th
 
 ## Phase 1 — Canonical event ingestion
 
-**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A, B/B0, and A2 are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, durability, or performance evidence. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 as documentation design; R18 subsequently authorizes only bounded raw D1 append/replay correctness. External-dependency-free generator and manifest conformance implementation exists with reviewed workspace path dependencies, but generated workload and benchmark execution remain blocked; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
+**Current substate:** planning/readiness. EXP-0001 remains proposed and non-executable. Slices A, B/B0, A2, raw D1 append/replay, and the complete R20 reference-context correctness gate are merged and closed as bounded implementation/correctness-validation evidence; they supply no benchmark, durability, or performance evidence. R28 authorizes only one test integration of the existing literal SOP2, mapper, RF1, D1 append, and physical replay components. [R12](experiments/EXP-0001/R12-DETERMINISTIC-GENERATOR-SPECIFICATION-AND-VECTORS.md) resolves BLK-006/007 as documentation design only. R16 resolves BLK-009 as documentation design; R18 subsequently authorizes only bounded raw D1 append/replay correctness. External-dependency-free generator and manifest conformance implementation exists with reviewed workspace path dependencies, but generated workload and benchmark execution remain blocked; descriptive and confirmatory execution, BLK-015, executable harness/capture, empirical equivalence, and durability claims remain blocked.
 
 **Primary question:** what is the cost envelope of immutable event creation, sequencing, append, and different durability boundaries?
 
@@ -247,8 +247,21 @@ later phases remain gated.
 ## R27 checkpoint: v2 reference-context implementation authorized
 
 R27 closes the merged R26 v2 conformance implementation as bounded correctness evidence and freezes
-the minimum versioned R23 scope extension. The next and only authorized implementation increment is
-the pure v2 catalog/accepted-prefix/contextual mapper in `exp1-raw-append-replay`; its completion may
-close the remaining R20 reference-context correctness gate. The independent live Linux capture
-freeze still precedes any descriptive D1 harness, and workload/benchmark execution and later
-roadmap slices remain unauthorized.
+the minimum versioned R23 scope extension. The authorized pure v2 catalog/accepted-prefix/contextual mapper in
+`exp1-raw-append-replay` is merged and R28 closes it and the remaining R20 reference-context
+correctness gate as bounded correctness evidence. The independent live Linux capture freeze still
+precedes any descriptive D1 harness, and workload/benchmark execution and later roadmap slices
+remain unauthorized.
+
+
+## R28 checkpoint: R27 closure and test-only D1 integration authorized
+
+[R28](experiments/EXP-0001/R28-R27-CLOSURE-AND-END-TO-END-D1-INTEGRATION-AUTHORIZATION.md)
+closes PR #98 reviewed head `67715b3efc4732542152ea9d935d92ebdb2ca0d6`, merged as
+`f5cde575cbd82bb788b9519c4efc56e4d1186131` after both exact-head workflows succeeded. This closes
+only the complete R20 reference-context correctness gate. One follow-on may update only the existing
+`reference_context.rs` integration test plus closure documentation to prove all four literal SOP2
+operations map to byte-exact RF1 frames, append through `RawAppender`, and physically reopen/replay
+without loss or reordering, with transactional pre-append failure and `std`-only cleanup. This is
+deterministic correctness testing, not a harness, capture, execution, durability, benchmark, or
+performance increment. The live Linux capture freeze and every later roadmap gate remain blocked.
