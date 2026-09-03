@@ -14,3 +14,9 @@ compile_error!("exp1-descriptive-d1-harness supports only Linux on x86_64");
 pub mod linux_capture;
 
 pub mod orchestration;
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+mod live_adapter;
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub use live_adapter::LiveCaptureBoundary;

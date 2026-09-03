@@ -365,3 +365,8 @@ faults, external adapters/baselines, and production remain unauthorized.
 ### R32 — orchestration closure and internal live-adapter boundary
 
 [R32](R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) records PR #108's exact closure and freezes one internal adapter design without authorizing its invocation. The later bounded implementation may touch only the three named fourth-crate source files, at most one necessary adapter module, and synchronized governance documents; Cargo, dependencies, fixtures, workflows, and toolchains remain unchanged. Its tests and CI must be synthetic and invoke no host interface. BLK-020/021/026/027 and UNK-022 are narrowed only at the adapter-design boundary; target/effective validation, live readiness, records, calibration/overhead, capture, execution, and evidence remain open.
+
+
+### Open R32-authorized adapter implementation status
+
+The one authorized internal adapter implementation is present on this branch: an explicit borrowed measured-file reference, fail-closed identity-only live mapping, independent per-event perf owners, and a dependency-free `LiveCaptureBoundary` over the existing wrappers. The public aggregate `PerfCounterSession` disposition is compatibility retained. Tests are synthetic and invoke no host interface. The implementation remains open pending external exact-head review and CI and supplies no completed adapter correctness evidence, target validation, live readiness, capture, or execution. All R32 exclusions remain in force.

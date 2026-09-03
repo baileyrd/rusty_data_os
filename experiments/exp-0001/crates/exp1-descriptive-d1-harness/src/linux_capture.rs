@@ -83,6 +83,7 @@ pub enum ErrorReason {
     PerfCleanup(i32),
     PerfUnexpectedReturn(i32),
     PerfCleanupUnexpected(i32),
+    MissingFileCapability,
 }
 
 /// Source identity for an R30 counter. These values are intentionally distinct
@@ -505,6 +506,49 @@ pub struct PerfCounterSession<'a> {
     owners: PerfFdOwners<'a, GlibcPerfBoundary>,
 }
 
+/// One independently owned R30 counter.  This is the ownership unit used by
+/// the R32 adapter; it neither groups nor suppresses outcomes from other
+/// events.
+pub struct PerfEventSession<'a> {
+    owner: Option<OwnedPerfFd<'a, GlibcPerfBoundary>>,
+    stopped: bool,
+}
+
+impl<'a> PerfEventSession<'a> {
+    /// Opens, resets, and enables exactly one event.
+    pub fn open(event: PerfEvent, cleanup: &'a PerfCleanupState) -> Outcome<Self> {
+        match open_one_perf(GlibcPerfBoundary, cleanup, event) {
+            Outcome::Success(owner) => Outcome::Success(Self {
+                owner: Some(owner),
+                stopped: false,
+            }),
+            outcome => outcome.map_type(),
+        }
+    }
+
+    /// Disables and reads this event.  Closing remains a separate operation so
+    /// the orchestrator can retain stop and cleanup failures independently.
+    pub fn stop(&mut self) -> Outcome<PerfCounter> {
+        if self.stopped {
+            return Outcome::Error(ErrorReason::PerfLifecycle);
+        }
+        self.stopped = true;
+        stop_one_perf(
+            GlibcPerfBoundary,
+            self.owner.as_ref().expect("owned descriptor is present"),
+        )
+    }
+
+    /// Closes the uniquely owned descriptor exactly once.
+    pub fn cleanup(mut self) -> Outcome<()> {
+        let owner = self.owner.take().expect("owned descriptor is present");
+        match owner.finalize() {
+            Ok(()) => Outcome::Success(()),
+            Err(error) => classify_perf_close_error(error),
+        }
+    }
+}
+
 struct PerfFdOwners<'a, B: PerfBoundary> {
     fds: Vec<OwnedPerfFd<'a, B>>,
 }
@@ -581,6 +625,50 @@ fn open_perf_session<'a, B: PerfBoundary>(
         }
     }
     Outcome::Success(owners)
+}
+
+fn open_one_perf<'a, B: PerfBoundary>(
+    boundary: B,
+    cleanup: &'a PerfCleanupState,
+    event: PerfEvent,
+) -> Outcome<OwnedPerfFd<'a, B>> {
+    let fd = match boundary.open(&PerfEventAttr::for_event(event)) {
+        Ok(fd) => fd,
+        Err(errno) => return classify_perf_open_errno(errno),
+    };
+    let owner = OwnedPerfFd {
+        fd: Some(fd),
+        boundary,
+        cleanup,
+        event,
+    };
+    for request in [PERF_EVENT_IOC_RESET, PERF_EVENT_IOC_ENABLE] {
+        if let Err(error) = boundary.ioctl(fd, request) {
+            drop(owner);
+            return if cleanup.cleanup_failed() {
+                classify_sticky_cleanup(cleanup)
+            } else {
+                classify_perf_boundary_error(error)
+            };
+        }
+    }
+    Outcome::Success(owner)
+}
+
+fn stop_one_perf<B: PerfBoundary>(boundary: B, owner: &OwnedPerfFd<'_, B>) -> Outcome<PerfCounter> {
+    let fd = owner.fd.expect("owned descriptor is present");
+    if let Err(error) = boundary.ioctl(fd, PERF_EVENT_IOC_DISABLE) {
+        return classify_perf_boundary_error(error);
+    }
+    let mut value = PerfSnapshot::default();
+    match boundary.read(fd, &mut value) {
+        Ok(PERF_READ_BYTES) => Outcome::Success(perf_counter(owner.event, value)),
+        Ok(other) => Outcome::Error(ErrorReason::PerfShortRead(other as isize)),
+        Err(BoundaryReadError::Unexpected(count)) => {
+            Outcome::Error(ErrorReason::PerfShortRead(count))
+        }
+        Err(BoundaryReadError::Errno(errno)) => classify_perf_boundary_errno(errno),
+    }
 }
 
 fn finish_perf_session<B: PerfBoundary>(
@@ -794,7 +882,7 @@ pub fn resource_usage(scope: ResourceScope) -> Outcome<ResourceUsage> {
     }
 }
 
-pub fn open_file_length(file: &impl AsRawFd) -> Outcome<FileLength> {
+pub fn open_file_length(file: &(impl AsRawFd + ?Sized)) -> Outcome<FileLength> {
     file_length_for_fd(file.as_raw_fd())
 }
 
