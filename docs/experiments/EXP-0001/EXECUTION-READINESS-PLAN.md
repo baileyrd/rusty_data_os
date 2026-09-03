@@ -319,3 +319,9 @@ This is deterministic integration/correctness testing only. The independent live
 freeze, descriptive D1 harness, fourth crate, R7 production, real execution, `fsync`, D2/D3, faults,
 adapters, baselines, production code, durability, benchmarks, and performance claims remain blocked
 or unauthorized.
+
+The authorized test-only path is now implemented pending external review. It connects the four
+literal SOP2 operations to the existing contextual mapper, byte-exact RF1 oracle, one
+`RawAppender`, and physical reopen/replay, with a pre-append discontinuity check and exact
+state/receipt/prefix/record/order accounting. This is not a merge or external-review claim and does
+not advance the independent live-capture or execution gates.

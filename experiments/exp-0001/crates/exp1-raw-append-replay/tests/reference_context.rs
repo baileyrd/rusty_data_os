@@ -1,10 +1,54 @@
 use exp1_raw_append_replay::reference_context::*;
+use exp1_raw_append_replay::{RawAppender, ReplayTermination, reopen_and_replay};
+use exp1_record_format::{Body, Record, ScanLimits};
 use exp1_workload_conformance::{hex, manifest_digest_v2, sha256, workload_digest_v2};
+use std::fs::{self, OpenOptions};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 const MANIFEST: &[u8] =
     include_bytes!("../../exp1-workload-conformance/tests/data/r26-v2/manifest.jcs");
 const WS_HEX: &str = include_str!("../../exp1-workload-conformance/tests/data/r26-v2/ws.hex");
 const NS: [u8; 16] = [0x25, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1];
+static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+struct TestFileCleanup {
+    path: PathBuf,
+}
+
+impl Drop for TestFileCleanup {
+    fn drop(&mut self) {
+        match fs::remove_file(&self.path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => eprintln!("failed to remove test file {:?}: {error}", self.path),
+        }
+    }
+}
+
+fn create_exclusive_test_file() -> (std::fs::File, TestFileCleanup) {
+    let counter = TEMP_FILE_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let path = std::env::temp_dir().join(format!(
+        "exp1-r28-reference-context-{}-{counter}",
+        std::process::id()
+    ));
+    let file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+        .unwrap_or_else(|error| {
+            panic!("exclusive test-file creation failed for {path:?}: {error}")
+        });
+    let cleanup = TestFileCleanup { path };
+    (file, cleanup)
+}
+
+fn provisional_sequence(record: &Record) -> u64 {
+    match &record.body {
+        Body::Provisional { sequence, .. } => *sequence,
+        body => panic!("expected provisional record, got {body:?}"),
+    }
+}
 
 fn decode_hex(s: &str) -> Vec<u8> {
     let s = s.trim();
@@ -785,6 +829,111 @@ fn both_segment_bootstraps_and_prior_references_map_transactionally() {
             .unwrap_err(),
         ContextualMappingError::Exhaustion
     );
+}
+
+#[test]
+fn literal_sop2_maps_appends_and_physically_replays_without_reordering() {
+    let (context, operations) = context();
+    assert_eq!(operations.len(), 4);
+    let initial = context.initial_state().clone();
+
+    let (exclusive_file, cleanup) = create_exclusive_test_file();
+    assert_eq!(exclusive_file.metadata().unwrap().len(), 0);
+
+    let rejected_mapping =
+        map_semantic_operation_v2_with_context(&operations[1], 1, 1, context.catalog(), &initial);
+    assert_eq!(
+        rejected_mapping.as_ref().unwrap_err(),
+        &ContextualMappingError::Discontinuity
+    );
+    assert!(rejected_mapping.ok().is_none());
+    assert_eq!(initial, *context.initial_state());
+    let rejected_receipt = None::<exp1_raw_append_replay::D1SubmissionReceipt>;
+    let append_called = false;
+    assert!(rejected_receipt.is_none());
+    assert!(!append_called);
+    assert_eq!(exclusive_file.metadata().unwrap().len(), 0);
+
+    drop(exclusive_file);
+    let frame_digests = [
+        "5822e65071f5ed4a17865d96c60247639bf11fe7fb6421efc139181510a1333a",
+        "2a293b9f09924711c476d0892abfb296a04e8b31a1b6649b1e2c6906d714dd87",
+        "cc1293aed2c195cb047b0bbe607979074369993946b757914b14d7c0b9f44f1a",
+        "fb5d0a896bb841aae4045e6dfd2a6369d0d2095e74aae18c8234f39011cd83f3",
+    ];
+    let mut state = initial;
+    let mut mapped = Vec::with_capacity(operations.len());
+    for (index, operation) in operations.iter().enumerate() {
+        let assigned = (index + 1) as u64;
+        let before = state.clone();
+        let output = map_semantic_operation_v2_with_context(
+            operation,
+            assigned,
+            assigned,
+            context.catalog(),
+            &state,
+        )
+        .unwrap();
+        assert_eq!(state, before);
+        assert_eq!(output.next_state().accepted_operations(), assigned);
+        assert_eq!(output.next_state().previous_sequence(), assigned);
+        assert_eq!(output.next_state().previous_physical_ordinal(), assigned);
+        assert_eq!(provisional_sequence(output.record()), assigned);
+        assert_eq!(output.record().physical_ordinal, assigned);
+        assert_eq!(
+            exp1_record_format::decode(output.frame()).unwrap(),
+            *output.record()
+        );
+        assert_eq!(hex(&sha256(output.frame())), frame_digests[index]);
+        state = output.next_state().clone();
+        mapped.push(output);
+    }
+
+    let mut appender = RawAppender::open(&cleanup.path).unwrap();
+    let mut receipts = Vec::with_capacity(mapped.len());
+    let mut expected_offset = 0_u64;
+    for output in &mapped {
+        let receipt = appender.append(output.frame()).unwrap();
+        assert_eq!(receipt.starting_offset, expected_offset);
+        assert_eq!(receipt.byte_count, output.frame().len());
+        expected_offset += u64::try_from(receipt.byte_count).unwrap();
+        assert!(!appender.is_poisoned());
+        receipts.push(receipt);
+    }
+    assert_eq!(receipts.len(), 4);
+    drop(appender);
+
+    let expected_prefix: Vec<u8> = mapped
+        .iter()
+        .flat_map(|output| output.frame().iter().copied())
+        .collect();
+    let report = reopen_and_replay(
+        &cleanup.path,
+        ScanLimits {
+            max_record_len: mapped
+                .iter()
+                .map(|output| output.frame().len())
+                .max()
+                .unwrap(),
+            max_records: 4,
+            max_scan_bytes: u64::try_from(expected_prefix.len()).unwrap(),
+            max_diagnostic_bytes: expected_prefix.len(),
+        },
+    );
+    assert_eq!(report.termination, ReplayTermination::CleanEof);
+    assert_eq!(report.accepted_prefix, expected_prefix);
+    assert_eq!(report.scanned_bytes, expected_offset);
+    assert_eq!(report.records.len(), mapped.len());
+
+    for (index, (physical, output)) in report.records.iter().zip(&mapped).enumerate() {
+        let assigned = (index + 1) as u64;
+        assert_eq!(physical.offset, receipts[index].starting_offset);
+        assert_eq!(physical.extent, receipts[index].byte_count);
+        assert_eq!(physical.bytes, output.frame());
+        assert_eq!(&physical.record, output.record());
+        assert_eq!(provisional_sequence(&physical.record), assigned);
+        assert_eq!(physical.record.physical_ordinal, assigned);
+    }
 }
 
 #[test]
