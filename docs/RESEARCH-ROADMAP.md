@@ -284,3 +284,10 @@ later roadmap work remain blocked.
 ## R30 checkpoint: R29 preflight closed and counter-only perf ABI frozen
 
 [R30](experiments/EXP-0001/R30-R29-PREFLIGHT-CLOSURE-AND-PERF-COUNTER-ABI-DECISION.md) records the exact PR #103 head, merge, and successful workflows as bounded correctness evidence only. Its prospective next increment is limited to callable wrappers, FD ownership, pure policy/scaling, and synthetic tests for CPU cycles, instructions, page faults, and context switches. CI and tests may not invoke perf or observe a host. Tracefs, mmap/ring buffers, sampling/signals, live capture, execution, publication, performance, durability, faults, adapters, and production remain outside roadmap authorization.
+
+
+## R31 checkpoint: perf implementation closed and minimum descriptive D1 instrumentation frozen
+
+[R31](experiments/EXP-0001/R31-PERF-IMPLEMENTATION-CLOSURE-AND-MINIMUM-D1-INSTRUMENTATION-DECISION.md) closes PR #105 reviewed head `547d0bba730d842e354a058773408c66b368f326`, merge `409d0737759d4e10fc39ad879ccc975858e89d9f`, with both exact-head workflows successful, only as bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence. It is not live capture, target validation, execution, or performance evidence.
+
+The first descriptive B1/D1 minimum uses frozen clocks, both `getrusage` scopes, procfs/file observations, and four availability-conditional perf counters as separate sources. Tracefs is narrowly deferred with exact missing states because R8 does not make its attribution diagnostic primary; it remains blocked for confirmation and every attribution/loss claim. One later PR may add only deterministic injected orchestration and synthetic fail-closed tests in the existing fourth crate and synchronized documentation. Live use, records, workloads, benchmarks, publication, D2/D3, `fsync`, durability/recovery, faults, adapters/baselines, production, and later phases remain gated.
