@@ -81,6 +81,8 @@ pub enum ErrorReason {
     PerfDecrease,
     PerfLifecycle,
     PerfCleanup(i32),
+    PerfUnexpectedReturn(i32),
+    PerfCleanupUnexpected(i32),
 }
 
 /// Source identity for an R30 counter. These values are intentionally distinct
@@ -368,9 +370,15 @@ unsafe extern "C" {
 
 trait PerfBoundary: Copy {
     fn open(&self, attr: &PerfEventAttr) -> Result<RawFd, i32>;
-    fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), i32>;
+    fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), BoundaryCallError>;
     fn read(&self, fd: RawFd, result: &mut PerfSnapshot) -> Result<usize, BoundaryReadError>;
-    fn close(&self, fd: RawFd) -> Result<(), i32>;
+    fn close(&self, fd: RawFd) -> Result<(), BoundaryCallError>;
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BoundaryCallError {
+    Errno(i32),
+    Unexpected(i32),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -403,10 +411,10 @@ impl PerfBoundary for GlibcPerfBoundary {
         }
     }
 
-    fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), i32> {
+    fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), BoundaryCallError> {
         // SAFETY: The request is one of the frozen no-argument perf ioctls.
         let result = unsafe { ioctl(fd, request, 0_i64) };
-        (result == 0).then_some(()).ok_or_else(last_errno)
+        classify_zero_result(result, last_errno)
     }
 
     fn read(&self, fd: RawFd, result: &mut PerfSnapshot) -> Result<usize, BoundaryReadError> {
@@ -421,25 +429,43 @@ impl PerfBoundary for GlibcPerfBoundary {
         }
     }
 
-    fn close(&self, fd: RawFd) -> Result<(), i32> {
+    fn close(&self, fd: RawFd) -> Result<(), BoundaryCallError> {
         // SAFETY: The uniquely owned descriptor is closed exactly once.
         let result = unsafe { close(fd) };
-        (result == 0).then_some(()).ok_or_else(last_errno)
+        classify_zero_result(result, last_errno)
+    }
+}
+
+fn classify_zero_result(result: i32, errno: impl FnOnce() -> i32) -> Result<(), BoundaryCallError> {
+    match result {
+        0 => Ok(()),
+        -1 => Err(BoundaryCallError::Errno(errno())),
+        unexpected => Err(BoundaryCallError::Unexpected(unexpected)),
     }
 }
 
 #[derive(Debug, Default)]
 pub struct PerfCleanupState {
-    errno: std::cell::Cell<Option<i32>>,
+    failure: std::cell::Cell<Option<BoundaryCallError>>,
 }
 
 impl PerfCleanupState {
     pub fn cleanup_failed(&self) -> bool {
-        self.errno.get().is_some()
+        self.failure.get().is_some()
     }
 
     pub fn cleanup_errno(&self) -> Option<i32> {
-        self.errno.get()
+        match self.failure.get() {
+            Some(BoundaryCallError::Errno(errno)) => Some(errno),
+            _ => None,
+        }
+    }
+
+    pub fn cleanup_unexpected_return(&self) -> Option<i32> {
+        match self.failure.get() {
+            Some(BoundaryCallError::Unexpected(result)) => Some(result),
+            _ => None,
+        }
     }
 }
 
@@ -451,11 +477,11 @@ struct OwnedPerfFd<'a, B: PerfBoundary> {
 }
 
 impl<B: PerfBoundary> OwnedPerfFd<'_, B> {
-    fn finalize(mut self) -> Result<(), i32> {
+    fn finalize(mut self) -> Result<(), BoundaryCallError> {
         let fd = self.fd.take().expect("owned descriptor is present");
         let result = self.boundary.close(fd);
         if result.is_err() {
-            self.cleanup.errno.set(result.err());
+            self.cleanup.failure.set(result.err());
         }
         result
     }
@@ -464,9 +490,9 @@ impl<B: PerfBoundary> OwnedPerfFd<'_, B> {
 impl<B: PerfBoundary> Drop for OwnedPerfFd<'_, B> {
     fn drop(&mut self) {
         if let Some(fd) = self.fd.take()
-            && let Err(errno) = self.boundary.close(fd)
+            && let Err(failure) = self.boundary.close(fd)
         {
-            self.cleanup.errno.set(Some(errno));
+            self.cleanup.failure.set(Some(failure));
         }
     }
 }
@@ -476,21 +502,46 @@ impl<B: PerfBoundary> Drop for OwnedPerfFd<'_, B> {
 /// measured interval yet.
 pub struct PerfCounterSession<'a> {
     boundary: GlibcPerfBoundary,
-    fds: Vec<OwnedPerfFd<'a, GlibcPerfBoundary>>,
+    owners: PerfFdOwners<'a, GlibcPerfBoundary>,
+}
+
+struct PerfFdOwners<'a, B: PerfBoundary> {
+    fds: Vec<OwnedPerfFd<'a, B>>,
+}
+
+impl<B: PerfBoundary> PerfFdOwners<'_, B> {
+    fn close_reverse(&mut self) {
+        drop_owners_reverse(&mut self.fds);
+    }
+}
+
+impl<B: PerfBoundary> Drop for PerfFdOwners<'_, B> {
+    fn drop(&mut self) {
+        self.close_reverse();
+    }
+}
+
+impl Drop for PerfCounterSession<'_> {
+    fn drop(&mut self) {
+        self.owners.close_reverse();
+    }
 }
 
 impl<'a> PerfCounterSession<'a> {
     pub fn open(cleanup: &'a PerfCleanupState) -> Outcome<Self> {
         let boundary = GlibcPerfBoundary;
         match open_perf_session(boundary, cleanup) {
-            Outcome::Success(fds) => Outcome::Success(Self { boundary, fds }),
+            Outcome::Success(fds) => Outcome::Success(Self {
+                boundary,
+                owners: PerfFdOwners { fds },
+            }),
             outcome => outcome.map_type(),
         }
     }
 
     pub fn finalize(mut self) -> Outcome<[PerfCounter; 4]> {
-        let result = finish_perf_session(self.boundary, &mut self.fds);
-        self.fds.clear();
+        let result = finish_perf_session(self.boundary, &mut self.owners.fds);
+        self.owners.fds.clear();
         result
     }
 }
@@ -506,7 +557,7 @@ fn open_perf_session<'a, B: PerfBoundary>(
             Err(errno) => {
                 drop_owners_reverse(&mut owners);
                 return if cleanup.cleanup_failed() {
-                    Outcome::Error(ErrorReason::PerfCleanup(cleanup.cleanup_errno().unwrap()))
+                    classify_sticky_cleanup(cleanup)
                 } else {
                     classify_perf_open_errno(errno)
                 };
@@ -519,12 +570,12 @@ fn open_perf_session<'a, B: PerfBoundary>(
             event,
         });
         for request in [PERF_EVENT_IOC_RESET, PERF_EVENT_IOC_ENABLE] {
-            if let Err(errno) = boundary.ioctl(fd, request) {
+            if let Err(error) = boundary.ioctl(fd, request) {
                 drop_owners_reverse(&mut owners);
                 return if cleanup.cleanup_failed() {
-                    Outcome::Error(ErrorReason::PerfCleanup(cleanup.cleanup_errno().unwrap()))
+                    classify_sticky_cleanup(cleanup)
                 } else {
-                    classify_perf_boundary_errno(errno)
+                    classify_perf_boundary_error(error)
                 };
             }
         }
@@ -541,9 +592,9 @@ fn finish_perf_session<B: PerfBoundary>(
     while let Some(owner) = owners.pop() {
         let event = owner.event;
         let fd = owner.fd.expect("owned descriptor is present");
-        if let Err(errno) = boundary.ioctl(fd, PERF_EVENT_IOC_DISABLE) {
+        if let Err(error) = boundary.ioctl(fd, PERF_EVENT_IOC_DISABLE) {
             if failure.is_none() {
-                failure = Some(classify_perf_boundary_errno(errno));
+                failure = Some(classify_perf_boundary_error(error));
             }
         } else {
             let mut value = PerfSnapshot::default();
@@ -570,8 +621,8 @@ fn finish_perf_session<B: PerfBoundary>(
                 }
             }
         }
-        if let Err(errno) = owner.finalize() {
-            failure = Some(classify_perf_close_errno(errno));
+        if let Err(error) = owner.finalize() {
+            failure = Some(classify_perf_close_error(error));
         }
     }
     if let Some(failure) = failure {
@@ -650,11 +701,33 @@ fn classify_perf_boundary_errno<T>(errno: i32) -> Outcome<T> {
     }
 }
 
-fn classify_perf_close_errno<T>(errno: i32) -> Outcome<T> {
-    if errno == EOVERFLOW {
-        Outcome::Overflow(OverflowReason::PerfErrno(errno))
-    } else {
-        Outcome::Error(ErrorReason::PerfCleanup(errno))
+fn classify_perf_boundary_error<T>(error: BoundaryCallError) -> Outcome<T> {
+    match error {
+        BoundaryCallError::Errno(errno) => classify_perf_boundary_errno(errno),
+        BoundaryCallError::Unexpected(result) => {
+            Outcome::Error(ErrorReason::PerfUnexpectedReturn(result))
+        }
+    }
+}
+
+fn classify_perf_close_error<T>(error: BoundaryCallError) -> Outcome<T> {
+    match error {
+        BoundaryCallError::Errno(EOVERFLOW) => {
+            Outcome::Overflow(OverflowReason::PerfErrno(EOVERFLOW))
+        }
+        BoundaryCallError::Errno(errno) => Outcome::Error(ErrorReason::PerfCleanup(errno)),
+        BoundaryCallError::Unexpected(result) => {
+            Outcome::Error(ErrorReason::PerfCleanupUnexpected(result))
+        }
+    }
+}
+
+fn classify_sticky_cleanup<T>(cleanup: &PerfCleanupState) -> Outcome<T> {
+    match cleanup.failure.get().expect("cleanup failure is present") {
+        BoundaryCallError::Errno(errno) => Outcome::Error(ErrorReason::PerfCleanup(errno)),
+        BoundaryCallError::Unexpected(result) => {
+            Outcome::Error(ErrorReason::PerfCleanupUnexpected(result))
+        }
     }
 }
 
@@ -1104,9 +1177,9 @@ mod tests {
 
     struct FakeBoundary {
         opens: RefCell<VecDeque<Result<RawFd, i32>>>,
-        ioctls: RefCell<VecDeque<Result<(), i32>>>,
+        ioctls: RefCell<VecDeque<Result<(), BoundaryCallError>>>,
         reads: RefCell<VecDeque<Result<PerfSnapshot, BoundaryReadError>>>,
-        closes: RefCell<VecDeque<Result<(), i32>>>,
+        closes: RefCell<VecDeque<Result<(), BoundaryCallError>>>,
         calls: RefCell<Vec<Call>>,
     }
 
@@ -1139,7 +1212,7 @@ mod tests {
             self.opens.borrow_mut().pop_front().unwrap()
         }
 
-        fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), i32> {
+        fn ioctl(&self, fd: RawFd, request: u64) -> Result<(), BoundaryCallError> {
             self.calls.borrow_mut().push(Call::Ioctl(fd, request));
             self.ioctls.borrow_mut().pop_front().unwrap()
         }
@@ -1155,7 +1228,7 @@ mod tests {
             }
         }
 
-        fn close(&self, fd: RawFd) -> Result<(), i32> {
+        fn close(&self, fd: RawFd) -> Result<(), BoundaryCallError> {
             self.calls.borrow_mut().push(Call::Close(fd));
             self.closes.borrow_mut().pop_front().unwrap()
         }
@@ -1434,7 +1507,7 @@ mod tests {
             );
         }
         let fake = FakeBoundary::successful();
-        fake.ioctls.borrow_mut()[0] = Err(EINVAL);
+        fake.ioctls.borrow_mut()[0] = Err(BoundaryCallError::Errno(EINVAL));
         let cleanup = PerfCleanupState::default();
         assert_eq!(
             open_perf_session(&fake, &cleanup).map_type::<()>(),
@@ -1450,7 +1523,7 @@ mod tests {
         );
 
         let fake = FakeBoundary::successful();
-        fake.closes.borrow_mut()[0] = Err(EBADF);
+        fake.closes.borrow_mut()[0] = Err(BoundaryCallError::Errno(EBADF));
         let cleanup = PerfCleanupState::default();
         let Outcome::Success(mut owners) = open_perf_session(&fake, &cleanup) else {
             panic!()
@@ -1465,7 +1538,7 @@ mod tests {
     #[test]
     fn every_perf_lifecycle_failure_is_terminal_without_retry() {
         let fake = FakeBoundary::successful();
-        fake.ioctls.borrow_mut()[1] = Err(EBUSY);
+        fake.ioctls.borrow_mut()[1] = Err(BoundaryCallError::Errno(EBUSY));
         let cleanup = PerfCleanupState::default();
         assert_eq!(
             open_perf_session(&fake, &cleanup).map_type::<()>(),
@@ -1481,7 +1554,7 @@ mod tests {
         );
 
         let fake = FakeBoundary::successful();
-        fake.ioctls.borrow_mut()[8] = Err(EPERM);
+        fake.ioctls.borrow_mut()[8] = Err(BoundaryCallError::Errno(EPERM));
         let cleanup = PerfCleanupState::default();
         let Outcome::Success(mut owners) = open_perf_session(&fake, &cleanup) else {
             panic!()
@@ -1514,13 +1587,13 @@ mod tests {
     #[test]
     fn perf_unwind_drop_closes_once_and_marks_sticky_failure() {
         let fake = FakeBoundary::successful();
-        fake.closes.borrow_mut()[0] = Err(EBADF);
+        fake.closes.borrow_mut()[0] = Err(BoundaryCallError::Errno(EBADF));
         let cleanup = PerfCleanupState::default();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let Outcome::Success(mut owners) = open_perf_session(&fake, &cleanup) else {
+            let Outcome::Success(fds) = open_perf_session(&fake, &cleanup) else {
                 panic!()
             };
-            drop_owners_reverse(&mut owners);
+            let _session = PerfFdOwners { fds };
             panic!("synthetic unwind");
         }));
         assert!(result.is_err());
@@ -1529,10 +1602,56 @@ mod tests {
             fake.calls
                 .borrow()
                 .iter()
-                .filter(|call| matches!(call, Call::Close(_)))
-                .count(),
-            4
+                .filter_map(|call| match call {
+                    Call::Close(fd) => Some(*fd),
+                    _ => None,
+                })
+                .collect::<Vec<_>>(),
+            [13, 12, 11, 10]
         );
+    }
+
+    #[test]
+    fn positive_ioctl_and_close_returns_are_invalid_without_reading_errno() {
+        let errno_reads = std::cell::Cell::new(0);
+        let stale_errno = || {
+            errno_reads.set(errno_reads.get() + 1);
+            EBADF
+        };
+        assert_eq!(
+            classify_zero_result(7, stale_errno),
+            Err(BoundaryCallError::Unexpected(7))
+        );
+        assert_eq!(errno_reads.get(), 0);
+        assert_eq!(
+            classify_perf_boundary_error::<()>(BoundaryCallError::Unexpected(7)),
+            Outcome::Error(ErrorReason::PerfUnexpectedReturn(7))
+        );
+        assert_eq!(
+            classify_perf_close_error::<()>(BoundaryCallError::Unexpected(9)),
+            Outcome::Error(ErrorReason::PerfCleanupUnexpected(9))
+        );
+
+        let fake = FakeBoundary::successful();
+        fake.ioctls.borrow_mut()[0] = Err(BoundaryCallError::Unexpected(7));
+        assert_eq!(
+            open_perf_session(&fake, &PerfCleanupState::default()).map_type::<()>(),
+            Outcome::Error(ErrorReason::PerfUnexpectedReturn(7))
+        );
+
+        let fake = FakeBoundary::successful();
+        fake.closes.borrow_mut()[0] = Err(BoundaryCallError::Unexpected(9));
+        let cleanup = PerfCleanupState::default();
+        let Outcome::Success(mut owners) = open_perf_session(&fake, &cleanup) else {
+            panic!()
+        };
+        assert_eq!(
+            finish_perf_session(&fake, &mut owners),
+            Outcome::Error(ErrorReason::PerfCleanupUnexpected(9))
+        );
+        assert!(cleanup.cleanup_failed());
+        assert_eq!(cleanup.cleanup_errno(), None);
+        assert_eq!(cleanup.cleanup_unexpected_return(), Some(9));
     }
 
     #[test]

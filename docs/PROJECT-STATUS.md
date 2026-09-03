@@ -19,8 +19,9 @@ subset and deterministic synthetic tests. R30 freezes a four-event, counter-read
 a non-live deterministic extension in the existing fourth crate. Tracefs, live capture, harness
 assembly/execution, and every retained exclusion remain blocked or unauthorized.
 
-The R30-authorized follow-up now implements the frozen four-event `perf_event_open` counter boundary
-and synthetic lifecycle, ownership, parsing, classification, and scaling tests only in the existing
+The R30-authorized follow-up now implements the frozen four-event `perf_event_open` counter boundary,
+reverse-order session abandonment/unwind cleanup, distinct errno and unexpected-return failures, and
+synthetic lifecycle, ownership, parsing, classification, and scaling tests only in the existing
 fourth crate. This change is pending external review and is not merged or completed evidence. No test
 or implementation caller invokes perf, probes the host, captures data, or executes a workload or
 benchmark; tracefs and effective instrumentation remain blocked.

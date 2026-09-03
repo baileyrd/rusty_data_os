@@ -339,6 +339,7 @@ adapters, production, and performance conclusions remain unauthorized.
 
 [R30](R30-R29-PREFLIGHT-CLOSURE-AND-PERF-COUNTER-ABI-DECISION.md) closes the exact PR #103 implementation and freezes only four independent current-thread perf counter reads, exact ABI/lifecycle, enabled/running/raw retention, checked integer scaling, typed failures, and cleanup. Exactly one later PR may extend only `linux_capture.rs`, deterministic synthetic tests, and synchronized status documentation; tests and CI may not invoke perf or observe a host. Tracefs and effective instrumentation/capture remain open under BLK-021/UNK-022. Every execution, evidence-publication, durability, fault, adapter, and production exclusion remains in force.
 
-That authorized deterministic extension is now implemented and pending external review. It remains
-non-live correctness code with injected synthetic tests only; it is not merged or completed evidence,
+That authorized deterministic extension is now implemented with reverse-order session-drop cleanup
+and distinct errno/unexpected-return failures, and is pending external review. It remains non-live
+correctness code with injected synthetic tests only; it is not merged or completed evidence,
 and it does not change any tracefs, effective-capture, execution, publication, or later-slice gate.
