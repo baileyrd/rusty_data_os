@@ -15,16 +15,15 @@ trait LiveOperations {
     fn process_io(&mut self) -> Outcome<ProcessIo>;
     fn file_length(&mut self, file: MeasuredFileReference<'_>) -> Outcome<FileLength>;
     fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner>;
+    fn perf_event(owner: &Self::PerfOwner) -> PerfEvent;
     fn stop_perf(&mut self, owner: &mut Self::PerfOwner) -> Outcome<PerfCounter>;
     fn cleanup_perf(&mut self, owner: Self::PerfOwner) -> Outcome<()>;
 }
 
-struct SystemOperations<'a> {
-    cleanup: &'a PerfCleanupState,
-}
+struct SystemOperations;
 
-impl<'a> LiveOperations for SystemOperations<'a> {
-    type PerfOwner = PerfEventSession<'a>;
+impl LiveOperations for SystemOperations {
+    type PerfOwner = PerfEventSession<'static>;
 
     fn clock(&mut self, clock: Clock) -> Outcome<i128> {
         linux_capture::clock_time(clock)
@@ -48,7 +47,10 @@ impl<'a> LiveOperations for SystemOperations<'a> {
         }
     }
     fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner> {
-        PerfEventSession::open(event, self.cleanup)
+        PerfEventSession::open(event)
+    }
+    fn perf_event(owner: &Self::PerfOwner) -> PerfEvent {
+        owner.event()
     }
     fn stop_perf(&mut self, owner: &mut Self::PerfOwner) -> Outcome<PerfCounter> {
         owner.stop()
@@ -92,11 +94,27 @@ impl<O: LiveOperations> CaptureBoundary for Adapter<O> {
     fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner> {
         self.operations.open_perf(event)
     }
-    fn stop_perf(&mut self, owner: &mut Self::PerfOwner, _: PerfEvent) -> Outcome<PerfCounter> {
+    fn stop_perf(&mut self, owner: &mut Self::PerfOwner, event: PerfEvent) -> Outcome<PerfCounter> {
+        let actual = O::perf_event(owner);
+        if actual != event {
+            return Outcome::Error(ErrorReason::PerfEventMismatch {
+                expected: event,
+                actual,
+            });
+        }
         self.operations.stop_perf(owner)
     }
-    fn cleanup_perf(&mut self, owner: Self::PerfOwner, _: PerfEvent) -> Outcome<()> {
-        self.operations.cleanup_perf(owner)
+    fn cleanup_perf(&mut self, owner: Self::PerfOwner, event: PerfEvent) -> Outcome<()> {
+        let actual = O::perf_event(&owner);
+        let cleanup = self.operations.cleanup_perf(owner);
+        if actual != event {
+            Outcome::Error(ErrorReason::PerfEventMismatch {
+                expected: event,
+                actual,
+            })
+        } else {
+            cleanup
+        }
     }
 }
 
@@ -105,21 +123,23 @@ impl<O: LiveOperations> CaptureBoundary for Adapter<O> {
 /// Construction performs no probing or host call.  No caller is provided by
 /// this crate; possessing this value does not validate a target.
 pub struct LiveCaptureBoundary<'a> {
-    inner: Adapter<SystemOperations<'a>>,
+    inner: Adapter<SystemOperations>,
+    lifetime: std::marker::PhantomData<&'a PerfCleanupState>,
 }
 
 impl<'a> LiveCaptureBoundary<'a> {
-    pub fn new(cleanup: &'a PerfCleanupState) -> Self {
+    pub fn new(_: &'a PerfCleanupState) -> Self {
         Self {
             inner: Adapter {
-                operations: SystemOperations { cleanup },
+                operations: SystemOperations,
             },
+            lifetime: std::marker::PhantomData,
         }
     }
 }
 
 impl<'a> CaptureBoundary for LiveCaptureBoundary<'a> {
-    type PerfOwner = PerfEventSession<'a>;
+    type PerfOwner = PerfEventSession<'static>;
 
     fn realtime(&mut self) -> Outcome<i128> {
         self.inner.realtime()
@@ -214,6 +234,9 @@ mod tests {
             self.calls.push(format!("open:{event:?}"));
             Outcome::Success(event)
         }
+        fn perf_event(owner: &Self::PerfOwner) -> PerfEvent {
+            *owner
+        }
         fn stop_perf(&mut self, owner: &mut Self::PerfOwner) -> Outcome<PerfCounter> {
             self.calls.push(format!("stop:{owner:?}"));
             Outcome::Unavailable(UnavailableReason::Unsupported)
@@ -302,5 +325,33 @@ mod tests {
             Outcome::Error(ErrorReason::MissingFileCapability)
         );
         assert!(!cleanup.cleanup_failed());
+    }
+
+    #[test]
+    fn adapter_event_mismatches_fail_closed_and_cleanup_the_owner_once() {
+        let mut boundary = Adapter {
+            operations: FakeOperations::default(),
+        };
+        let Outcome::Success(mut owner) = boundary.open_perf(PerfEvent::CpuCycles) else {
+            panic!()
+        };
+        assert_eq!(
+            boundary.stop_perf(&mut owner, PerfEvent::Instructions),
+            Outcome::Error(ErrorReason::PerfEventMismatch {
+                expected: PerfEvent::Instructions,
+                actual: PerfEvent::CpuCycles,
+            })
+        );
+        assert_eq!(
+            boundary.cleanup_perf(owner, PerfEvent::PageFaults),
+            Outcome::Error(ErrorReason::PerfEventMismatch {
+                expected: PerfEvent::PageFaults,
+                actual: PerfEvent::CpuCycles,
+            })
+        );
+        assert_eq!(
+            boundary.operations.calls,
+            ["open:CpuCycles", "cleanup:CpuCycles"]
+        );
     }
 }
