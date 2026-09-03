@@ -273,10 +273,14 @@ R29 closes the authorized test-only integration at PR #101 reviewed head `b88908
 
 [R29](experiments/EXP-0001/R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes the merged PR #101 integration as bounded deterministic correctness evidence and closes R19's semantic-to-physical mapping blocker. It freezes only a Fedora 44 Linux/x86_64 external-dependency-free clocks/resource/file/procfs preflight ABI, with five glibc calls isolated behind typed safe wrappers and fail-closed parsing/outcomes. Perf and tracefs remain blocked because their event, ABI, scope, scaling, and loss contracts are not frozen.
 
-The single authorized PR now adds the provisional fourth member
-`exp1-descriptive-d1-harness`, depending one-way only on the three existing crates, and implements
-only that preflight subset plus deterministic synthetic tests. It is pending external review and
-does not constitute completed evidence, live capture, harness assembly, or execution. M01
-materialization, appending/replay execution, R7 production, capture publication, workload or
-benchmark execution, durability, faults, machine changes, and performance conclusions remain
-outside the roadmap authorization.
+R30 closes the authorized fourth-member implementation at PR #103 reviewed head
+`eda5005c3a3e6e6ec76e90f882bc320e7da1bce3`, merge
+`1d8466d1ce8c7c99e0fbd572c1cb77b2e357ba11`, with both exact-head workflows successful, only as
+bounded preflight implementation/correctness evidence. R30 freezes the next boundary as four
+independent counter reads through `perf_event_open` and authorizes one non-live deterministic
+extension only in the existing fourth crate. Tracefs, effective capture, harness execution, and all
+later roadmap work remain blocked.
+
+## R30 checkpoint: R29 preflight closed and counter-only perf ABI frozen
+
+[R30](experiments/EXP-0001/R30-R29-PREFLIGHT-CLOSURE-AND-PERF-COUNTER-ABI-DECISION.md) records the exact PR #103 head, merge, and successful workflows as bounded correctness evidence only. Its prospective next increment is limited to callable wrappers, FD ownership, pure policy/scaling, and synthetic tests for CPU cycles, instructions, page faults, and context switches. CI and tests may not invoke perf or observe a host. Tracefs, mmap/ring buffers, sampling/signals, live capture, execution, publication, performance, durability, faults, adapters, and production remain outside roadmap authorization.
