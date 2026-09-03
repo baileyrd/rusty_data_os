@@ -349,3 +349,12 @@ change any live-capture, effective-validation, execution, publication, or later-
 [R31](R31-PERF-IMPLEMENTATION-CLOSURE-AND-MINIMUM-D1-INSTRUMENTATION-DECISION.md) closes PR #105 reviewed head `547d0bba730d842e354a058773408c66b368f326`, merge `409d0737759d4e10fc39ad879ccc975858e89d9f`, and both successful exact-head workflows as bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence only. No live capture, target validation, execution, or performance evidence follows.
 
 R31 freezes the first descriptive B1/D1 minimum as monotonic lifecycle timing, realtime correlation, process/thread `getrusage`, the three procfs sources, frozen file-length fallback, and four availability-conditional separately sourced perf counters. Only this cell may record tracefs syscall/scheduler/block-I/O channels with R31's exact `not_collected` or evidenced `unsupported` reason; no tracefs claim is permitted. One later non-live PR may assemble the exact injected ownership/state/failure/cleanup contract in the existing fourth crate and synthetic tests only. BLK-020/021 and UNK-022 are narrowed at deterministic assembly design, not closed for live capture, effective validation, records, overhead, execution, or evidence. All retained exclusions remain.
+
+The open authorized extension proposes the immutable injected plan, borrowed measured-file
+identity, exactly-once action, exact success ledger, typed partial invalid output, first-causal-error
+preservation, and deterministic reverse cleanup using synthetic boundaries exclusively. It remains
+pending external exact-head review and successful CI and is not yet completed correctness evidence
+or a closed increment. Live capture, target
+validation, workload materialization or execution, append orchestration, R7 record production,
+benchmarks, publication, performance claims, D2/D3, `fsync`, durability, recovery, faults,
+adapters, baselines, and production work remain unauthorized.

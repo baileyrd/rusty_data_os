@@ -27,6 +27,15 @@ target validation, benchmark execution, or performance evidence. R31 freezes the
 B1/D1 descriptive source set, narrowly defers tracefs with explicit missing states, and authorizes
 only one later non-live deterministic harness-assembly PR in the existing fourth crate.
 
+The open R31-authorized fourth-crate extension proposes that injected observation plan,
+exactly-once action boundary, frozen lifecycle, independently typed sources, fail-closed partial
+outcome, and reverse-order cleanup contract with synthetic tests. It remains pending external
+exact-head review and successful CI and is not yet completed correctness evidence or a closed
+increment. It adds no live capture or target validation and does not
+authorize workload materialization or execution, append orchestration, R7 record production,
+benchmarks, publication, performance claims, D2/D3, `fsync`, durability, recovery, faults,
+adapters, baselines, or production work.
+
 ## 2. Approved foundation
 
 The primary unproven research claim is that a single canonical information history can support multiple independently optimized representations with acceptable performance and complexity.

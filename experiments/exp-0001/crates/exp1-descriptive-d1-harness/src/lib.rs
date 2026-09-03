@@ -1,6 +1,7 @@
-//! R29-authorized, Linux/x86_64-only preflight interfaces.
+//! Deterministic R31 observation assembly and the R29/R30 Linux ABI types.
 //!
-//! This library does not assemble or execute a descriptive D1 harness.
+//! There is deliberately no live harness entry point.  [`orchestration`] only
+//! operates on caller-injected boundaries.
 
 #![deny(unsafe_code)]
 #![deny(unsafe_op_in_unsafe_fn)]
@@ -11,3 +12,5 @@ compile_error!("exp1-descriptive-d1-harness supports only Linux on x86_64");
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 #[allow(unsafe_code)]
 pub mod linux_capture;
+
+pub mod orchestration;
