@@ -27,14 +27,14 @@ target validation, benchmark execution, or performance evidence. R31 freezes the
 B1/D1 descriptive source set, narrowly defers tracefs with explicit missing states, and authorizes
 only one later non-live deterministic harness-assembly PR in the existing fourth crate.
 
-The open R31-authorized fourth-crate extension proposes that injected observation plan,
-exactly-once action boundary, frozen lifecycle, independently typed sources, fail-closed partial
-outcome, and reverse-order cleanup contract with synthetic tests. It remains pending external
-exact-head review and successful CI and is not yet completed correctness evidence or a closed
-increment. It adds no live capture or target validation and does not
-authorize workload materialization or execution, append orchestration, R7 record production,
-benchmarks, publication, performance claims, D2/D3, `fsync`, durability, recovery, faults,
-adapters, baselines, or production work.
+R32 closes the R31-authorized fourth-crate extension at PR #108 reviewed head
+`fb1200c31e4730404a1ee941cfb58fa77520f43b`, merged as
+`0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, after the exact-head Documentation validation and
+EXP-0001 Slice A workflows succeeded. The evidence is limited to deterministic injected
+orchestration, lifecycle, source metadata, failures, and cleanup. R32 freezes a borrowed
+identity-plus-`AsRawFd` measured-file reference, one internal `LiveCaptureBoundary`, and independent
+per-event perf ownership, and authorizes exactly one later non-live-tested adapter PR. It is not
+live readiness, target validation, capture, execution, publication, or performance evidence.
 
 ## 2. Approved foundation
 
@@ -250,4 +250,9 @@ R30 freezes exactly four independent, current-thread, counter-read `perf_event_o
 
 [R31](experiments/EXP-0001/R31-PERF-IMPLEMENTATION-CLOSURE-AND-MINIMUM-D1-INSTRUMENTATION-DECISION.md) closes PR #105 reviewed head `547d0bba730d842e354a058773408c66b368f326`, merged as `409d0737759d4e10fc39ad879ccc975858e89d9f`, after both exact-head workflows succeeded. This is bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence only. It is not live capture, target validation, workload or benchmark execution, or performance evidence.
 
-R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` scopes, the three frozen `/proc/self` sources, frozen `statx` fallback, and four separately sourced availability-conditional perf counters for the first descriptive B1/D1 cell. It supersedes R7 only by permitting exact `not_collected` or evidenced `unsupported` tracefs states for that cell; no tracefs metric or attribution follows, and confirmatory tracefs remains blocked. Exactly one later non-live deterministic orchestration PR is authorized within the frozen fourth-crate paths. All live use, execution, publication, performance, D2/D3, `fsync`, durability, recovery, fault, adapter, baseline, production, networking, server, query, and distributed work remains blocked or excluded.
+R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` scopes, the three frozen `/proc/self` sources, frozen `statx` fallback, and four separately sourced availability-conditional perf counters for the first descriptive B1/D1 cell. It supersedes R7 only by permitting exact `not_collected` or evidenced `unsupported` tracefs states for that cell; no tracefs metric or attribution follows, and confirmatory tracefs remains blocked. That one non-live deterministic orchestration PR is now closed by R32. All live use, execution, publication, performance, D2/D3, `fsync`, durability, recovery, fault, adapter, baseline, production, networking, server, query, and distributed work remains blocked or excluded.
+
+
+## R32 orchestration closure and internal live-adapter decision
+
+[R32](experiments/EXP-0001/R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) closes PR #108 reviewed head `fb1200c31e4730404a1ee941cfb58fa77520f43b`, merged as `0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, after both exact-head workflows succeeded, only as bounded deterministic injected orchestration/lifecycle/source-metadata/failure/cleanup correctness evidence. It freezes an explicit borrowed measured-file identity plus `AsRawFd` capability without ownership transfer, one Linux/x86_64 dependency-free `LiveCaptureBoundary`, and independently owned per-event perf sessions while preserving aggregate compatibility. Exactly one later synthetic-only internal adapter implementation PR is authorized. Target probing/validation, live calls/tests, tracefs, records, workloads, capture, execution, publication, performance, durability/recovery/faults, external adapters/baselines, and production remain blocked or unauthorized.
