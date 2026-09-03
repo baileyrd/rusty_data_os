@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R28 closes the merged R27 pure v2 reference-context mapper and the complete R20 reference-context correctness gate as bounded correctness evidence; one test-only end-to-end D1 correctness integration is authorized, live capture remains blocked, and execution remains unauthorized
+**Status:** Phase 1 planning/readiness — the R28-authorized test-only end-to-end D1 correctness integration is implemented pending external review; live capture remains blocked and execution remains unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -200,3 +200,11 @@ byte-exact RF1, `RawAppender`, and physical reopen/replay, including transaction
 failure and unwind-safe `std` cleanup. This is deterministic integration/correctness testing only.
 No production/configuration change, harness, capture, workload execution, durability, benchmark, or
 performance evidence is authorized.
+
+The authorized integration test now exercises the four literal SOP2 operations through the
+existing contextual mapper, reviewed RF1 expectations, one raw D1 appender, and deterministic
+physical reopen/replay. It includes the required discontinuity-before-append boundary, exact state,
+receipt, prefix, record, sequence, ordinal, offset, extent, byte, and order checks, and exclusive
+test-owned unwind-safe file cleanup. This records only implementation and local deterministic
+correctness validation pending external review; it does not claim merge, external review, workload
+execution, synchronization, durability, recovery, capture, benchmark, or performance evidence.
