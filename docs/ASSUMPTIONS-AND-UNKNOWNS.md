@@ -131,3 +131,8 @@ R31 closes the R30-authorized perf implementation as bounded deterministic ABI/l
 ### R32 disposition
 
 R32 closes the injected R31 orchestration implementation only as bounded deterministic correctness evidence. It resolves the internal interface design by freezing a borrowed measured-file identity plus `AsRawFd` capability, one dependency-free Linux/x86_64 `LiveCaptureBoundary`, and independently owned per-event perf sessions with retained aggregate compatibility. UNK-022 remains open for implementation closure, live use, target/effective validation, record production, calibration/overhead, capture, execution, publication, and evidence. Tracefs and every attribution/loss claim remain separately blocked.
+
+
+### Open R32 implementation disposition
+
+The authorized internal adapter implementation is present on this branch with synthetic tests only, but remains open pending external exact-head review and CI. It does not yet close adapter correctness evidence or any live/effective portion of UNK-022. The existing aggregate perf API is retained; no construction, borrowed file, successful wrapper result, or compilation is target validation. Every R32 exclusion remains unchanged.

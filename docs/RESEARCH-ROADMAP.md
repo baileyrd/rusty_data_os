@@ -296,3 +296,8 @@ The first descriptive B1/D1 minimum uses frozen clocks, both `getrusage` scopes,
 ## R32 checkpoint: deterministic orchestration closed; internal adapter boundary frozen
 
 [R32](experiments/EXP-0001/R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) closes PR #108 reviewed head `fb1200c31e4730404a1ee941cfb58fa77520f43b`, merge `0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, with both exact-head workflows successful, only as bounded deterministic injected orchestration, lifecycle, source-metadata, failure, and cleanup correctness evidence. It freezes the borrowed measured-file capability, a single internal Linux/x86_64 live-boundary mapping, and independent per-event perf ownership. One later implementation PR may add only that adapter and synthetic tests in the existing fourth crate plus synchronized documentation. No test or CI host call, live caller, probe, target validation, tracefs, workload, record, capture, execution, publication, performance, durability, fault, external adapter/baseline, or production work is authorized.
+
+
+### Open R32-authorized adapter implementation
+
+The single internal `LiveCaptureBoundary` and synthetic-only adapter tests are implemented on this branch, with the existing aggregate `PerfCounterSession` API and behavior retained. This work is open pending external exact-head review and CI and is not completed adapter correctness evidence. It adds no caller or probe and preserves every R32 exclusion, including live calls/tests, target validation, tracefs, records, workloads, capture, execution, publication, performance, durability/recovery/faults, external adapters/baselines, and production work.

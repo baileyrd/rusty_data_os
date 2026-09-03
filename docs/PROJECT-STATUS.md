@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R31 closes the deterministic perf implementation and authorizes only non-live harness assembly; live capture, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — the R32-authorized internal live-adapter implementation is open pending external exact-head review and CI; live capture, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -35,6 +35,8 @@ orchestration, lifecycle, source metadata, failures, and cleanup. R32 freezes a 
 identity-plus-`AsRawFd` measured-file reference, one internal `LiveCaptureBoundary`, and independent
 per-event perf ownership, and authorizes exactly one later non-live-tested adapter PR. It is not
 live readiness, target validation, capture, execution, publication, or performance evidence.
+
+The R32-authorized internal adapter is now implemented on this branch with only synthetic tests. Its borrowed measured-file capability, per-event perf ownership, wrapper mapping, and retained aggregate API are **open pending external exact-head review and CI**. This branch is not completed adapter correctness evidence and authorizes no invocation. All R32 exclusions remain in force.
 
 ## 2. Approved foundation
 
