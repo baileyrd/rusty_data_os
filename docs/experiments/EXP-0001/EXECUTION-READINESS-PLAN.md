@@ -303,6 +303,19 @@ catalog, caller-owned accepted prefix, and contextual mapper against the merged 
 Complete R20 closure requires that implementation, review, and exact-head CI. Capture, harness,
 append integration, execution, benchmarks, durability, faults, and later work remain excluded.
 
-### R27 active implementation closure
+### R28 R27 closure and end-to-end D1 integration gate
 
-The active closure branch now contains R27's bounded pure v2 catalog, accepted-prefix, and contextual mapper implementation. It awaits exact-head review, CI, and merge; therefore the complete R20 gate and the independent capture/execution gates remain open.
+[R28](R28-R27-CLOSURE-AND-END-TO-END-D1-INTEGRATION-AUTHORIZATION.md) closes PR #98 reviewed head
+`67715b3efc4732542152ea9d935d92ebdb2ca0d6`, merge
+`f5cde575cbd82bb788b9519c4efc56e4d1186131`, and both successful exact-head workflows as bounded
+R27 correctness evidence. The complete R20 reference-context correctness gate is closed.
+
+Exactly one follow-on PR may update only
+`experiments/exp-0001/crates/exp1-raw-append-replay/tests/reference_context.rs` plus synchronized
+closure documentation. It must prove the frozen four-operation literal SOP2 → contextual mapper →
+byte-exact RF1 → `RawAppender` → physical reopen/replay path, including transactional pre-append
+failure, exact receipt/prefix/record/order accounting, and unwind-safe test-owned `std` file cleanup.
+This is deterministic integration/correctness testing only. The independent live Linux capture
+freeze, descriptive D1 harness, fourth crate, R7 production, real execution, `fsync`, D2/D3, faults,
+adapters, baselines, production code, durability, benchmarks, and performance claims remain blocked
+or unauthorized.
