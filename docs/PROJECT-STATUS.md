@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — the R29-authorized bounded Linux clocks/resource/file/procfs preflight implementation is pending external review; perf, tracefs, capture, and execution remain blocked or unauthorized
+**Status:** Phase 1 planning/readiness — R30 closes the R29 preflight implementation and freezes only a counter-read perf ABI; tracefs, live capture, and execution remain blocked or unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -11,11 +11,13 @@ The repository contains the reviewed Slice A implementation: one experiment-loca
 
 The merged Slice B implementation is a bounded, single-owner in-memory vector mechanism with process-local sequence and correctness accounting. R11 closes it as implementation/correctness-validation evidence only. It remains D0-only, provisional, noncanonical, and unexecuted as a workload or benchmark. The conceptual architecture is a research direction, not a benchmark-validated design.
 
-The fourth experiment crate now contains the R29-authorized Linux/x86_64-only preflight subset and
-deterministic synthetic tests. This implementation is pending external review and is not completed
-evidence, live capture, harness assembly, or execution. Perf, tracefs, M01 materialization,
-append/replay orchestration, R7 production, workload/benchmark execution, and every R29 exclusion
-remain blocked or unauthorized.
+R30 closes the fourth experiment crate at PR #103 reviewed head
+`eda5005c3a3e6e6ec76e90f882bc320e7da1bce3`, merged as
+`1d8466d1ce8c7c99e0fbd572c1cb77b2e357ba11`, after both exact-head workflows succeeded. It is
+bounded implementation/correctness-validation evidence for only the R29 Linux/x86_64 preflight
+subset and deterministic synthetic tests. R30 freezes a four-event, counter-read-only perf ABI and
+a non-live deterministic extension in the existing fourth crate. Tracefs, live capture, harness
+assembly/execution, and every retained exclusion remain blocked or unauthorized.
 
 ## 2. Approved foundation
 
@@ -218,4 +220,10 @@ test-owned unwind-safe file cleanup. R29 closes this merged path as bounded dete
 
 [R29](experiments/EXP-0001/R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes PR #101 reviewed head `b88908cb9cbba39774437e582308bab25a88482b`, merged as `2168839a70baebdea1773fc56e7b8aa0dc9a89e4`, after successful exact-head Documentation validation and EXP-0001 Slice A workflows. The R28 test-only path is bounded deterministic integration/correctness evidence only. The R19 semantic-to-physical mapping blocker is closed.
 
-R29 freezes an external-dependency-free Fedora 44 Linux/x86_64 preflight subset: exact glibc clock/resource/stat ABI, safe parsing of three named procfs files, typed outcomes, and a sole `statx`-`ENOSYS` `fstat` fallback. Existing crates retain `#![forbid(unsafe_code)]`; only one isolated module in a future fourth crate may contain the five reviewed glibc calls behind typed safe wrappers. Perf and tracefs have no authorized ABI and remain blocked with BLK-021/UNK-022. Exactly one `exp1-descriptive-d1-harness` PR may implement only this preflight subset and deterministic tests with one-way path dependencies. Live capture, M01 materialization, append/replay or R7 production, workload/benchmark execution, publication, durability, faults, machine changes, and performance conclusions remain unauthorized.
+R29 froze an external-dependency-free Fedora 44 Linux/x86_64 preflight subset: exact glibc clock/resource/stat ABI, safe parsing of three named procfs files, typed outcomes, and a sole `statx`-`ENOSYS` `fstat` fallback. PR #103 implemented that subset in `exp1-descriptive-d1-harness`; R30 records its exact merged closure and supersedes R29’s then-pending perf status only with the frozen counter-only boundary. Tracefs and effective capture remain blocked with BLK-021/UNK-022. Live capture, M01 materialization, append/replay or R7 production, workload/benchmark execution, publication, durability, faults, machine changes, and performance conclusions remain unauthorized.
+
+## R30 R29 preflight closure and counter-only perf decision
+
+[R30](experiments/EXP-0001/R30-R29-PREFLIGHT-CLOSURE-AND-PERF-COUNTER-ABI-DECISION.md) closes PR #103 reviewed head `eda5005c3a3e6e6ec76e90f882bc320e7da1bce3`, merged as `1d8466d1ce8c7c99e0fbd572c1cb77b2e357ba11`, after successful exact-head Documentation validation and EXP-0001 Slice A workflows. The result is bounded implementation/correctness-validation evidence only for the R29 ABI, wrappers, outcomes, parsers, and synthetic tests; it is not capture, target, benchmark, performance, durability, or execution evidence.
+
+R30 freezes exactly four independent, current-thread, counter-read `perf_event_open` events with enabled/running-time retention and checked integer scaling. It prospectively authorizes one non-live deterministic implementation PR modifying only the fourth crate and synchronized status documentation. Tracefs, mmap, sampling, signals, live observation, capture, harness execution, and all R30 exclusions remain blocked.
