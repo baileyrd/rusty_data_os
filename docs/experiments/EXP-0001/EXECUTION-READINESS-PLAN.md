@@ -327,4 +327,10 @@ R29 closes the authorized path at PR #101 reviewed head `b88908cb9cbba39774437e5
 
 [R29](R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes PR #101's merged four-operation integration as bounded deterministic correctness evidence and closes R19's semantic-to-physical mapping blocker. It freezes only the Fedora 44 Linux/x86_64 clocks/resource/file/procfs preflight ABI: five exact glibc calls in one isolated module, three exact safe procfs parsers, checked arithmetic, typed outcomes, and `fstat` fallback only for `statx` `ENOSYS`. Perf and tracefs have no authorized ABI; BLK-021/UNK-022 remain open for them and for effective instrumentation/capture. R7/R8 fail-closed rules remain controlling.
 
-Exactly one next PR may add provisional member `exp1-descriptive-d1-harness` with direct path dependencies only on the three existing crates and implement only that preflight subset plus deterministic tests. CI requires no privileges and produces no experiment evidence. M01 materialization, append/replay or R7 production, capture publication, workload/benchmark execution, D2/D3, `fsync`, durability/recovery, faults, machine changes, adapters, production, and performance conclusions remain unauthorized.
+The single authorized PR now adds provisional member `exp1-descriptive-d1-harness` with direct path
+dependencies only on the three existing crates and implements only that preflight subset plus
+deterministic synthetic tests. The implementation is pending external review; it is not completed
+evidence, live capture, harness assembly, or execution. CI requires no privileges and produces no
+experiment evidence. M01 materialization, append/replay or R7 production, capture publication,
+workload/benchmark execution, D2/D3, `fsync`, durability/recovery, faults, machine changes,
+adapters, production, and performance conclusions remain unauthorized.
