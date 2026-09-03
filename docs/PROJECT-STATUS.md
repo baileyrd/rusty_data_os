@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R30 closes the R29 preflight implementation and freezes only a counter-read perf ABI; tracefs, live capture, and execution remain blocked or unauthorized
+**Status:** Phase 1 planning/readiness — the R30-authorized deterministic counter-read perf ABI implementation is pending external review; tracefs, live capture, and execution remain blocked or unauthorized
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -18,6 +18,13 @@ bounded implementation/correctness-validation evidence for only the R29 Linux/x8
 subset and deterministic synthetic tests. R30 freezes a four-event, counter-read-only perf ABI and
 a non-live deterministic extension in the existing fourth crate. Tracefs, live capture, harness
 assembly/execution, and every retained exclusion remain blocked or unauthorized.
+
+The R30-authorized follow-up now implements the frozen four-event `perf_event_open` counter boundary,
+reverse-order session abandonment/unwind cleanup, distinct errno and unexpected-return failures, and
+synthetic lifecycle, ownership, parsing, classification, and scaling tests only in the existing
+fourth crate. This change is pending external review and is not merged or completed evidence. No test
+or implementation caller invokes perf, probes the host, captures data, or executes a workload or
+benchmark; tracefs and effective instrumentation remain blocked.
 
 ## 2. Approved foundation
 
