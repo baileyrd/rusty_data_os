@@ -3,6 +3,8 @@
 use crate::linux_capture::{
     FileLength, Outcome, PerfCounter, PerfEvent, ProcessIo, ResourceUsage, Statm, StatusMemory,
 };
+use std::fmt;
+use std::os::fd::AsRawFd;
 
 pub const TRACE_NOT_COLLECTED_REASON: &str =
     "R31 first descriptive B1/D1 cell deliberately did not invoke tracefs";
@@ -71,9 +73,46 @@ impl SourceList {
     };
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct MeasuredFileIdentity<'a> {
-    pub identity: &'a str,
+#[derive(Clone, Copy)]
+pub struct MeasuredFileReference<'a> {
+    identity: &'a str,
+    file: Option<&'a dyn AsRawFd>,
+}
+impl<'a> MeasuredFileReference<'a> {
+    pub const fn identity_only(identity: &'a str) -> Self {
+        Self {
+            identity,
+            file: None,
+        }
+    }
+
+    pub fn borrowed(identity: &'a str, file: &'a impl AsRawFd) -> Self {
+        Self {
+            identity,
+            file: Some(file),
+        }
+    }
+
+    pub const fn identity(self) -> &'a str {
+        self.identity
+    }
+
+    pub const fn file(self) -> Option<&'a dyn AsRawFd> {
+        self.file
+    }
+
+    pub const fn has_file_capability(self) -> bool {
+        self.file.is_some()
+    }
+}
+impl fmt::Debug for MeasuredFileReference<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("MeasuredFileReference")
+            .field("identity", &self.identity)
+            .field("has_file_capability", &self.file.is_some())
+            .finish()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -361,7 +400,7 @@ pub trait CaptureBoundary {
     fn statm(&mut self) -> Outcome<Statm>;
     fn status(&mut self) -> Outcome<StatusMemory>;
     fn process_io(&mut self) -> Outcome<ProcessIo>;
-    fn file_length(&mut self, file: MeasuredFileIdentity<'_>) -> Outcome<FileLength>;
+    fn file_length(&mut self, file: MeasuredFileReference<'_>) -> Outcome<FileLength>;
     fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner>;
     fn stop_perf(&mut self, owner: &mut Self::PerfOwner, event: PerfEvent) -> Outcome<PerfCounter>;
     fn cleanup_perf(&mut self, owner: Self::PerfOwner, event: PerfEvent) -> Outcome<()>;
@@ -439,14 +478,14 @@ fn validate(plan: &ObservationPlan) -> Result<(), Failure> {
 /// Executes only injected calls. Each perf owner is cleaned once, in reverse acquisition order.
 pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
     plan: &ObservationPlan,
-    file: MeasuredFileIdentity<'_>,
+    file: MeasuredFileReference<'_>,
     boundary: &mut B,
     action: &mut A,
 ) -> ObservationOutcome {
     let mut life = Lifecycle::new();
     let mut data = PartialObservation {
         plan: plan.clone(),
-        measured_file_identity: file.identity.to_owned(),
+        measured_file_identity: file.identity().to_owned(),
         realtime_ns: SourcePair::new(
             SourceIdentity::Realtime,
             SourceScope::Observation,
@@ -555,11 +594,12 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
                 }
                 value => {
                     data.perf[index].outcome = Some(value.map_type_for_orchestration());
-                    primary = Some(failure(
-                        Phase::PerfOpen(event),
-                        data.perf[index].outcome.as_ref().unwrap(),
-                    ));
-                    break;
+                    if primary.is_none() {
+                        primary = Some(failure(
+                            Phase::PerfOpen(event),
+                            data.perf[index].outcome.as_ref().unwrap(),
+                        ));
+                    }
                 }
             }
         }
@@ -892,8 +932,8 @@ mod tests {
                 7,
             )
         }
-        fn file_length(&mut self, file: MeasuredFileIdentity<'_>) -> Outcome<FileLength> {
-            assert_eq!(file.identity, "fd-7");
+        fn file_length(&mut self, file: MeasuredFileReference<'_>) -> Outcome<FileLength> {
+            assert_eq!(file.identity(), "fd-7");
             self.ordinary(
                 "file",
                 FileLength {
@@ -978,7 +1018,7 @@ mod tests {
         let mut a = Action::new(b.calls.clone());
         let out = observe(
             &plan(),
-            MeasuredFileIdentity { identity: "fd-7" },
+            MeasuredFileReference::identity_only("fd-7"),
             b,
             &mut a,
         );
@@ -1000,6 +1040,7 @@ mod tests {
         };
         assert_eq!(calls, 1);
         assert_eq!(done.cleanup, CleanupStatus::Successful);
+        assert_eq!(done.observation.measured_file_identity, "fd-7");
         let log = b.calls.borrow();
         let start = log.iter().position(|v| v == "monotonic").unwrap();
         let action = log.iter().position(|v| v == "action").unwrap();
@@ -1294,6 +1335,13 @@ mod tests {
                     ..Default::default()
                 };
                 let (out, _) = run(&mut b);
+                let retained_identity = match &out {
+                    ObservationOutcome::Complete(value) => {
+                        &value.observation.measured_file_identity
+                    }
+                    ObservationOutcome::Invalid(value) => &value.observation.measured_file_identity,
+                };
+                assert_eq!(retained_identity, "fd-7");
                 let entry = match &out {
                     ObservationOutcome::Complete(v) => &v.observation.perf,
                     ObservationOutcome::Invalid(v) => &v.observation.perf,
@@ -1325,9 +1373,13 @@ mod tests {
                 ..Default::default()
             };
             let _ = run(&mut b);
-            let expected: Vec<_> = SourceList::R31.perf[..index]
+            let expected: Vec<_> = SourceList::R31
+                .perf
                 .iter()
+                .enumerate()
                 .rev()
+                .filter(|(candidate, _)| *candidate != index)
+                .map(|(_, event)| event)
                 .map(|e| format!("cleanup:{e:?}"))
                 .collect();
             let actual: Vec<_> = b
@@ -1369,7 +1421,7 @@ mod tests {
         assert!(matches!(
             observe(
                 &plan(),
-                MeasuredFileIdentity { identity: "fd-7" },
+                MeasuredFileReference::identity_only("fd-7"),
                 &mut b,
                 &mut a
             ),
