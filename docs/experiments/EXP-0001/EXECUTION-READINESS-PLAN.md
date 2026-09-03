@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; R31 closes deterministic perf and authorizes only non-live orchestration assembly; live capture, execution, evidence, and confirmatory tracefs remain blocked
+**Status:** Active staged plan; R32 closes deterministic orchestration and authorizes only a non-live-tested internal capture adapter; live readiness, target validation, capture, execution, evidence, and confirmatory tracefs remain blocked
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -57,8 +57,8 @@ other blocker IDs or the frozen semantic contracts (`SEM`). Unknowns refer to th
 | BLK-023 | Numeric threshold registry and rationale | Resolved for this documentation decision by the prospective owner-approved R8 `thresholds-v1`; implementation and admissibility remain gated | Primary-cell design, baseline profiles | UNK-008 | Reviewed versioned per-cell values with evidence/rationale | Confirmatory execution only |
 | BLK-024 | Estimator, interval, repetitions, stopping and run order | Resolved as documentation design by [R8](R8-PRIMARY-MATRIX-THRESHOLDS-AND-STATISTICAL-PLAN.md); implementation/effective validation remain gated | BLK-014, primary-cell design | UNK-008 | Frozen analysis specification | Confirmatory execution only |
 | BLK-025 | Artifact storage and retention | Resolved as documentation design by R7; external service/provisioning deliberately unselected | BLK-008, repository constraints | UNK-019, UNK-022 | Layout, durable references, retention/redaction and supersession rules | Execution/result admissibility |
-| BLK-026 | Reproducible toolchain/build configuration | Resolved through the existing three-member Rust 1.89.0 correctness workspace; R31 closes the fourth-crate deterministic perf subset and prospectively extends it only with non-live injected orchestration code/tests; later/native/benchmark-series builds remain open | BLK-014, BLK-018 | UNK-020, UNK-022 | Rust 1.89.0, target, flags, lock/build identity and offline reproduction procedure | Slice A authorization; series separately gated |
-| BLK-027 | Cargo/workspace and CI bootstrap authorization | Resolved through the reviewed three-member workspace; R31 closes that deterministic extension and authorizes only non-live injected orchestration assembly, not executable capture expansion | BLK-020, BLK-026, section 6 | UNK-020, UNK-022 | Reviewed layout, empty dependency allowlist, exact CI plan, and approval record | First Slice A code creation after R9 merge |
+| BLK-026 | Reproducible toolchain/build configuration | Resolved through the existing three-member Rust 1.89.0 correctness workspace; R32 closes the fourth-crate non-live injected orchestration subset and prospectively extends it only with the synthetic-tested internal adapter; later/native/benchmark-series builds remain open | BLK-014, BLK-018 | UNK-020, UNK-022 | Rust 1.89.0, target, flags, lock/build identity and offline reproduction procedure | Slice A authorization; series separately gated |
+| BLK-027 | Cargo/workspace and CI bootstrap authorization | Resolved through the reviewed three-member workspace; R32 closes that non-live injected orchestration assembly and authorizes only the synthetic-tested internal adapter, not executable capture expansion | BLK-020, BLK-026, section 6 | UNK-020, UNK-022 | Reviewed layout, empty dependency allowlist, exact CI plan, and approval record | First Slice A code creation after R9 merge |
 
 ## 3. Dependency ordering
 
@@ -350,11 +350,18 @@ change any live-capture, effective-validation, execution, publication, or later-
 
 R31 freezes the first descriptive B1/D1 minimum as monotonic lifecycle timing, realtime correlation, process/thread `getrusage`, the three procfs sources, frozen file-length fallback, and four availability-conditional separately sourced perf counters. Only this cell may record tracefs syscall/scheduler/block-I/O channels with R31's exact `not_collected` or evidenced `unsupported` reason; no tracefs claim is permitted. One later non-live PR may assemble the exact injected ownership/state/failure/cleanup contract in the existing fourth crate and synthetic tests only. BLK-020/021 and UNK-022 are narrowed at deterministic assembly design, not closed for live capture, effective validation, records, overhead, execution, or evidence. All retained exclusions remain.
 
-The open authorized extension proposes the immutable injected plan, borrowed measured-file
-identity, exactly-once action, exact success ledger, typed partial invalid output, first-causal-error
-preservation, and deterministic reverse cleanup using synthetic boundaries exclusively. It remains
-pending external exact-head review and successful CI and is not yet completed correctness evidence
-or a closed increment. Live capture, target
-validation, workload materialization or execution, append orchestration, R7 record production,
-benchmarks, publication, performance claims, D2/D3, `fsync`, durability, recovery, faults,
-adapters, baselines, and production work remain unauthorized.
+R32 closes that authorized extension at PR #108 reviewed head
+`fb1200c31e4730404a1ee941cfb58fa77520f43b`, merge
+`0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, after both exact-head workflows succeeded, only as
+bounded deterministic injected orchestration/lifecycle/source-metadata/failure/cleanup correctness
+evidence. R32 freezes the still-unimplemented internal adapter: a borrowed measured-file identity
+plus `AsRawFd` capability, one Linux/x86_64 dependency-free `LiveCaptureBoundary`, and independent
+per-event perf owners with aggregate compatibility. Exactly one later synthetic-only adapter PR is
+authorized. Live calls/tests, target validation, tracefs, workload materialization or execution,
+R7 records, capture, benchmarks, publication, performance, D2/D3, `fsync`, durability, recovery,
+faults, external adapters/baselines, and production remain unauthorized.
+
+
+### R32 — orchestration closure and internal live-adapter boundary
+
+[R32](R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) records PR #108's exact closure and freezes one internal adapter design without authorizing its invocation. The later bounded implementation may touch only the three named fourth-crate source files, at most one necessary adapter module, and synchronized governance documents; Cargo, dependencies, fixtures, workflows, and toolchains remain unchanged. Its tests and CI must be synthetic and invoke no host interface. BLK-020/021/026/027 and UNK-022 are narrowed only at the adapter-design boundary; target/effective validation, live readiness, records, calibration/overhead, capture, execution, and evidence remain open.
