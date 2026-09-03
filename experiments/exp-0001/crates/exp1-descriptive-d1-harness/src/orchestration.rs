@@ -124,7 +124,8 @@ impl Lifecycle {
                         | Measuring
                         | ActionCompleted
                         | CountersStopped
-                        | AfterCaptured,
+                        | AfterCaptured
+                        | Cleaned,
                     Failed
                 )
                 | (Failed, CleanedAfterFailure)
@@ -211,11 +212,78 @@ pub enum SourceScope {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Unit {
     Nanoseconds,
-    ResourceUsageFields,
-    ProcfsFields,
     Bytes,
-    PerfCounterFields,
+    StatmPages,
+    ResourceUsage(ResourceUsageUnits),
+    ProcessIo(ProcessIoUnits),
+    PerfCounter(PerfCounterUnits),
 }
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScalarUnit {
+    Nanoseconds,
+    Bytes,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CountUnit {
+    Events,
+    Operations,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ResourceUsageUnits {
+    pub user: ScalarUnit,
+    pub system: ScalarUnit,
+    pub maximum_resident: ScalarUnit,
+    pub minor_faults: CountUnit,
+    pub major_faults: CountUnit,
+    pub input_blocks: CountUnit,
+    pub output_blocks: CountUnit,
+    pub voluntary_context_switches: CountUnit,
+    pub involuntary_context_switches: CountUnit,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ProcessIoUnits {
+    pub rchar: ScalarUnit,
+    pub wchar: ScalarUnit,
+    pub syscr: CountUnit,
+    pub syscw: CountUnit,
+    pub read: ScalarUnit,
+    pub write: ScalarUnit,
+    pub cancelled_write: ScalarUnit,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PerfCounterUnits {
+    pub raw_count: CountUnit,
+    pub time_enabled: ScalarUnit,
+    pub time_running: ScalarUnit,
+    pub scaled_count: CountUnit,
+}
+
+const RESOURCE_USAGE_UNITS: ResourceUsageUnits = ResourceUsageUnits {
+    user: ScalarUnit::Nanoseconds,
+    system: ScalarUnit::Nanoseconds,
+    maximum_resident: ScalarUnit::Bytes,
+    minor_faults: CountUnit::Events,
+    major_faults: CountUnit::Events,
+    input_blocks: CountUnit::Operations,
+    output_blocks: CountUnit::Operations,
+    voluntary_context_switches: CountUnit::Events,
+    involuntary_context_switches: CountUnit::Events,
+};
+const PROCESS_IO_UNITS: ProcessIoUnits = ProcessIoUnits {
+    rchar: ScalarUnit::Bytes,
+    wchar: ScalarUnit::Bytes,
+    syscr: CountUnit::Operations,
+    syscw: CountUnit::Operations,
+    read: ScalarUnit::Bytes,
+    write: ScalarUnit::Bytes,
+    cancelled_write: ScalarUnit::Bytes,
+};
+const PERF_COUNTER_UNITS: PerfCounterUnits = PerfCounterUnits {
+    raw_count: CountUnit::Events,
+    time_enabled: ScalarUnit::Nanoseconds,
+    time_running: ScalarUnit::Nanoseconds,
+    scaled_count: CountUnit::Events,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourcePair<T> {
@@ -393,23 +461,23 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
         process_rusage: SourcePair::new(
             SourceIdentity::ProcessRusage,
             SourceScope::Process,
-            Unit::ResourceUsageFields,
+            Unit::ResourceUsage(RESOURCE_USAGE_UNITS),
         ),
         thread_rusage: SourcePair::new(
             SourceIdentity::ThreadRusage,
             SourceScope::MeasuredThread,
-            Unit::ResourceUsageFields,
+            Unit::ResourceUsage(RESOURCE_USAGE_UNITS),
         ),
         statm: SourcePair::new(
             SourceIdentity::Statm,
             SourceScope::Process,
-            Unit::ProcfsFields,
+            Unit::StatmPages,
         ),
         status: SourcePair::new(SourceIdentity::Status, SourceScope::Process, Unit::Bytes),
         process_io: SourcePair::new(
             SourceIdentity::ProcessIo,
             SourceScope::Process,
-            Unit::ProcfsFields,
+            Unit::ProcessIo(PROCESS_IO_UNITS),
         ),
         file_length: SourcePair::new(
             SourceIdentity::FileLength,
@@ -419,7 +487,7 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
         perf: SourceList::R31.perf.map(|event| PerfObservation {
             event,
             scope: SourceScope::MeasuredThread,
-            unit: Unit::PerfCounterFields,
+            unit: Unit::PerfCounter(PERF_COUNTER_UNITS),
             outcome: None,
         }),
         action: None,
@@ -938,15 +1006,119 @@ mod tests {
         let end = log.iter().rposition(|v| v == "monotonic").unwrap();
         assert!(start < action && action < end);
         assert_eq!(done.observation.elapsed_ns, Some(5));
-        assert_eq!(done.observation.process_rusage.scope, SourceScope::Process);
+        let resource_usage_units = ResourceUsageUnits {
+            user: ScalarUnit::Nanoseconds,
+            system: ScalarUnit::Nanoseconds,
+            maximum_resident: ScalarUnit::Bytes,
+            minor_faults: CountUnit::Events,
+            major_faults: CountUnit::Events,
+            input_blocks: CountUnit::Operations,
+            output_blocks: CountUnit::Operations,
+            voluntary_context_switches: CountUnit::Events,
+            involuntary_context_switches: CountUnit::Events,
+        };
+        let process_io_units = ProcessIoUnits {
+            rchar: ScalarUnit::Bytes,
+            wchar: ScalarUnit::Bytes,
+            syscr: CountUnit::Operations,
+            syscw: CountUnit::Operations,
+            read: ScalarUnit::Bytes,
+            write: ScalarUnit::Bytes,
+            cancelled_write: ScalarUnit::Bytes,
+        };
+        let perf_counter_units = PerfCounterUnits {
+            raw_count: CountUnit::Events,
+            time_enabled: ScalarUnit::Nanoseconds,
+            time_running: ScalarUnit::Nanoseconds,
+            scaled_count: CountUnit::Events,
+        };
         assert_eq!(
-            done.observation.thread_rusage.scope,
-            SourceScope::MeasuredThread
+            (
+                done.observation.realtime_ns.identity,
+                done.observation.realtime_ns.scope,
+                done.observation.realtime_ns.unit,
+            ),
+            (
+                SourceIdentity::Realtime,
+                SourceScope::Observation,
+                Unit::Nanoseconds,
+            )
         );
-        assert_eq!(done.observation.file_length.unit, Unit::Bytes);
+        assert_eq!(
+            (
+                done.observation.monotonic_raw_ns.identity,
+                done.observation.monotonic_raw_ns.scope,
+                done.observation.monotonic_raw_ns.unit,
+            ),
+            (
+                SourceIdentity::MonotonicRaw,
+                SourceScope::Observation,
+                Unit::Nanoseconds,
+            )
+        );
+        for (source, identity, scope) in [
+            (
+                &done.observation.process_rusage,
+                SourceIdentity::ProcessRusage,
+                SourceScope::Process,
+            ),
+            (
+                &done.observation.thread_rusage,
+                SourceIdentity::ThreadRusage,
+                SourceScope::MeasuredThread,
+            ),
+        ] {
+            assert_eq!((source.identity, source.scope), (identity, scope));
+            assert_eq!(source.unit, Unit::ResourceUsage(resource_usage_units));
+        }
+        assert_eq!(
+            (
+                done.observation.statm.identity,
+                done.observation.statm.scope,
+                done.observation.statm.unit,
+            ),
+            (
+                SourceIdentity::Statm,
+                SourceScope::Process,
+                Unit::StatmPages,
+            )
+        );
+        assert_eq!(
+            (
+                done.observation.status.identity,
+                done.observation.status.scope,
+                done.observation.status.unit,
+            ),
+            (SourceIdentity::Status, SourceScope::Process, Unit::Bytes)
+        );
+        assert_eq!(
+            (
+                done.observation.process_io.identity,
+                done.observation.process_io.scope,
+                done.observation.process_io.unit,
+            ),
+            (
+                SourceIdentity::ProcessIo,
+                SourceScope::Process,
+                Unit::ProcessIo(process_io_units),
+            )
+        );
+        assert_eq!(
+            (
+                done.observation.file_length.identity,
+                done.observation.file_length.scope,
+                done.observation.file_length.unit,
+            ),
+            (
+                SourceIdentity::FileLength,
+                SourceScope::MeasuredFile,
+                Unit::Bytes,
+            )
+        );
         for (entry, event) in done.observation.perf.iter().zip(SourceList::R31.perf) {
             assert_eq!(entry.event, event);
             assert_eq!(entry.scope, SourceScope::MeasuredThread);
+            assert_eq!(entry.unit, Unit::PerfCounter(perf_counter_units));
         }
         assert_eq!(done.ledger.last(), Some(&LifecycleState::Complete));
         for event in SourceList::R31.perf {
@@ -998,12 +1170,61 @@ mod tests {
                                 | Measuring
                                 | ActionCompleted
                                 | CountersStopped
-                                | AfterCaptured,
+                                | AfterCaptured
+                                | Cleaned,
                             Failed
                         )
                         | (Failed, CleanedAfterFailure)
                 );
                 assert_eq!(life.transition(to).is_ok(), legal, "{from:?} -> {to:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn final_transition_failures_preserve_primary_and_reach_failure_terminal_once() {
+        for failed_transition in [LifecycleState::Cleaned, LifecycleState::Complete] {
+            let mut b = Synthetic {
+                transition_fail: Some(failed_transition),
+                ..Default::default()
+            };
+            let (out, _) = run(&mut b);
+            let invalid = invalid(out);
+            let expected_from = match failed_transition {
+                LifecycleState::Cleaned => LifecycleState::AfterCaptured,
+                LifecycleState::Complete => LifecycleState::Cleaned,
+                _ => unreachable!(),
+            };
+            assert_eq!(
+                invalid.primary_failure,
+                Failure::InvalidTransition {
+                    from: expected_from,
+                    to: failed_transition,
+                }
+            );
+            assert!(invalid.cleanup_failures.is_empty());
+            assert_eq!(invalid.terminal, LifecycleState::CleanedAfterFailure);
+            assert_eq!(
+                invalid.ledger.last(),
+                Some(&LifecycleState::CleanedAfterFailure)
+            );
+            assert_eq!(
+                invalid
+                    .ledger
+                    .iter()
+                    .filter(|state| **state == LifecycleState::CleanedAfterFailure)
+                    .count(),
+                1
+            );
+            for event in SourceList::R31.perf {
+                assert_eq!(
+                    b.calls
+                        .borrow()
+                        .iter()
+                        .filter(|call| **call == format!("cleanup:{event:?}"))
+                        .count(),
+                    1
+                );
             }
         }
     }
