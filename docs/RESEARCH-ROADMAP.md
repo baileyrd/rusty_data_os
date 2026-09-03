@@ -273,4 +273,10 @@ R29 closes the authorized test-only integration at PR #101 reviewed head `b88908
 
 [R29](experiments/EXP-0001/R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes the merged PR #101 integration as bounded deterministic correctness evidence and closes R19's semantic-to-physical mapping blocker. It freezes only a Fedora 44 Linux/x86_64 external-dependency-free clocks/resource/file/procfs preflight ABI, with five glibc calls isolated behind typed safe wrappers and fail-closed parsing/outcomes. Perf and tracefs remain blocked because their event, ABI, scope, scaling, and loss contracts are not frozen.
 
-Exactly one next PR may add the provisional fourth member `exp1-descriptive-d1-harness`, depending one-way only on the three existing crates, and implement only that preflight subset plus deterministic tests. M01 materialization, appending/replay execution, R7 production, capture publication, workload or benchmark execution, durability, faults, machine changes, and performance conclusions remain outside the roadmap authorization.
+The single authorized PR now adds the provisional fourth member
+`exp1-descriptive-d1-harness`, depending one-way only on the three existing crates, and implements
+only that preflight subset plus deterministic synthetic tests. It is pending external review and
+does not constitute completed evidence, live capture, harness assembly, or execution. M01
+materialization, appending/replay execution, R7 production, capture publication, workload or
+benchmark execution, durability, faults, machine changes, and performance conclusions remain
+outside the roadmap authorization.

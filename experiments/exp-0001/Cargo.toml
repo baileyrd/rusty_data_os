@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/exp1-record-format", "crates/exp1-workload-conformance", "crates/exp1-raw-append-replay"]
-default-members = ["crates/exp1-record-format", "crates/exp1-workload-conformance", "crates/exp1-raw-append-replay"]
+members = ["crates/exp1-record-format", "crates/exp1-workload-conformance", "crates/exp1-raw-append-replay", "crates/exp1-descriptive-d1-harness"]
+default-members = ["crates/exp1-record-format", "crates/exp1-workload-conformance", "crates/exp1-raw-append-replay", "crates/exp1-descriptive-d1-harness"]
 resolver = "3"
 
 [workspace.package]

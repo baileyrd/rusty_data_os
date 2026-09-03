@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "exp1-descriptive-d1-harness"
+version = "0.0.0"
+dependencies = [
+ "exp1-raw-append-replay",
+ "exp1-record-format",
+ "exp1-workload-conformance",
+]
+
+[[package]]
 name = "exp1-raw-append-replay"
 version = "0.0.0"
 dependencies = [
