@@ -15,7 +15,6 @@ pub enum TraceChannel {
     Scheduler,
     BlockIo,
 }
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TraceMissingState {
     NotCollected,
@@ -53,7 +52,6 @@ pub struct SourceList {
     pub file_length: bool,
     pub perf: [PerfEvent; 4],
 }
-
 impl SourceList {
     pub const R31: Self = Self {
         realtime: true,
@@ -92,13 +90,11 @@ pub enum LifecycleState {
     Failed,
     CleanedAfterFailure,
 }
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Lifecycle {
     state: LifecycleState,
     pub ledger: Vec<LifecycleState>,
 }
-
 impl Lifecycle {
     pub fn new() -> Self {
         Self {
@@ -144,7 +140,6 @@ impl Lifecycle {
         Ok(())
     }
 }
-
 impl Default for Lifecycle {
     fn default() -> Self {
         Self::new()
@@ -176,7 +171,6 @@ pub enum Phase {
     Elapsed,
     Cleanup(PerfEvent),
 }
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Failure {
     InvalidPlan(&'static str),
@@ -196,42 +190,85 @@ pub enum Failure {
     },
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SourceIdentity {
+    Realtime,
+    MonotonicRaw,
+    ProcessRusage,
+    ThreadRusage,
+    Statm,
+    Status,
+    ProcessIo,
+    FileLength,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SourceScope {
+    Observation,
+    Process,
+    MeasuredThread,
+    MeasuredFile,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Unit {
+    Nanoseconds,
+    ResourceUsageFields,
+    ProcfsFields,
+    Bytes,
+    PerfCounterFields,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Pair<T> {
+pub struct SourcePair<T> {
+    pub identity: SourceIdentity,
+    pub scope: SourceScope,
+    pub unit: Unit,
     pub before: Option<Outcome<T>>,
     pub after: Option<Outcome<T>>,
 }
-impl<T> Default for Pair<T> {
-    fn default() -> Self {
+impl<T> SourcePair<T> {
+    fn new(identity: SourceIdentity, scope: SourceScope, unit: Unit) -> Self {
         Self {
+            identity,
+            scope,
+            unit,
             before: None,
             after: None,
         }
     }
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PerfObservation {
+    pub event: PerfEvent,
+    pub scope: SourceScope,
+    pub unit: Unit,
+    pub outcome: Option<Outcome<PerfCounter>>,
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CleanupStatus {
+    Successful,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PartialObservation {
     pub plan: ObservationPlan,
     pub measured_file_identity: String,
-    pub realtime_ns: Pair<i128>,
-    pub monotonic_start_ns: Option<Outcome<i128>>,
-    pub monotonic_end_ns: Option<Outcome<i128>>,
+    pub realtime_ns: SourcePair<i128>,
+    pub monotonic_raw_ns: SourcePair<i128>,
     pub elapsed_ns: Option<i128>,
-    pub process_rusage: Pair<ResourceUsage>,
-    pub thread_rusage: Pair<ResourceUsage>,
-    pub statm: Pair<Statm>,
-    pub status: Pair<StatusMemory>,
-    pub process_io: Pair<ProcessIo>,
-    pub file_length: Pair<FileLength>,
-    pub perf: [Option<Outcome<PerfCounter>>; 4],
+    pub process_rusage: SourcePair<ResourceUsage>,
+    pub thread_rusage: SourcePair<ResourceUsage>,
+    pub statm: SourcePair<Statm>,
+    pub status: SourcePair<StatusMemory>,
+    pub process_io: SourcePair<ProcessIo>,
+    pub file_length: SourcePair<FileLength>,
+    pub perf: [PerfObservation; 4],
     pub action: Option<Result<(), String>>,
 }
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CompleteObservation {
     pub observation: PartialObservation,
     pub ledger: Vec<LifecycleState>,
+    pub cleanup: CleanupStatus,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InvalidObservation {
@@ -260,8 +297,15 @@ pub trait CaptureBoundary {
     fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner>;
     fn stop_perf(&mut self, owner: &mut Self::PerfOwner, event: PerfEvent) -> Outcome<PerfCounter>;
     fn cleanup_perf(&mut self, owner: Self::PerfOwner, event: PerfEvent) -> Outcome<()>;
+    /// Testable transition boundary; implementations normally use the exact state machine.
+    fn transition(
+        &mut self,
+        lifecycle: &mut Lifecycle,
+        next: LifecycleState,
+    ) -> Result<(), Failure> {
+        lifecycle.transition(next)
+    }
 }
-
 pub trait MeasuredAction {
     fn invoke(&mut self) -> Result<(), String>;
 }
@@ -276,7 +320,6 @@ fn failure<T>(phase: Phase, value: &Outcome<T>) -> Failure {
     };
     Failure::Source { phase, outcome }
 }
-
 fn validate(plan: &ObservationPlan) -> Result<(), Failure> {
     if plan.cell_identity.is_empty()
         || plan.observation_identity.is_empty()
@@ -290,12 +333,11 @@ fn validate(plan: &ObservationPlan) -> Result<(), Failure> {
             "source list is not the frozen R31 list",
         ));
     }
-    let channels = [
+    for (entry, channel) in plan.tracefs.iter().zip([
         TraceChannel::Syscall,
         TraceChannel::Scheduler,
         TraceChannel::BlockIo,
-    ];
-    for (entry, channel) in plan.tracefs.iter().zip(channels) {
+    ]) {
         if entry.channel != channel {
             return Err(Failure::InvalidPlan(
                 "tracefs channels are not in frozen order",
@@ -337,21 +379,54 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
     let mut data = PartialObservation {
         plan: plan.clone(),
         measured_file_identity: file.identity.to_owned(),
-        realtime_ns: Pair::default(),
-        monotonic_start_ns: None,
-        monotonic_end_ns: None,
+        realtime_ns: SourcePair::new(
+            SourceIdentity::Realtime,
+            SourceScope::Observation,
+            Unit::Nanoseconds,
+        ),
+        monotonic_raw_ns: SourcePair::new(
+            SourceIdentity::MonotonicRaw,
+            SourceScope::Observation,
+            Unit::Nanoseconds,
+        ),
         elapsed_ns: None,
-        process_rusage: Pair::default(),
-        thread_rusage: Pair::default(),
-        statm: Pair::default(),
-        status: Pair::default(),
-        process_io: Pair::default(),
-        file_length: Pair::default(),
-        perf: [None, None, None, None],
+        process_rusage: SourcePair::new(
+            SourceIdentity::ProcessRusage,
+            SourceScope::Process,
+            Unit::ResourceUsageFields,
+        ),
+        thread_rusage: SourcePair::new(
+            SourceIdentity::ThreadRusage,
+            SourceScope::MeasuredThread,
+            Unit::ResourceUsageFields,
+        ),
+        statm: SourcePair::new(
+            SourceIdentity::Statm,
+            SourceScope::Process,
+            Unit::ProcfsFields,
+        ),
+        status: SourcePair::new(SourceIdentity::Status, SourceScope::Process, Unit::Bytes),
+        process_io: SourcePair::new(
+            SourceIdentity::ProcessIo,
+            SourceScope::Process,
+            Unit::ProcfsFields,
+        ),
+        file_length: SourcePair::new(
+            SourceIdentity::FileLength,
+            SourceScope::MeasuredFile,
+            Unit::Bytes,
+        ),
+        perf: SourceList::R31.perf.map(|event| PerfObservation {
+            event,
+            scope: SourceScope::MeasuredThread,
+            unit: Unit::PerfCounterFields,
+            outcome: None,
+        }),
         action: None,
     };
     let mut owners: Vec<(PerfEvent, B::PerfOwner)> = Vec::new();
     let mut primary = validate(plan).err();
+    let mut later_failures = Vec::new();
     macro_rules! required {
         ($slot:expr, $call:expr, $phase:expr) => {{
             if primary.is_none() {
@@ -364,85 +439,83 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
             }
         }};
     }
-    if primary.is_none() {
-        required!(
-            data.realtime_ns.before,
-            boundary.realtime(),
-            Phase::BeforeRealtime
-        );
-        required!(
-            data.process_rusage.before,
-            boundary.process_rusage(),
-            Phase::BeforeProcessRusage
-        );
-        required!(
-            data.thread_rusage.before,
-            boundary.thread_rusage(),
-            Phase::BeforeThreadRusage
-        );
-        required!(data.statm.before, boundary.statm(), Phase::BeforeStatm);
-        required!(data.status.before, boundary.status(), Phase::BeforeStatus);
-        required!(
-            data.process_io.before,
-            boundary.process_io(),
-            Phase::BeforeProcessIo
-        );
-        required!(
-            data.file_length.before,
-            boundary.file_length(file),
-            Phase::BeforeFileLength
-        );
-        if primary.is_none() {
-            let _ = life.transition(LifecycleState::BeforeCaptured);
-        }
+    macro_rules! transition {
+        ($next:expr) => {{
+            if primary.is_none() {
+                if let Err(error) = boundary.transition(&mut life, $next) {
+                    primary = Some(error);
+                }
+            }
+        }};
     }
+
+    required!(
+        data.realtime_ns.before,
+        boundary.realtime(),
+        Phase::BeforeRealtime
+    );
+    required!(
+        data.process_rusage.before,
+        boundary.process_rusage(),
+        Phase::BeforeProcessRusage
+    );
+    required!(
+        data.thread_rusage.before,
+        boundary.thread_rusage(),
+        Phase::BeforeThreadRusage
+    );
+    required!(data.statm.before, boundary.statm(), Phase::BeforeStatm);
+    required!(data.status.before, boundary.status(), Phase::BeforeStatus);
+    required!(
+        data.process_io.before,
+        boundary.process_io(),
+        Phase::BeforeProcessIo
+    );
+    required!(
+        data.file_length.before,
+        boundary.file_length(file),
+        Phase::BeforeFileLength
+    );
+    transition!(LifecycleState::BeforeCaptured);
+
     if primary.is_none() {
         for (index, event) in SourceList::R31.perf.into_iter().enumerate() {
             match boundary.open_perf(event) {
                 Outcome::Success(owner) => owners.push((event, owner)),
                 value @ (Outcome::Unavailable(_) | Outcome::Permission(_)) => {
-                    data.perf[index] = Some(value.map_type_for_orchestration())
+                    data.perf[index].outcome = Some(value.map_type_for_orchestration())
                 }
                 value => {
-                    data.perf[index] = Some(value.map_type_for_orchestration());
+                    data.perf[index].outcome = Some(value.map_type_for_orchestration());
                     primary = Some(failure(
                         Phase::PerfOpen(event),
-                        data.perf[index].as_ref().unwrap(),
+                        data.perf[index].outcome.as_ref().unwrap(),
                     ));
                     break;
                 }
             }
         }
-        if primary.is_none() {
-            let _ = life.transition(LifecycleState::CountersArmed);
-        }
     }
-    if primary.is_none() {
-        required!(
-            data.monotonic_start_ns,
-            boundary.monotonic_raw(),
-            Phase::MonotonicStart
-        );
-        if primary.is_none() {
-            let _ = life.transition(LifecycleState::Measuring);
-        }
-    }
+    transition!(LifecycleState::CountersArmed);
+    required!(
+        data.monotonic_raw_ns.before,
+        boundary.monotonic_raw(),
+        Phase::MonotonicStart
+    );
+    transition!(LifecycleState::Measuring);
     if primary.is_none() {
         let result = action.invoke();
         data.action = Some(result.clone());
         if let Err(error) = result {
             primary = Some(Failure::Action(error));
-        } else {
-            let _ = life.transition(LifecycleState::ActionCompleted);
         }
     }
-    if primary.is_none() {
-        required!(
-            data.monotonic_end_ns,
-            boundary.monotonic_raw(),
-            Phase::MonotonicEnd
-        );
-    }
+    transition!(LifecycleState::ActionCompleted);
+    required!(
+        data.monotonic_raw_ns.after,
+        boundary.monotonic_raw(),
+        Phase::MonotonicEnd
+    );
     if primary.is_none() {
         for index in (0..owners.len()).rev() {
             let (event, owner) = &mut owners[index];
@@ -453,56 +526,50 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
                 .iter()
                 .position(|v| v == event)
                 .unwrap();
-            data.perf[perf_index] = Some(value);
+            data.perf[perf_index].outcome = Some(value);
             if bad && primary.is_none() {
                 primary = Some(failure(
                     Phase::PerfStop(*event),
-                    data.perf[perf_index].as_ref().unwrap(),
+                    data.perf[perf_index].outcome.as_ref().unwrap(),
                 ));
             }
         }
-        if primary.is_none() {
-            let _ = life.transition(LifecycleState::CountersStopped);
-        }
     }
+    transition!(LifecycleState::CountersStopped);
+    required!(
+        data.file_length.after,
+        boundary.file_length(file),
+        Phase::AfterFileLength
+    );
+    required!(data.statm.after, boundary.statm(), Phase::AfterStatm);
+    required!(data.status.after, boundary.status(), Phase::AfterStatus);
+    required!(
+        data.process_io.after,
+        boundary.process_io(),
+        Phase::AfterProcessIo
+    );
+    required!(
+        data.process_rusage.after,
+        boundary.process_rusage(),
+        Phase::AfterProcessRusage
+    );
+    required!(
+        data.thread_rusage.after,
+        boundary.thread_rusage(),
+        Phase::AfterThreadRusage
+    );
+    required!(
+        data.realtime_ns.after,
+        boundary.realtime(),
+        Phase::AfterRealtime
+    );
+    transition!(LifecycleState::AfterCaptured);
     if primary.is_none() {
-        required!(
-            data.file_length.after,
-            boundary.file_length(file),
-            Phase::AfterFileLength
-        );
-        required!(data.statm.after, boundary.statm(), Phase::AfterStatm);
-        required!(data.status.after, boundary.status(), Phase::AfterStatus);
-        required!(
-            data.process_io.after,
-            boundary.process_io(),
-            Phase::AfterProcessIo
-        );
-        required!(
-            data.process_rusage.after,
-            boundary.process_rusage(),
-            Phase::AfterProcessRusage
-        );
-        required!(
-            data.thread_rusage.after,
-            boundary.thread_rusage(),
-            Phase::AfterThreadRusage
-        );
-        required!(
-            data.realtime_ns.after,
-            boundary.realtime(),
-            Phase::AfterRealtime
-        );
-        if primary.is_none() {
-            let _ = life.transition(LifecycleState::AfterCaptured);
-        }
-    }
-    if primary.is_none() {
-        let start = match data.monotonic_start_ns {
+        let start = match data.monotonic_raw_ns.before {
             Some(Outcome::Success(v)) => v,
             _ => unreachable!(),
         };
-        let end = match data.monotonic_end_ns {
+        let end = match data.monotonic_raw_ns.after {
             Some(Outcome::Success(v)) => v,
             _ => unreachable!(),
         };
@@ -514,39 +581,58 @@ pub fn observe<B: CaptureBoundary, A: MeasuredAction>(
             primary = Some(Failure::ElapsedOverflow);
         }
     }
-    if primary.is_some() && life.state() != LifecycleState::Failed {
-        let _ = life.transition(LifecycleState::Failed);
+    if primary.is_some()
+        && life.state() != LifecycleState::Failed
+        && let Err(error) = boundary.transition(&mut life, LifecycleState::Failed)
+    {
+        later_failures.push(error);
     }
-    let mut cleanup_failures = Vec::new();
+    let mut cleanup_failures = later_failures;
     while let Some((event, owner)) = owners.pop() {
         let value = boundary.cleanup_perf(owner, event);
         if !matches!(value, Outcome::Success(())) {
             let item = failure(Phase::Cleanup(event), &value);
             if primary.is_none() {
-                primary = Some(item.clone());
+                primary = Some(item);
             } else {
                 cleanup_failures.push(item);
             }
         }
     }
+    if primary.is_none()
+        && let Err(error) = boundary.transition(&mut life, LifecycleState::Cleaned)
+    {
+        primary = Some(error);
+    }
+    if primary.is_none()
+        && let Err(error) = boundary.transition(&mut life, LifecycleState::Complete)
+    {
+        primary = Some(error);
+    }
     if let Some(primary_failure) = primary {
-        if life.state() != LifecycleState::Failed {
-            let _ = life.transition(LifecycleState::Failed);
+        if life.state() != LifecycleState::Failed
+            && let Err(error) = boundary.transition(&mut life, LifecycleState::Failed)
+        {
+            cleanup_failures.push(error);
         }
-        let _ = life.transition(LifecycleState::CleanedAfterFailure);
+        if life.state() == LifecycleState::Failed
+            && let Err(error) = boundary.transition(&mut life, LifecycleState::CleanedAfterFailure)
+        {
+            cleanup_failures.push(error);
+        }
+        let terminal = life.state();
         ObservationOutcome::Invalid(InvalidObservation {
             observation: data,
             ledger: life.ledger,
             primary_failure,
             cleanup_failures,
-            terminal: LifecycleState::CleanedAfterFailure,
+            terminal,
         })
     } else {
-        let _ = life.transition(LifecycleState::Cleaned);
-        let _ = life.transition(LifecycleState::Complete);
         ObservationOutcome::Complete(CompleteObservation {
             observation: data,
             ledger: life.ledger,
+            cleanup: CleanupStatus::Successful,
         })
     }
 }
@@ -570,7 +656,7 @@ impl<T> MapOutcome<T> for Outcome<T> {
 mod tests {
     use super::*;
     use crate::linux_capture::{ErrorReason, FileLengthSource, OverflowReason, UnavailableReason};
-    use std::collections::VecDeque;
+    use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
     fn traces(state: TraceMissingState) -> [TraceMissing; 3] {
         [
@@ -581,9 +667,10 @@ mod tests {
         .map(|channel| TraceMissing {
             channel,
             state,
-            reason: match state {
-                TraceMissingState::NotCollected => TRACE_NOT_COLLECTED_REASON,
-                TraceMissingState::Unsupported => TRACE_UNSUPPORTED_REASON,
+            reason: if state == TraceMissingState::NotCollected {
+                TRACE_NOT_COLLECTED_REASON
+            } else {
+                TRACE_UNSUPPORTED_REASON
             },
             preflight_evidence: (state == TraceMissingState::Unsupported)
                 .then(|| "retained preflight #1".into()),
@@ -622,53 +709,85 @@ mod tests {
             scaled_count: Outcome::Success(10),
         }
     }
+    fn ledger() -> Rc<RefCell<Vec<String>>> {
+        Rc::new(RefCell::new(Vec::new()))
+    }
 
-    #[derive(Default)]
+    #[derive(Clone, Copy)]
+    enum PerfFault {
+        Unavailable,
+        Permission,
+        Error,
+        Overflow,
+    }
     struct Synthetic {
-        calls: Vec<String>,
+        calls: Rc<RefCell<Vec<String>>>,
         fail_call: Option<String>,
+        fail_occurrence: usize,
+        perf_fault: Option<(PerfEvent, PerfFault)>,
         cleanup_fail: Vec<PerfEvent>,
+        transition_fail: Option<LifecycleState>,
         next_clock: VecDeque<i128>,
+    }
+    impl Default for Synthetic {
+        fn default() -> Self {
+            Self {
+                calls: ledger(),
+                fail_call: None,
+                fail_occurrence: 1,
+                perf_fault: None,
+                cleanup_fail: vec![],
+                transition_fail: None,
+                next_clock: VecDeque::from([10, 15]),
+            }
+        }
     }
     impl Synthetic {
         fn mark(&mut self, call: String) -> bool {
-            self.calls.push(call.clone());
+            self.calls.borrow_mut().push(call.clone());
             self.fail_call.as_ref() == Some(&call)
+                && self.calls.borrow().iter().filter(|v| **v == call).count()
+                    == self.fail_occurrence
+        }
+        fn ordinary<T>(&mut self, name: &str, value: T, errno: i32) -> Outcome<T> {
+            if self.mark(name.into()) {
+                Outcome::Error(ErrorReason::Errno(errno))
+            } else {
+                Outcome::Success(value)
+            }
         }
     }
     impl CaptureBoundary for Synthetic {
         type PerfOwner = PerfEvent;
         fn realtime(&mut self) -> Outcome<i128> {
-            let n = self.calls.iter().filter(|v| *v == "realtime").count();
-            if self.mark("realtime".into()) && n == 0 {
-                Outcome::Error(ErrorReason::Errno(1))
-            } else {
-                Outcome::Success(100 + n as i128)
-            }
+            self.ordinary("realtime", 100, 1)
         }
         fn monotonic_raw(&mut self) -> Outcome<i128> {
-            self.mark("monotonic".into());
-            Outcome::Success(self.next_clock.pop_front().unwrap_or(10))
-        }
-        fn process_rusage(&mut self) -> Outcome<ResourceUsage> {
-            if self.mark("process_rusage".into()) {
+            self.calls.borrow_mut().push("monotonic".into());
+            if self.fail_call.as_deref() == Some("monotonic")
+                && self
+                    .calls
+                    .borrow()
+                    .iter()
+                    .filter(|v| v.as_str() == "monotonic")
+                    .count()
+                    == self.fail_occurrence
+            {
                 Outcome::Error(ErrorReason::Errno(2))
             } else {
-                Outcome::Success(usage())
+                Outcome::Success(self.next_clock.pop_front().unwrap())
             }
+        }
+        fn process_rusage(&mut self) -> Outcome<ResourceUsage> {
+            self.ordinary("process_rusage", usage(), 3)
         }
         fn thread_rusage(&mut self) -> Outcome<ResourceUsage> {
-            if self.mark("thread_rusage".into()) {
-                Outcome::Error(ErrorReason::Errno(3))
-            } else {
-                Outcome::Success(usage())
-            }
+            self.ordinary("thread_rusage", usage(), 4)
         }
         fn statm(&mut self) -> Outcome<Statm> {
-            if self.mark("statm".into()) {
-                Outcome::Error(ErrorReason::Errno(4))
-            } else {
-                Outcome::Success(Statm {
+            self.ordinary(
+                "statm",
+                Statm {
                     size: 1,
                     resident: 2,
                     shared: 3,
@@ -676,24 +795,24 @@ mod tests {
                     lib: 5,
                     data: 6,
                     dt: 7,
-                })
-            }
+                },
+                5,
+            )
         }
         fn status(&mut self) -> Outcome<StatusMemory> {
-            if self.mark("status".into()) {
-                Outcome::Error(ErrorReason::Errno(5))
-            } else {
-                Outcome::Success(StatusMemory {
+            self.ordinary(
+                "status",
+                StatusMemory {
                     resident_bytes: 1,
                     high_water_bytes: 2,
-                })
-            }
+                },
+                6,
+            )
         }
         fn process_io(&mut self) -> Outcome<ProcessIo> {
-            if self.mark("io".into()) {
-                Outcome::Error(ErrorReason::Errno(6))
-            } else {
-                Outcome::Success(ProcessIo {
+            self.ordinary(
+                "io",
+                ProcessIo {
                     rchar: 1,
                     wchar: 2,
                     syscr: 3,
@@ -701,34 +820,35 @@ mod tests {
                     read_bytes: 5,
                     write_bytes: 6,
                     cancelled_write_bytes: 7,
-                })
-            }
+                },
+                7,
+            )
         }
         fn file_length(&mut self, file: MeasuredFileIdentity<'_>) -> Outcome<FileLength> {
             assert_eq!(file.identity, "fd-7");
-            if self.mark("file".into()) {
-                Outcome::Error(ErrorReason::Errno(7))
-            } else {
-                Outcome::Success(FileLength {
+            self.ordinary(
+                "file",
+                FileLength {
                     bytes: 8,
                     source: FileLengthSource::Statx,
                     statx_only_fields: Ok(()),
-                })
+                },
+                8,
+            )
+        }
+        fn open_perf(&mut self, event: PerfEvent) -> Outcome<PerfEvent> {
+            self.calls.borrow_mut().push(format!("open:{event:?}"));
+            match self.perf_fault.filter(|(e, _)| *e == event).map(|(_, f)| f) {
+                Some(PerfFault::Unavailable) => {
+                    Outcome::Unavailable(UnavailableReason::Unsupported)
+                }
+                Some(PerfFault::Permission) => Outcome::Permission(13),
+                Some(PerfFault::Error) => Outcome::Error(ErrorReason::Errno(9)),
+                Some(PerfFault::Overflow) => Outcome::Overflow(OverflowReason::PerfScaling),
+                None => Outcome::Success(event),
             }
         }
-        fn open_perf(&mut self, event: PerfEvent) -> Outcome<Self::PerfOwner> {
-            let name = format!("open:{event:?}");
-            if self.mark(name) {
-                Outcome::Error(ErrorReason::Errno(8))
-            } else {
-                Outcome::Success(event)
-            }
-        }
-        fn stop_perf(
-            &mut self,
-            _owner: &mut Self::PerfOwner,
-            event: PerfEvent,
-        ) -> Outcome<PerfCounter> {
+        fn stop_perf(&mut self, _: &mut PerfEvent, event: PerfEvent) -> Outcome<PerfCounter> {
             let name = format!("stop:{event:?}");
             if self.mark(name) {
                 Outcome::Overflow(OverflowReason::PerfScaling)
@@ -736,23 +856,49 @@ mod tests {
                 Outcome::Success(counter(event))
             }
         }
-        fn cleanup_perf(&mut self, _owner: Self::PerfOwner, event: PerfEvent) -> Outcome<()> {
-            self.calls.push(format!("cleanup:{event:?}"));
+        fn cleanup_perf(&mut self, _: PerfEvent, event: PerfEvent) -> Outcome<()> {
+            self.calls.borrow_mut().push(format!("cleanup:{event:?}"));
             if self.cleanup_fail.contains(&event) {
                 Outcome::Error(ErrorReason::PerfCleanup(9))
             } else {
                 Outcome::Success(())
             }
         }
+        fn transition(
+            &mut self,
+            life: &mut Lifecycle,
+            next: LifecycleState,
+        ) -> Result<(), Failure> {
+            self.calls.borrow_mut().push(format!("transition:{next:?}"));
+            if self.transition_fail == Some(next) {
+                self.transition_fail = None;
+                Err(Failure::InvalidTransition {
+                    from: life.state(),
+                    to: next,
+                })
+            } else {
+                life.transition(next)
+            }
+        }
     }
-    #[derive(Default)]
     struct Action {
         calls: usize,
         fail: bool,
+        ledger: Rc<RefCell<Vec<String>>>,
+    }
+    impl Action {
+        fn new(calls: Rc<RefCell<Vec<String>>>) -> Self {
+            Self {
+                calls: 0,
+                fail: false,
+                ledger: calls,
+            }
+        }
     }
     impl MeasuredAction for Action {
         fn invoke(&mut self) -> Result<(), String> {
             self.calls += 1;
+            self.ledger.borrow_mut().push("action".into());
             if self.fail {
                 Err("action failed".into())
             } else {
@@ -760,84 +906,219 @@ mod tests {
             }
         }
     }
-
-    #[test]
-    fn success_has_exact_order_complete_sources_and_once_action() {
-        let mut boundary = Synthetic {
-            next_clock: VecDeque::from([10, 15]),
-            ..Synthetic::default()
-        };
-        let mut action = Action::default();
-        let result = observe(
+    fn run(b: &mut Synthetic) -> (ObservationOutcome, usize) {
+        let mut a = Action::new(b.calls.clone());
+        let out = observe(
             &plan(),
             MeasuredFileIdentity { identity: "fd-7" },
-            &mut boundary,
-            &mut action,
+            b,
+            &mut a,
         );
-        let ObservationOutcome::Complete(done) = result else {
-            panic!("must complete")
-        };
-        assert_eq!(action.calls, 1);
-        assert_eq!(done.observation.elapsed_ns, Some(5));
-        assert_eq!(
-            done.ledger,
-            [
-                LifecycleState::Created,
-                LifecycleState::BeforeCaptured,
-                LifecycleState::CountersArmed,
-                LifecycleState::Measuring,
-                LifecycleState::ActionCompleted,
-                LifecycleState::CountersStopped,
-                LifecycleState::AfterCaptured,
-                LifecycleState::Cleaned,
-                LifecycleState::Complete
-            ]
-        );
-        assert_eq!(
-            boundary.calls,
-            [
-                "realtime",
-                "process_rusage",
-                "thread_rusage",
-                "statm",
-                "status",
-                "io",
-                "file",
-                "open:CpuCycles",
-                "open:Instructions",
-                "open:PageFaults",
-                "open:ContextSwitches",
-                "monotonic",
-                "monotonic",
-                "stop:ContextSwitches",
-                "stop:PageFaults",
-                "stop:Instructions",
-                "stop:CpuCycles",
-                "file",
-                "statm",
-                "status",
-                "io",
-                "process_rusage",
-                "thread_rusage",
-                "realtime",
-                "cleanup:ContextSwitches",
-                "cleanup:PageFaults",
-                "cleanup:Instructions",
-                "cleanup:CpuCycles"
-            ]
-        );
-        assert!(
-            done.observation
-                .perf
-                .iter()
-                .all(|v| matches!(v, Some(Outcome::Success(_))))
-        );
+        (out, a.calls)
+    }
+    fn invalid(out: ObservationOutcome) -> InvalidObservation {
+        match out {
+            ObservationOutcome::Invalid(v) => v,
+            _ => panic!("must be invalid"),
+        }
     }
 
     #[test]
-    fn lifecycle_accepts_only_the_frozen_paths() {
-        let success = [
-            LifecycleState::BeforeCaptured,
+    fn success_contract_has_shared_action_order_identity_units_and_cleanup() {
+        let mut b = Synthetic::default();
+        let (out, calls) = run(&mut b);
+        let ObservationOutcome::Complete(done) = out else {
+            panic!()
+        };
+        assert_eq!(calls, 1);
+        assert_eq!(done.cleanup, CleanupStatus::Successful);
+        let log = b.calls.borrow();
+        let start = log.iter().position(|v| v == "monotonic").unwrap();
+        let action = log.iter().position(|v| v == "action").unwrap();
+        let end = log.iter().rposition(|v| v == "monotonic").unwrap();
+        assert!(start < action && action < end);
+        assert_eq!(done.observation.elapsed_ns, Some(5));
+        assert_eq!(done.observation.process_rusage.scope, SourceScope::Process);
+        assert_eq!(
+            done.observation.thread_rusage.scope,
+            SourceScope::MeasuredThread
+        );
+        assert_eq!(done.observation.file_length.unit, Unit::Bytes);
+        for (entry, event) in done.observation.perf.iter().zip(SourceList::R31.perf) {
+            assert_eq!(entry.event, event);
+            assert_eq!(entry.scope, SourceScope::MeasuredThread);
+        }
+        assert_eq!(done.ledger.last(), Some(&LifecycleState::Complete));
+        for event in SourceList::R31.perf {
+            assert_eq!(
+                log.iter()
+                    .filter(|v| **v == format!("cleanup:{event:?}"))
+                    .count(),
+                1
+            );
+        }
+    }
+
+    #[test]
+    fn lifecycle_exhaustively_rejects_every_illegal_duplicate_and_terminal_transition() {
+        use LifecycleState::*;
+        let states = [
+            Created,
+            BeforeCaptured,
+            CountersArmed,
+            Measuring,
+            ActionCompleted,
+            CountersStopped,
+            AfterCaptured,
+            Cleaned,
+            Complete,
+            Failed,
+            CleanedAfterFailure,
+        ];
+        for from in states {
+            for to in states {
+                let mut life = Lifecycle {
+                    state: from,
+                    ledger: vec![from],
+                };
+                let legal = matches!(
+                    (from, to),
+                    (Created, BeforeCaptured)
+                        | (BeforeCaptured, CountersArmed)
+                        | (CountersArmed, Measuring)
+                        | (Measuring, ActionCompleted)
+                        | (ActionCompleted, CountersStopped)
+                        | (CountersStopped, AfterCaptured)
+                        | (AfterCaptured, Cleaned)
+                        | (Cleaned, Complete)
+                        | (
+                            Created
+                                | BeforeCaptured
+                                | CountersArmed
+                                | Measuring
+                                | ActionCompleted
+                                | CountersStopped
+                                | AfterCaptured,
+                            Failed
+                        )
+                        | (Failed, CleanedAfterFailure)
+                );
+                assert_eq!(life.transition(to).is_ok(), legal, "{from:?} -> {to:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_non_perf_before_and_after_and_both_monotonic_fail_closed() {
+        for call in [
+            "realtime",
+            "process_rusage",
+            "thread_rusage",
+            "statm",
+            "status",
+            "io",
+            "file",
+        ] {
+            for occurrence in 1..=2 {
+                let mut b = Synthetic {
+                    fail_call: Some(call.into()),
+                    fail_occurrence: occurrence,
+                    ..Default::default()
+                };
+                let (out, _) = run(&mut b);
+                assert!(
+                    matches!(out, ObservationOutcome::Invalid(_)),
+                    "{call} #{occurrence}"
+                );
+            }
+        }
+        for occurrence in 1..=2 {
+            let mut b = Synthetic {
+                fail_call: Some("monotonic".into()),
+                fail_occurrence: occurrence,
+                ..Default::default()
+            };
+            let (out, _) = run(&mut b);
+            assert!(matches!(out, ObservationOutcome::Invalid(_)));
+        }
+    }
+
+    #[test]
+    fn elapsed_reversal_and_checked_overflow_are_invalid() {
+        for clocks in [[5, 4], [i128::MIN, i128::MAX]] {
+            let mut b = Synthetic {
+                next_clock: clocks.into(),
+                ..Default::default()
+            };
+            let (out, _) = run(&mut b);
+            let v = invalid(out);
+            assert!(matches!(
+                v.primary_failure,
+                Failure::MonotonicReversal { .. } | Failure::ElapsedOverflow
+            ));
+        }
+    }
+
+    #[test]
+    fn every_perf_event_retains_each_open_outcome_and_post_open_failure() {
+        for event in SourceList::R31.perf {
+            for fault in [
+                PerfFault::Unavailable,
+                PerfFault::Permission,
+                PerfFault::Error,
+                PerfFault::Overflow,
+            ] {
+                let mut b = Synthetic {
+                    perf_fault: Some((event, fault)),
+                    ..Default::default()
+                };
+                let (out, _) = run(&mut b);
+                let entry = match &out {
+                    ObservationOutcome::Complete(v) => &v.observation.perf,
+                    ObservationOutcome::Invalid(v) => &v.observation.perf,
+                }
+                .iter()
+                .find(|v| v.event == event)
+                .unwrap();
+                assert!(entry.outcome.is_some());
+                assert_eq!(
+                    matches!(out, ObservationOutcome::Complete(_)),
+                    matches!(fault, PerfFault::Unavailable | PerfFault::Permission)
+                );
+            }
+            let mut b = Synthetic {
+                fail_call: Some(format!("stop:{event:?}")),
+                ..Default::default()
+            };
+            let (out, _) = run(&mut b);
+            assert!(matches!(invalid(out).primary_failure,
+                Failure::Source { phase: Phase::PerfStop(e), .. } if e == event));
+        }
+    }
+
+    #[test]
+    fn reverse_cleanup_after_every_open_failure_transition_failure_and_action_unwind() {
+        for (index, event) in SourceList::R31.perf.into_iter().enumerate() {
+            let mut b = Synthetic {
+                perf_fault: Some((event, PerfFault::Error)),
+                ..Default::default()
+            };
+            let _ = run(&mut b);
+            let expected: Vec<_> = SourceList::R31.perf[..index]
+                .iter()
+                .rev()
+                .map(|e| format!("cleanup:{e:?}"))
+                .collect();
+            let actual: Vec<_> = b
+                .calls
+                .borrow()
+                .iter()
+                .filter(|v| v.starts_with("cleanup:"))
+                .cloned()
+                .collect();
+            assert_eq!(actual, expected);
+        }
+        for state in [
             LifecycleState::CountersArmed,
             LifecycleState::Measuring,
             LifecycleState::ActionCompleted,
@@ -845,75 +1126,25 @@ mod tests {
             LifecycleState::AfterCaptured,
             LifecycleState::Cleaned,
             LifecycleState::Complete,
-        ];
-        let mut lifecycle = Lifecycle::new();
-        for state in success {
-            lifecycle.transition(state).unwrap();
+        ] {
+            let mut b = Synthetic {
+                transition_fail: Some(state),
+                ..Default::default()
+            };
+            let (out, _) = run(&mut b);
+            assert!(matches!(out, ObservationOutcome::Invalid(_)));
+            assert_eq!(
+                b.calls
+                    .borrow()
+                    .iter()
+                    .filter(|v| v.starts_with("cleanup:"))
+                    .count(),
+                4
+            );
         }
-        assert!(lifecycle.transition(LifecycleState::Complete).is_err());
-        for start in 0..7 {
-            let mut lifecycle = Lifecycle::new();
-            for state in success.iter().take(start) {
-                lifecycle.transition(*state).unwrap();
-            }
-            lifecycle.transition(LifecycleState::Failed).unwrap();
-            lifecycle
-                .transition(LifecycleState::CleanedAfterFailure)
-                .unwrap();
-            assert!(lifecycle.transition(LifecycleState::Complete).is_err());
-        }
-        let mut lifecycle = Lifecycle::new();
-        assert!(lifecycle.transition(LifecycleState::Measuring).is_err());
-    }
-
-    #[test]
-    fn availability_is_valid_but_post_open_failure_is_invalid_and_cleanup_is_reverse() {
-        struct Availability(Synthetic);
-        impl CaptureBoundary for Availability {
-            type PerfOwner = PerfEvent;
-            fn realtime(&mut self) -> Outcome<i128> {
-                self.0.realtime()
-            }
-            fn monotonic_raw(&mut self) -> Outcome<i128> {
-                self.0.monotonic_raw()
-            }
-            fn process_rusage(&mut self) -> Outcome<ResourceUsage> {
-                self.0.process_rusage()
-            }
-            fn thread_rusage(&mut self) -> Outcome<ResourceUsage> {
-                self.0.thread_rusage()
-            }
-            fn statm(&mut self) -> Outcome<Statm> {
-                self.0.statm()
-            }
-            fn status(&mut self) -> Outcome<StatusMemory> {
-                self.0.status()
-            }
-            fn process_io(&mut self) -> Outcome<ProcessIo> {
-                self.0.process_io()
-            }
-            fn file_length(&mut self, f: MeasuredFileIdentity<'_>) -> Outcome<FileLength> {
-                self.0.file_length(f)
-            }
-            fn open_perf(&mut self, e: PerfEvent) -> Outcome<PerfEvent> {
-                match e {
-                    PerfEvent::CpuCycles => Outcome::Unavailable(UnavailableReason::Unsupported),
-                    PerfEvent::Instructions => Outcome::Permission(13),
-                    _ => self.0.open_perf(e),
-                }
-            }
-            fn stop_perf(&mut self, o: &mut PerfEvent, e: PerfEvent) -> Outcome<PerfCounter> {
-                self.0.stop_perf(o, e)
-            }
-            fn cleanup_perf(&mut self, o: PerfEvent, e: PerfEvent) -> Outcome<()> {
-                self.0.cleanup_perf(o, e)
-            }
-        }
-        let mut b = Availability(Synthetic {
-            next_clock: VecDeque::from([1, 2]),
-            ..Synthetic::default()
-        });
-        let mut a = Action::default();
+        let mut b = Synthetic::default();
+        let mut a = Action::new(b.calls.clone());
+        a.fail = true;
         assert!(matches!(
             observe(
                 &plan(),
@@ -921,59 +1152,36 @@ mod tests {
                 &mut b,
                 &mut a
             ),
-            ObservationOutcome::Complete(_)
-        ));
-        let mut b = Synthetic {
-            fail_call: Some("stop:PageFaults".into()),
-            next_clock: VecDeque::from([1, 2]),
-            ..Synthetic::default()
-        };
-        let mut a = Action::default();
-        let ObservationOutcome::Invalid(v) = observe(
-            &plan(),
-            MeasuredFileIdentity { identity: "fd-7" },
-            &mut b,
-            &mut a,
-        ) else {
-            panic!()
-        };
-        assert!(matches!(
-            v.primary_failure,
-            Failure::Source {
-                phase: Phase::PerfStop(PerfEvent::PageFaults),
-                ..
-            }
+            ObservationOutcome::Invalid(_)
         ));
         assert_eq!(
-            &b.calls[b.calls.len() - 4..],
-            [
-                "cleanup:ContextSwitches",
-                "cleanup:PageFaults",
-                "cleanup:Instructions",
-                "cleanup:CpuCycles"
-            ]
+            b.calls
+                .borrow()
+                .iter()
+                .filter(|v| v.starts_with("cleanup:"))
+                .count(),
+            4
         );
     }
 
     #[test]
-    fn action_reversal_cleanup_failures_and_partial_values_fail_closed() {
+    fn cleanup_only_primary_multiple_failures_order_and_no_double_cleanup() {
         let mut b = Synthetic {
-            next_clock: VecDeque::from([5, 4]),
-            cleanup_fail: vec![PerfEvent::ContextSwitches, PerfEvent::Instructions],
-            ..Synthetic::default()
+            cleanup_fail: vec![
+                PerfEvent::ContextSwitches,
+                PerfEvent::PageFaults,
+                PerfEvent::Instructions,
+            ],
+            ..Default::default()
         };
-        let mut a = Action::default();
-        let ObservationOutcome::Invalid(v) = observe(
-            &plan(),
-            MeasuredFileIdentity { identity: "fd-7" },
-            &mut b,
-            &mut a,
-        ) else {
-            panic!()
-        };
+        let (out, _) = run(&mut b);
+        let v = invalid(out);
         assert!(matches!(
             v.primary_failure,
-            Failure::MonotonicReversal { .. }
+            Failure::Source {
+                phase: Phase::Cleanup(PerfEvent::ContextSwitches),
+                ..
+            }
         ));
         assert_eq!(
             v.cleanup_failures
@@ -984,54 +1192,25 @@ mod tests {
                 })
                 .collect::<Vec<_>>(),
             [
-                Phase::Cleanup(PerfEvent::ContextSwitches),
+                Phase::Cleanup(PerfEvent::PageFaults),
                 Phase::Cleanup(PerfEvent::Instructions)
             ]
         );
-        assert_eq!(a.calls, 1);
-        assert_eq!(v.terminal, LifecycleState::CleanedAfterFailure);
-        assert!(v.observation.elapsed_ns.is_none());
-        let mut b = Synthetic::default();
-        let mut a = Action {
-            fail: true,
-            ..Action::default()
-        };
-        let _ = observe(
-            &plan(),
-            MeasuredFileIdentity { identity: "fd-7" },
-            &mut b,
-            &mut a,
-        );
-        assert_eq!(a.calls, 1);
+        for event in SourceList::R31.perf {
+            assert_eq!(
+                b.calls
+                    .borrow()
+                    .iter()
+                    .filter(|v| **v == format!("cleanup:{event:?}"))
+                    .count(),
+                1
+            );
+        }
     }
 
     #[test]
-    fn required_phase_failure_stops_and_tracefs_evidence_is_exact() {
-        for call in [
-            "realtime",
-            "process_rusage",
-            "thread_rusage",
-            "statm",
-            "status",
-            "io",
-            "file",
-        ] {
-            let mut b = Synthetic {
-                fail_call: Some(call.into()),
-                ..Synthetic::default()
-            };
-            let mut a = Action::default();
-            assert!(matches!(
-                observe(
-                    &plan(),
-                    MeasuredFileIdentity { identity: "fd-7" },
-                    &mut b,
-                    &mut a
-                ),
-                ObservationOutcome::Invalid(_)
-            ));
-            assert_eq!(a.calls, 0);
-        }
+    fn tracefs_reasons_and_evidence_are_exact() {
+        assert!(validate(&plan()).is_ok());
         let mut supported = plan();
         supported.tracefs = traces(TraceMissingState::Unsupported);
         assert!(validate(&supported).is_ok());
@@ -1040,5 +1219,8 @@ mod tests {
         let mut wrong = plan();
         wrong.tracefs[0].reason = "similar but unauthorized";
         assert!(validate(&wrong).is_err());
+        let mut evidence = plan();
+        evidence.tracefs[0].preflight_evidence = Some("forbidden".into());
+        assert!(validate(&evidence).is_err());
     }
 }
