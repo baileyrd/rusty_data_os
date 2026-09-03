@@ -712,6 +712,7 @@ fn classify_perf_boundary_error<T>(error: BoundaryCallError) -> Outcome<T> {
 
 fn classify_perf_close_error<T>(error: BoundaryCallError) -> Outcome<T> {
     match error {
+        BoundaryCallError::Errno(errno @ (EPERM | EACCES)) => Outcome::Permission(errno),
         BoundaryCallError::Errno(EOVERFLOW) => {
             Outcome::Overflow(OverflowReason::PerfErrno(EOVERFLOW))
         }
@@ -724,6 +725,10 @@ fn classify_perf_close_error<T>(error: BoundaryCallError) -> Outcome<T> {
 
 fn classify_sticky_cleanup<T>(cleanup: &PerfCleanupState) -> Outcome<T> {
     match cleanup.failure.get().expect("cleanup failure is present") {
+        BoundaryCallError::Errno(errno @ (EPERM | EACCES)) => Outcome::Permission(errno),
+        BoundaryCallError::Errno(EOVERFLOW) => {
+            Outcome::Overflow(OverflowReason::PerfErrno(EOVERFLOW))
+        }
         BoundaryCallError::Errno(errno) => Outcome::Error(ErrorReason::PerfCleanup(errno)),
         BoundaryCallError::Unexpected(result) => {
             Outcome::Error(ErrorReason::PerfCleanupUnexpected(result))
@@ -1533,6 +1538,45 @@ mod tests {
             Outcome::Error(ErrorReason::PerfCleanup(EBADF))
         );
         assert_eq!(cleanup.cleanup_errno(), Some(EBADF));
+    }
+
+    #[test]
+    fn perf_close_and_sticky_cleanup_preserve_specific_errno_classes() {
+        for (errno, expected) in [
+            (EPERM, Outcome::Permission(EPERM)),
+            (EACCES, Outcome::Permission(EACCES)),
+            (
+                EOVERFLOW,
+                Outcome::Overflow(OverflowReason::PerfErrno(EOVERFLOW)),
+            ),
+        ] {
+            let fake = FakeBoundary::successful();
+            fake.closes.borrow_mut()[0] = Err(BoundaryCallError::Errno(errno));
+            let cleanup = PerfCleanupState::default();
+            let Outcome::Success(mut owners) = open_perf_session(&fake, &cleanup) else {
+                panic!()
+            };
+            assert_eq!(finish_perf_session(&fake, &mut owners), expected);
+            assert_eq!(cleanup.cleanup_errno(), Some(errno));
+
+            let fake = FakeBoundary::successful();
+            fake.ioctls.borrow_mut()[0] = Err(BoundaryCallError::Errno(EINVAL));
+            fake.closes.borrow_mut()[0] = Err(BoundaryCallError::Errno(errno));
+            let cleanup = PerfCleanupState::default();
+            assert_eq!(
+                open_perf_session(&fake, &cleanup).map_type::<()>(),
+                expected.clone().map_type()
+            );
+            assert_eq!(cleanup.cleanup_errno(), Some(errno));
+            assert_eq!(
+                &*fake.calls.borrow(),
+                &[
+                    Call::Open(PerfEventAttr::for_event(PerfEvent::CpuCycles)),
+                    Call::Ioctl(10, PERF_EVENT_IOC_RESET),
+                    Call::Close(10),
+                ]
+            );
+        }
     }
 
     #[test]
