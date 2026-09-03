@@ -20,7 +20,7 @@ A documentation-complete experiment framework is not an executable experiment.
 |---|---|---|
 | Framework readiness | Complete | EXP-0000's seven reviewed contracts remain linked and internally consistent. |
 | Design-choice readiness | Incomplete | The physical and lifecycle choices required by the intended slice are resolved through R1–R8 as applicable. |
-| Implementation readiness | Slices A, B/B0, A2, and bounded Slice C/B1 complete | R19 closes raw D1 append/reopen/replay correctness; a descriptive harness is blocked on the semantic-to-physical mapping and live Linux capture decisions and every execution or later increment requires separate authorization. |
+| Implementation readiness | Slices A, B/B0, A2, and bounded Slice C/B1 complete | R19 closes raw D1 append/reopen/replay correctness; R29 closes the semantic-to-physical blocker and freezes only the live Linux capture/preflight implementation boundary; harness assembly, capture, and every execution or later increment require separate authorization. |
 | Correctness-validation readiness | Slices A, B/B0, A2, and bounded Slice C/B1 passed only | Stable fixtures, oracle, recovery rules, fault mechanisms, and validation procedures must exist for every applicable measured mode. |
 | Descriptive execution readiness | Incomplete | A validated runnable cell, environment, stream, adapter, instrumentation, and result path pass the descriptive gate. |
 | Confirmatory execution readiness | Incomplete | The stricter frozen-design gate in section 7 passes; descriptive readiness alone is insufficient. |
@@ -51,7 +51,7 @@ other blocker IDs or the frozen semantic contracts (`SEM`). Unknowns refer to th
 | BLK-017 | B1 append and synchronization APIs | Resolved as documentation design by [R5](R5-B0-B1-PHYSICAL-PROFILES-AND-ADAPTER-CONTRACTS.md) and its focused contract; BLK-015/implementation/evidence remain gated | BLK-001, BLK-003, BLK-013–BLK-015 | UNK-014, UNK-020 | Complete API/error/sync/grouping and finalized-commit mapping | Slices C–E |
 | BLK-018 | SQLite/RocksDB versions, builds, bindings and configurations | Resolved as documentation design by [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md); toolchain, implementation, effective validation and evidence remain gated | BLK-014–BLK-015 | UNK-020, UNK-021 | Exact reproducible profiles with verified effective settings | Slices F/G; series freeze |
 | BLK-019 | Adapter mappings for every baseline | Design complete: B0/B1 by R5 and B2/B3 by [R6](R6-SQLITE-ROCKSDB-EXECUTION-PROFILES.md); implementation and empirical validation open | BLK-001, BLK-004–BLK-005, BLK-011–BLK-012, BLK-016–BLK-018 | UNK-020, UNK-021 | Versioned semantic-to-physical mapping and equivalence classification per baseline | Baseline equivalence |
-| BLK-020 | Benchmark harness architecture | Resolved by R9 only for Slice A and extended through the three reviewed correctness crates; R19 freezes a maximum descriptive D1 candidate but blocks executable capture/harness architecture pending the semantic-to-physical mapping and live Linux capture decisions | BLK-009–BLK-010, BLK-019 | UNK-020, UNK-022 | Experimental component and dependency-boundary design | Slice A authorization; later slices separately gated |
+| BLK-020 | Benchmark harness architecture | Resolved by R9 only for Slice A and extended through the three reviewed correctness crates; R19 freezes a maximum descriptive D1 candidate; R29 closes the mapping blocker and authorizes only a bounded fourth-crate Linux capture/preflight implementation, while executable capture/harness architecture remains gated | BLK-009–BLK-010, BLK-019 | UNK-020, UNK-022 | Experimental component and dependency-boundary design | Slice A authorization; later slices separately gated |
 | BLK-021 | Instrumentation and overhead method | Resolved as documentation design by R7; implementation/effective capture remains gated | BLK-014, BLK-020 | UNK-022 | Named instruments, scope, calibration/bounding and loss rules | Descriptive/confirmatory execution |
 | BLK-022 | Fault-injection mechanisms | Process termination and offline-condition design resolved by R7; kernel crash, physical power/reset and I/O-error apparatus remain owner/BLK-015 blocked | BLK-013–BLK-015, BLK-017–BLK-019 | UNK-015, UNK-021 | Injection-point mapping, apparatus validation and coverage | Recovery readiness |
 | BLK-023 | Numeric threshold registry and rationale | Resolved for this documentation decision by the prospective owner-approved R8 `thresholds-v1`; implementation and admissibility remain gated | Primary-cell design, baseline profiles | UNK-008 | Reviewed versioned per-cell values with evidence/rationale | Confirmatory execution only |
@@ -320,8 +320,11 @@ freeze, descriptive D1 harness, fourth crate, R7 production, real execution, `fs
 adapters, baselines, production code, durability, benchmarks, and performance claims remain blocked
 or unauthorized.
 
-The authorized test-only path is now implemented pending external review. It connects the four
-literal SOP2 operations to the existing contextual mapper, byte-exact RF1 oracle, one
-`RawAppender`, and physical reopen/replay, with a pre-append discontinuity check and exact
-state/receipt/prefix/record/order accounting. This is not a merge or external-review claim and does
-not advance the independent live-capture or execution gates.
+R29 closes the authorized path at PR #101 reviewed head `b88908cb9cbba39774437e582308bab25a88482b`, merge `2168839a70baebdea1773fc56e7b8aa0dc9a89e4`, after both exact-head workflows succeeded. It is bounded deterministic integration/correctness evidence only and does not advance capture or execution gates.
+
+
+### R29 — R28 integration closure and Linux capture boundary
+
+[R29](R29-R28-INTEGRATION-CLOSURE-AND-LINUX-CAPTURE-DECISION.md) closes PR #101's merged four-operation integration as bounded deterministic correctness evidence and closes R19's semantic-to-physical mapping blocker. It freezes the Fedora 44 Linux/x86_64 direct-interface capture/preflight policy: no external Rust dependencies; existing crates remain unsafe-free; one isolated future module may contain minimal reviewed unsafe operations behind typed safe wrappers; all required sources preflight and report identity, scope, units, permissions, availability, perf timing/multiplexing/width, and loss state. R7/R8 fail-closed and replacement rules remain controlling.
+
+Exactly one next PR may add provisional member `exp1-descriptive-d1-harness` with direct path dependencies only on the three existing crates and implement only capture/preflight plus deterministic tests. CI requires no privileges and produces no experiment evidence. M01 materialization, append/replay or R7 production, capture publication, workload/benchmark execution, D2/D3, `fsync`, durability/recovery, faults, machine changes, adapters, production, and performance conclusions remain unauthorized.
