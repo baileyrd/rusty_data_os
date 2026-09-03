@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — the R30-authorized deterministic counter-read perf ABI implementation is pending external review; tracefs, live capture, and execution remain blocked or unauthorized
+**Status:** Phase 1 planning/readiness — R31 closes the deterministic perf implementation and authorizes only non-live harness assembly; live capture, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -19,12 +19,13 @@ subset and deterministic synthetic tests. R30 freezes a four-event, counter-read
 a non-live deterministic extension in the existing fourth crate. Tracefs, live capture, harness
 assembly/execution, and every retained exclusion remain blocked or unauthorized.
 
-The R30-authorized follow-up now implements the frozen four-event `perf_event_open` counter boundary,
-reverse-order session abandonment/unwind cleanup, distinct errno and unexpected-return failures, and
-synthetic lifecycle, ownership, parsing, classification, and scaling tests only in the existing
-fourth crate. This change is pending external review and is not merged or completed evidence. No test
-or implementation caller invokes perf, probes the host, captures data, or executes a workload or
-benchmark; tracefs and effective instrumentation remain blocked.
+R31 closes the R30-authorized follow-up at PR #105 reviewed head
+`547d0bba730d842e354a058773408c66b368f326`, merged as
+`409d0737759d4e10fc39ad879ccc975858e89d9f`, after both exact-head workflows succeeded. The result
+is bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence only, not live capture,
+target validation, benchmark execution, or performance evidence. R31 freezes the minimum first
+B1/D1 descriptive source set, narrowly defers tracefs with explicit missing states, and authorizes
+only one later non-live deterministic harness-assembly PR in the existing fourth crate.
 
 ## 2. Approved foundation
 
@@ -234,3 +235,10 @@ R29 froze an external-dependency-free Fedora 44 Linux/x86_64 preflight subset: e
 [R30](experiments/EXP-0001/R30-R29-PREFLIGHT-CLOSURE-AND-PERF-COUNTER-ABI-DECISION.md) closes PR #103 reviewed head `eda5005c3a3e6e6ec76e90f882bc320e7da1bce3`, merged as `1d8466d1ce8c7c99e0fbd572c1cb77b2e357ba11`, after successful exact-head Documentation validation and EXP-0001 Slice A workflows. The result is bounded implementation/correctness-validation evidence only for the R29 ABI, wrappers, outcomes, parsers, and synthetic tests; it is not capture, target, benchmark, performance, durability, or execution evidence.
 
 R30 freezes exactly four independent, current-thread, counter-read `perf_event_open` events with enabled/running-time retention and checked integer scaling. It prospectively authorizes one non-live deterministic implementation PR modifying only the fourth crate and synchronized status documentation. Tracefs, mmap, sampling, signals, live observation, capture, harness execution, and all R30 exclusions remain blocked.
+
+
+## R31 perf implementation closure and minimum descriptive D1 instrumentation
+
+[R31](experiments/EXP-0001/R31-PERF-IMPLEMENTATION-CLOSURE-AND-MINIMUM-D1-INSTRUMENTATION-DECISION.md) closes PR #105 reviewed head `547d0bba730d842e354a058773408c66b368f326`, merged as `409d0737759d4e10fc39ad879ccc975858e89d9f`, after both exact-head workflows succeeded. This is bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence only. It is not live capture, target validation, workload or benchmark execution, or performance evidence.
+
+R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` scopes, the three frozen `/proc/self` sources, frozen `statx` fallback, and four separately sourced availability-conditional perf counters for the first descriptive B1/D1 cell. It supersedes R7 only by permitting exact `not_collected` or evidenced `unsupported` tracefs states for that cell; no tracefs metric or attribution follows, and confirmatory tracefs remains blocked. Exactly one later non-live deterministic orchestration PR is authorized within the frozen fourth-crate paths. All live use, execution, publication, performance, D2/D3, `fsync`, durability, recovery, fault, adapter, baseline, production, networking, server, query, and distributed work remains blocked or excluded.
