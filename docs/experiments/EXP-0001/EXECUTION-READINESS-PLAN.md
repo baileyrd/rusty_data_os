@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; R32 closes deterministic orchestration and authorizes only a non-live-tested internal capture adapter; live readiness, target validation, capture, execution, evidence, and confirmatory tracefs remain blocked
+**Status:** Active staged plan; R33 closes the internal capture adapter and authorizes only one synthetic-tested target-preflight implementation; live readiness, target validation observations, capture, execution, evidence, and confirmatory tracefs remain blocked
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -354,12 +354,13 @@ R32 closes that authorized extension at PR #108 reviewed head
 `fb1200c31e4730404a1ee941cfb58fa77520f43b`, merge
 `0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, after both exact-head workflows succeeded, only as
 bounded deterministic injected orchestration/lifecycle/source-metadata/failure/cleanup correctness
-evidence. R32 freezes the still-unimplemented internal adapter: a borrowed measured-file identity
-plus `AsRawFd` capability, one Linux/x86_64 dependency-free `LiveCaptureBoundary`, and independent
-per-event perf owners with aggregate compatibility. Exactly one later synthetic-only adapter PR is
-authorized. Live calls/tests, target validation, tracefs, workload materialization or execution,
-R7 records, capture, benchmarks, publication, performance, D2/D3, `fsync`, durability, recovery,
-faults, external adapters/baselines, and production remain unauthorized.
+evidence. R32 froze a borrowed measured-file identity plus `AsRawFd` capability, one Linux/x86_64
+dependency-free `LiveCaptureBoundary`, and independent per-event perf owners with aggregate
+compatibility. That implementation is closed by R33 as bounded deterministic correctness evidence;
+R33 authorizes only the later synthetic-tested target-preflight boundary. Live calls/observations,
+tracefs, workload materialization or execution, R7 records, capture, benchmarks, publication,
+performance, D2/D3, `fsync`, durability, recovery, faults, external adapters/baselines, and
+production remain unauthorized.
 
 
 ### R32 — orchestration closure and internal live-adapter boundary
@@ -367,6 +368,6 @@ faults, external adapters/baselines, and production remain unauthorized.
 [R32](R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) records PR #108's exact closure and freezes one internal adapter design without authorizing its invocation. The later bounded implementation may touch only the three named fourth-crate source files, at most one necessary adapter module, and synchronized governance documents; Cargo, dependencies, fixtures, workflows, and toolchains remain unchanged. Its tests and CI must be synthetic and invoke no host interface. BLK-020/021/026/027 and UNK-022 are narrowed only at the adapter-design boundary; target/effective validation, live readiness, records, calibration/overhead, capture, execution, and evidence remain open.
 
 
-### Open R32-authorized adapter implementation status
+### Closed R32-authorized adapter implementation and R33 target-preflight gate
 
-The one authorized internal adapter implementation is present on this branch: an explicit borrowed measured-file reference, fail-closed identity-only live mapping, independent per-event perf owners, and a dependency-free `LiveCaptureBoundary` over the existing wrappers. The public aggregate `PerfCounterSession` disposition is compatibility retained. Tests are synthetic and invoke no host interface. The implementation remains open pending external exact-head review and CI and supplies no completed adapter correctness evidence, target validation, live readiness, capture, or execution. All R32 exclusions remain in force.
+PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, and both successful exact-head workflows close the R32 adapter only as bounded deterministic correctness evidence. [R33](R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) now freezes one explicit operator-only caller, a pre-existing regular file opened read-only with pseudonymous retained identity, exact merged-wrapper checks, a closed artifact containing only facts known before retention, a request-invalid/no-artifact disposition, deterministic sink-I/O failure mapping, a closed ordered failure-object schema, and a separately returned retention disposition. The artifact can at most be `preflight_subset_ready`; Fedora-release/effective-target validation remains unresolved. Ordinary drop records ownership release rather than OS close success. Exactly one later fourth-crate serializer-only implementation with fail-closed construction and synthetic tests is authorized; parsing and round-trip support are not. CI/manual host invocation and retained host observations are prohibited by that implementation gate; R7 production, capture, workloads, benchmarks, tracefs, execution, and evidence remain blocked.
