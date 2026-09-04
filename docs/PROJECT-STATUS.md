@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R34 records the R33 implementation conflict and authorizes only one later synthetic-tested v2 target-preflight correction; live target use, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — R35 corrects R34 to the existing Linux/x86_64 compile boundary and authorizes only one later synthetic-tested v2 target-preflight implementation after merge; live target use, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -39,6 +39,8 @@ live readiness, target validation, capture, execution, publication, or performan
 R33 closes the R32-authorized internal adapter at PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, with both exact-head workflows successful. This is bounded deterministic adapter/ownership/lifecycle/wrapper-mapping/failure/cleanup correctness evidence only. R33 freezes one explicit operator-invoked, non-CI preflight-subset caller, a pre-retention artifact plus separately returned retention disposition, a non-artifact request-invalid outcome, deterministic sink-I/O failure mapping, a closed ordered failure-object schema, and only drop-completed ownership release—not observable OS close success. Fedora-release/effective-target validation and host invocation/observation remain unresolved and unauthorized. Exactly one later serializer-only, fail-closed, synthetic-tested implementation PR is authorized; no parser is authorized.
 
 R34 records that closed, unmerged PR #114 exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` was not mergeable under R33 despite both head-specific workflows succeeding. R33 v1 cannot truthfully represent compile-target mismatch or a valid-request open failure without inventing closed states, and the head did not meet the exhaustive synthetic gate. PR #114 is not evidence and created no public compatibility obligation. R34 preserves v1 unchanged, freezes a separate v2 correction, and prospectively authorizes exactly one synthetic-only v2 implementation PR. This is governance design, not implementation closure or live evidence.
+
+R35 supersedes only R34's unsupported-target runtime-artifact and test requirements. The fourth crate continues to reject compilation outside Linux/x86_64, so unsupported OS/architecture is a build-time rejection and `run_target_preflight` is callable only on that supported target. V2 keeps `not_acquired` for valid-request open failure, freezes successful target values as `prospective_fedora_44_linux` and `x86_64`, and preserves R34's remaining type, failure, serialization, retention, and exhaustive synthetic contracts. Fedora-release and effective-host validation remain unresolved. Exactly one later synthetic-only v2 implementation PR is authorized after R35 merges; R35 is documentation design only.
 
 ## 2. Approved foundation
 
