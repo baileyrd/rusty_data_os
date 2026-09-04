@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; R33 closes the internal capture adapter and authorizes only one synthetic-tested target-preflight implementation; live readiness, target validation observations, capture, execution, evidence, and confirmatory tracefs remain blocked
+**Status:** Active staged plan; R34 corrects the R33 target-preflight schema and authorizes only one corrected synthetic-tested implementation; live readiness, target validation observations, capture, execution, evidence, and confirmatory tracefs remain blocked
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -371,3 +371,12 @@ production remain unauthorized.
 ### Closed R32-authorized adapter implementation and R33 target-preflight gate
 
 PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, and both successful exact-head workflows close the R32 adapter only as bounded deterministic correctness evidence. [R33](R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) now freezes one explicit operator-only caller, a pre-existing regular file opened read-only with pseudonymous retained identity, exact merged-wrapper checks, a closed artifact containing only facts known before retention, a request-invalid/no-artifact disposition, deterministic sink-I/O failure mapping, a closed ordered failure-object schema, and a separately returned retention disposition. The artifact can at most be `preflight_subset_ready`; Fedora-release/effective-target validation remains unresolved. Ordinary drop records ownership release rather than OS close success. Exactly one later fourth-crate serializer-only implementation with fail-closed construction and synthetic tests is authorized; parsing and round-trip support are not. CI/manual host invocation and retained host observations are prohibited by that implementation gate; R7 production, capture, workloads, benchmarks, tracefs, execution, and evidence remain blocked.
+
+### R34 correction to the target-preflight gate
+
+[R34](R34-R33-TARGET-PREFLIGHT-GOVERNANCE-CORRECTION.md) records why closed, unmerged PR #114 at
+exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` cannot merge under unchanged R33. It freezes the
+minimal non-Linux, non-x86_64, and no-file-acquired artifact values without extending the four call
+dispositions or changing successful bytes. Only after R34 merges may one corrected implementation
+PR attempt the unchanged full synthetic coverage gate. No live call, host observation, workload,
+record, capture, benchmark, tracefs, execution, or evidence is authorized.

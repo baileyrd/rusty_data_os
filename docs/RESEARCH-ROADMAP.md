@@ -305,3 +305,12 @@ PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05d
 ## R33 checkpoint: adapter closed; target-preflight boundary frozen
 
 [R33](experiments/EXP-0001/R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) freezes the smallest explicit operator-invoked preflight-subset caller, pre-existing read-only regular-file rules, exact wrapper checks, a closed versioned pre-retention artifact, a request-invalid/no-artifact disposition, deterministic sink-I/O failures, a closed ordered failure-object schema, and a separate returned retention disposition. The strongest artifact classification is `preflight_subset_ready`; Fedora-release/effective-target validation remains unresolved. Ordinary `File` drop records ownership release, not observable OS close success. Exactly one later PR may implement only fail-closed construction, deterministic serialization, retention, and synthetic tests in `exp1-descriptive-d1-harness`; no parser or round-trip API is authorized. It may not be invoked in CI or retain host observations under that authorization. Workload materialization/actions, append/R7 integration, tracefs, calibration, benchmark execution/publication, durability/recovery/faults, baselines, and production remain gated.
+
+## R34 checkpoint: target-preflight governance corrected
+
+[R34](experiments/EXP-0001/R34-R33-TARGET-PREFLIGHT-GOVERNANCE-CORRECTION.md) records that closed,
+unmerged PR #114 exposed an R33 contradiction between required pre-open failure artifacts and
+mandatory `drop_completed` ownership. It adds only closed compile-time target mismatch values and
+`not_acquired`, preserves the successful byte oracle and the four call dispositions, and
+authorizes one corrected synthetic-tested implementation after R34 merges. The entire R33 section
+8 coverage gate and every live-use, execution, evidence, and production exclusion remain in force.

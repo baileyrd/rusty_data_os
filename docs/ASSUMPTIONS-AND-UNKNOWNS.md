@@ -136,3 +136,11 @@ R32 closes the injected R31 orchestration implementation only as bounded determi
 ### R33 disposition
 
 R33 closes the authorized adapter implementation at PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, after both exact-head workflows succeeded, only as bounded deterministic correctness evidence. It freezes one operator-invoked, non-CI preflight and retained diagnostic contract and authorizes one later synthetic-tested implementation. It closes no live/effective portion of UNK-022: no construction, borrowed file, successful wrapper result, preflight artifact, or compilation is target validation or R7/performance evidence.
+
+### R34 disposition
+
+R34 resolves only R33's locally decidable representation conflict: compile-time target mismatch and
+valid-request open failure can now produce truthful classified artifacts using closed mismatch
+values and `not_acquired`. Closed, unmerged PR #114 is not evidence and must be corrected or
+superseded after R34 merges. UNK-022 remains open for implementation closure, live/effective target
+validation, host observation, capture, execution, and evidence.

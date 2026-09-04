@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R33 closes the R32-authorized internal live adapter and authorizes only one later synthetic-tested target-preflight implementation; live target use, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — R34 corrects the R33 target-preflight schema conflict and authorizes only one corrected synthetic-tested implementation; live target use, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -37,6 +37,13 @@ per-event perf ownership, and authorizes exactly one later non-live-tested adapt
 live readiness, target validation, capture, execution, publication, or performance evidence.
 
 R33 closes the R32-authorized internal adapter at PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, with both exact-head workflows successful. This is bounded deterministic adapter/ownership/lifecycle/wrapper-mapping/failure/cleanup correctness evidence only. R33 freezes one explicit operator-invoked, non-CI preflight-subset caller, a pre-retention artifact plus separately returned retention disposition, a non-artifact request-invalid outcome, deterministic sink-I/O failure mapping, a closed ordered failure-object schema, and only drop-completed ownership release—not observable OS close success. Fedora-release/effective-target validation and host invocation/observation remain unresolved and unauthorized. Exactly one later serializer-only, fail-closed, synthetic-tested implementation PR is authorized; no parser is authorized.
+
+R34 records that closed, unmerged PR #114 at exact head
+`41d30f3484609b6b6ec03918bfd04b03ac56273a` exposed an R33 contract conflict and must not merge at
+that head. It minimally adds compile-time target mismatch values and the truthful
+`not_acquired` measured-file ownership fact while preserving R33's successful byte vector and its
+four call dispositions. It authorizes exactly one corrected synthetic-tested implementation after
+R34 merges; this is governance only, not implementation or evidence.
 
 ## 2. Approved foundation
 
@@ -262,3 +269,14 @@ R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` 
 ## R33 adapter closure and target-preflight decision
 
 [R33](experiments/EXP-0001/R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) closes the R32 adapter implementation using PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, and both successful exact-head workflows, only as bounded deterministic correctness evidence. It freezes an explicit operator-only caller, read-only pre-existing regular-file handling with pseudonymous identity, exact wrapper checks, a closed pre-retention artifact with `preflight_subset_ready` as its strongest classification, a separate request-invalid/no-artifact disposition, deterministic write/flush I/O failures, a closed ordered failure-object schema, and a separate returned retention disposition. Ordinary drop records ownership release only, not OS close success. Exactly one later serializer-only implementation PR is authorized in the existing fourth crate with synthetic tests and fail-closed input validation; parsing/round-trip support is excluded. Fedora-release/effective-target validation, live invocation/observations, workloads, measured actions, records, benchmarks, tracefs, durability/recovery/faults, baselines, and production remain blocked or unauthorized.
+
+## R34 target-preflight governance correction
+
+[R34](experiments/EXP-0001/R34-R33-TARGET-PREFLIGHT-GOVERNANCE-CORRECTION.md) records the conflict
+found while reviewing closed, unmerged PR #114 at exact head
+`41d30f3484609b6b6ec03918bfd04b03ac56273a`. Target mismatch and valid-request open failure require
+classified artifacts, but R33 supplied neither a non-x86_64 observed value nor a truthful ownership
+fact when no file was acquired. R34 freezes `unsupported_target_os`, architecture `unsupported`,
+and ownership `not_acquired`, preserves R33's successful bytes and exact call/retention
+dispositions, and authorizes one corrected full-gate synthetic implementation after merge. It
+supplies no implementation, live observation, execution, or evidence.
