@@ -23,10 +23,12 @@ pub enum TargetPlatformV1 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TargetArchitectureV1 {
     X86_64,
+    Unsupported,
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlatformDispositionV1 {
     ProspectiveFedora44Linux,
+    UnsupportedTargetOs,
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ArtifactClassificationV1 {
@@ -40,6 +42,7 @@ pub enum TargetPreflightCallDispositionV1 {
     Completed,
     SerializationFailed,
     RetentionFailed,
+    GovernanceConflict,
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RequestFailureReasonV1 {
@@ -56,6 +59,7 @@ pub enum RetentionOperationV1 {
 pub enum NotAttemptedReasonV1 {
     RequestInvalid(RequestFailureReasonV1),
     SerializationFailure,
+    GovernanceConflict,
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IoErrorKindV1 {
@@ -232,6 +236,7 @@ pub enum LifecyclePhaseV1 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum OwnershipReleaseV1 {
     DropCompleted,
+    PendingDrop,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LifecycleV1 {
@@ -368,6 +373,17 @@ fn validate(r: &TargetPreflightRequest<'_>) -> Result<(), RequestFailureReasonV1
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+struct CompileTarget {
+    linux: bool,
+    x86_64: bool,
+}
+
+const COMPILE_TARGET: CompileTarget = CompileTarget {
+    linux: cfg!(target_os = "linux"),
+    x86_64: cfg!(target_arch = "x86_64"),
+};
+
 trait ExecutionBoundary: CaptureBoundary {
     fn resolution(&mut self, clock: Clock) -> Outcome<i128>;
 }
@@ -421,6 +437,9 @@ pub fn run_target_preflight(
     if let Err(e) = validate(request) {
         return invalid(e);
     }
+    if let Some(artifact) = build_target_failure(request, COMPILE_TARGET) {
+        return governance_conflict(artifact);
+    }
     let opened = OpenOptions::new()
         .read(true)
         .write(false)
@@ -431,24 +450,27 @@ pub fn run_target_preflight(
         .open(request.measured_file_path);
     let file = match opened {
         Ok(f) => f,
-        Err(e) => return finish_artifact(build_open_failure(request, e), retention),
+        Err(e) => return governance_conflict(build_open_failure(request, e)),
     };
     let regular = match file.metadata() {
         Ok(m) => m.file_type().is_file(),
         Err(e) => {
             drop(file);
-            return finish_artifact(build_open_failure(request, e), retention);
+            return finish_artifact(
+                mark_drop_completed(build_metadata_failure(request, e)),
+                retention,
+            );
         }
     };
     if !regular {
         drop(file);
-        return finish_artifact(build_nonregular(request), retention);
+        return finish_artifact(mark_drop_completed(build_nonregular(request)), retention);
     }
     let cleanup = PerfCleanupState::default();
     let mut boundary = LiveBoundary(LiveCaptureBoundary::new(&cleanup));
     let artifact = execute_with_boundary(request, &file, &mut boundary);
     drop(file);
-    finish_artifact(artifact, retention)
+    finish_artifact(mark_drop_completed(artifact), retention)
 }
 
 fn base_source<T>(
@@ -484,7 +506,6 @@ fn execute_with_boundary<B: ExecutionBoundary>(
     b: &mut B,
 ) -> TargetPreflightArtifactV1 {
     let mut first: Option<FailureObjectV1> = None;
-    let mut next = 1usize;
     macro_rules! call {
         ($phase:expr,$source:expr,$expr:expr) => {{
             if let Some(existing) = &first {
@@ -492,8 +513,7 @@ fn execute_with_boundary<B: ExecutionBoundary>(
             } else {
                 let o = $expr;
                 if let Some(d) = failure_detail(&o) {
-                    let id = format!("failure-{next:04}");
-                    next += 1;
+                    let id = "failure-0001".to_owned();
                     first = Some(FailureObjectV1 {
                         id: id.clone(),
                         phase: $phase,
@@ -582,8 +602,7 @@ fn execute_with_boundary<B: ExecutionBoundary>(
             Outcome::Success(mut owner) => {
                 let stop = b.stop_perf(&mut owner, event);
                 if let Some(d) = failure_detail(&stop) {
-                    let id = format!("failure-{next:04}");
-                    next += 1;
+                    let id = "failure-0001".to_owned();
                     first = Some(FailureObjectV1 {
                         id,
                         phase: FailurePhaseV1::PerfStopRead,
@@ -595,10 +614,8 @@ fn execute_with_boundary<B: ExecutionBoundary>(
                 let clean_out = match clean {
                     Outcome::Success(()) => PreflightOutcomeV1::Outcome(Outcome::Success(())),
                     bad => {
-                        let id = format!("failure-{next:04}");
-                        next += 1;
                         cleanup_failures.push(FailureObjectV1 {
-                            id,
+                            id: String::new(),
                             phase: FailurePhaseV1::PerfCleanup,
                             source: FailureSourceV1::Perf(event),
                             detail: failure_detail(&bad).unwrap(),
@@ -617,8 +634,7 @@ fn execute_with_boundary<B: ExecutionBoundary>(
             }
             bad => {
                 if let Some(d) = failure_detail(&bad) {
-                    let id = format!("failure-{next:04}");
-                    next += 1;
+                    let id = "failure-0001".to_owned();
                     first = Some(FailureObjectV1 {
                         id: id.clone(),
                         phase: FailurePhaseV1::PerfOpen,
@@ -644,6 +660,10 @@ fn execute_with_boundary<B: ExecutionBoundary>(
             }
         }
     });
+    let first_cleanup_id = if first.is_some() { 2 } else { 1 };
+    for (offset, failure) in cleanup_failures.iter_mut().enumerate() {
+        failure.id = format!("failure-{:04}", first_cleanup_id + offset);
+    }
     let classification = classify(first.as_ref(), &cleanup_failures);
     TargetPreflightArtifactV1 {
         schema: SCHEMA_V1,
@@ -731,9 +751,8 @@ fn execute_with_boundary<B: ExecutionBoundary>(
                 LifecyclePhaseV1::FileOpened,
                 LifecyclePhaseV1::SourcesChecked,
                 LifecyclePhaseV1::PerfChecked,
-                LifecyclePhaseV1::OwnershipReleased,
             ],
-            measured_file_ownership_release: OwnershipReleaseV1::DropCompleted,
+            measured_file_ownership_release: OwnershipReleaseV1::PendingDrop,
         },
         first_causal_failure: first,
         cleanup_failures,
@@ -858,11 +877,8 @@ fn empty_artifact(
             cleanup: skipped(&id),
         }),
         lifecycle: LifecycleV1 {
-            phases: vec![
-                LifecyclePhaseV1::RequestValidated,
-                LifecyclePhaseV1::OwnershipReleased,
-            ],
-            measured_file_ownership_release: OwnershipReleaseV1::DropCompleted,
+            phases: vec![LifecyclePhaseV1::RequestValidated],
+            measured_file_ownership_release: OwnershipReleaseV1::PendingDrop,
         },
         first_causal_failure: Some(first),
         cleanup_failures: vec![],
@@ -890,6 +906,86 @@ fn build_open_failure(r: &TargetPreflightRequest<'_>, e: io::Error) -> TargetPre
         }),
         skipped("failure-0001"),
     )
+}
+fn mark_drop_completed(mut artifact: TargetPreflightArtifactV1) -> TargetPreflightArtifactV1 {
+    artifact
+        .lifecycle
+        .phases
+        .push(LifecyclePhaseV1::OwnershipReleased);
+    artifact.lifecycle.measured_file_ownership_release = OwnershipReleaseV1::DropCompleted;
+    artifact
+}
+
+fn governance_conflict(artifact: TargetPreflightArtifactV1) -> TargetPreflightExecutionV1 {
+    // R33 requires the artifact to say `drop_completed`, but no `File` exists after open failure.
+    // Fail closed rather than serializing a fact that did not occur or extending the frozen schema.
+    TargetPreflightExecutionV1 {
+        artifact: Some(artifact),
+        serialized_bytes: None,
+        retention: RetentionOutcomeV1::NotAttempted {
+            reason: NotAttemptedReasonV1::GovernanceConflict,
+        },
+        disposition: TargetPreflightCallDispositionV1::GovernanceConflict,
+    }
+}
+fn build_metadata_failure(
+    r: &TargetPreflightRequest<'_>,
+    e: io::Error,
+) -> TargetPreflightArtifactV1 {
+    let d = FailureDetailV1::Error(ErrorReason::Io(e.kind()));
+    empty_artifact(
+        r,
+        FailureObjectV1 {
+            id: "failure-0001".into(),
+            phase: FailurePhaseV1::MeasuredFileRegularFile,
+            source: FailureSourceV1::MeasuredFile,
+            detail: d.clone(),
+        },
+        PreflightOutcomeV1::Outcome(Outcome::Success(())),
+        PreflightOutcomeV1::Outcome(match d {
+            FailureDetailV1::Error(x) => Outcome::Error(x),
+            _ => unreachable!(),
+        }),
+    )
+}
+
+fn build_target_failure(
+    r: &TargetPreflightRequest<'_>,
+    target: CompileTarget,
+) -> Option<TargetPreflightArtifactV1> {
+    let (phase, source, reason) = if !target.linux {
+        (
+            FailurePhaseV1::PlatformValidation,
+            FailureSourceV1::Platform,
+            InvalidStateReasonV1::PlatformMismatch,
+        )
+    } else if !target.x86_64 {
+        (
+            FailurePhaseV1::ArchitectureValidation,
+            FailureSourceV1::Architecture,
+            InvalidStateReasonV1::ArchitectureMismatch,
+        )
+    } else {
+        return None;
+    };
+    let mut artifact = empty_artifact(
+        r,
+        FailureObjectV1 {
+            id: "failure-0001".into(),
+            phase,
+            source,
+            detail: FailureDetailV1::InvalidState(reason),
+        },
+        skipped("failure-0001"),
+        skipped("failure-0001"),
+    );
+    if !target.linux {
+        artifact.platform.disposition = PlatformDispositionV1::UnsupportedTargetOs;
+    }
+    if !target.x86_64 {
+        artifact.architecture.observed = TargetArchitectureV1::Unsupported;
+    }
+    Some(artifact)
 }
 fn build_nonregular(r: &TargetPreflightRequest<'_>) -> TargetPreflightArtifactV1 {
     empty_artifact(
@@ -991,6 +1087,8 @@ fn map_io(k: io::ErrorKind) -> IoErrorKindV1 {
         E::Unsupported => IoErrorKindV1::Unsupported,
         E::UnexpectedEof => IoErrorKindV1::UnexpectedEof,
         E::OutOfMemory => IoErrorKindV1::OutOfMemory,
+        // `FilesystemLoop` and `InProgress` remain unstable on pinned Rust 1.89.0;
+        // the non-exhaustive fallback is therefore the only representable mapping here.
         _ => IoErrorKindV1::Other,
     }
 }
@@ -1424,7 +1522,38 @@ fn serialize(a: &TargetPreflightArtifactV1) -> Result<Vec<u8>, ()> {
     q(&mut o, &a.repository_revision)?;
     o.push_str(",\"build_identity\":");
     q(&mut o, &a.build_identity)?;
-    o.push_str(",\"platform\":{\"expected\":\"fedora-44-linux\",\"disposition\":\"prospective_fedora_44_linux\"},\"architecture\":{\"expected\":\"x86_64\",\"observed\":\"x86_64\"},\"measured_file\":{\"identity\":");
+    o.push_str(",\"platform\":{\"expected\":");
+    q(
+        &mut o,
+        match a.platform.expected {
+            TargetPlatformV1::Fedora44Linux => "fedora-44-linux",
+        },
+    )?;
+    o.push_str(",\"disposition\":");
+    q(
+        &mut o,
+        match a.platform.disposition {
+            PlatformDispositionV1::ProspectiveFedora44Linux => "prospective_fedora_44_linux",
+            PlatformDispositionV1::UnsupportedTargetOs => "unsupported_target_os",
+        },
+    )?;
+    o.push_str("},\"architecture\":{\"expected\":");
+    q(
+        &mut o,
+        match a.architecture.expected {
+            TargetArchitectureV1::X86_64 => "x86_64",
+            TargetArchitectureV1::Unsupported => "unsupported",
+        },
+    )?;
+    o.push_str(",\"observed\":");
+    q(
+        &mut o,
+        match a.architecture.observed {
+            TargetArchitectureV1::X86_64 => "x86_64",
+            TargetArchitectureV1::Unsupported => "unsupported",
+        },
+    )?;
+    o.push_str("},\"measured_file\":{\"identity\":");
     q(&mut o, &a.measured_file.identity)?;
     o.push_str(",\"open\":");
     a.measured_file.open.json(&mut o)?;
@@ -1473,9 +1602,12 @@ fn serialize(a: &TargetPreflightArtifactV1) -> Result<Vec<u8>, ()> {
             },
         )?
     }
-    o.push_str(
-        "],\"measured_file_ownership_release\":\"drop_completed\"},\"first_causal_failure\":",
-    );
+    o.push_str("],\"measured_file_ownership_release\":");
+    match a.lifecycle.measured_file_ownership_release {
+        OwnershipReleaseV1::DropCompleted => q(&mut o, "drop_completed")?,
+        OwnershipReleaseV1::PendingDrop => return Err(()),
+    }
+    o.push_str("},\"first_causal_failure\":");
     match &a.first_causal_failure {
         Some(f) => failure_json(&mut o, f)?,
         None => o.push_str("null"),
@@ -1560,6 +1692,22 @@ mod tests {
     #[test]
     fn io_fallback_is_other() {
         assert_eq!(map_io(io::ErrorKind::Other), IoErrorKindV1::Other);
+        assert_eq!(io_name(io::ErrorKind::Other), "other");
+        // These schema values are retained even though their std variants are unstable on 1.89.
+        assert_eq!(
+            match IoErrorKindV1::FilesystemLoop {
+                IoErrorKindV1::FilesystemLoop => "filesystem_loop",
+                _ => unreachable!(),
+            },
+            "filesystem_loop"
+        );
+        assert_eq!(
+            match IoErrorKindV1::InProgress {
+                IoErrorKindV1::InProgress => "in_progress",
+                _ => unreachable!(),
+            },
+            "in_progress"
+        );
     }
     use std::os::fd::{AsRawFd, RawFd};
     struct FakeFd;
@@ -1675,7 +1823,71 @@ mod tests {
             measured_file_path: Path::new("transient-do-not-retain"),
             measured_file_identity: "measured-file-alpha",
         };
-        execute_with_boundary(&r, &FakeFd, &mut Synthetic)
+        mark_drop_completed(execute_with_boundary(&r, &FakeFd, &mut Synthetic))
+    }
+    fn request() -> TargetPreflightRequest<'static> {
+        TargetPreflightRequest {
+            repository_revision: "1111111111111111111111111111111111111111",
+            build_identity: "fictional-build-01",
+            expected_platform: TargetPlatformV1::Fedora44Linux,
+            expected_architecture: TargetArchitectureV1::X86_64,
+            measured_file_path: Path::new("transient-do-not-retain"),
+            measured_file_identity: "measured-file-alpha",
+        }
+    }
+    #[test]
+    fn target_mismatches_are_first_invalid_failures_without_open() {
+        for (target, phase, source) in [
+            (
+                CompileTarget {
+                    linux: false,
+                    x86_64: true,
+                },
+                FailurePhaseV1::PlatformValidation,
+                FailureSourceV1::Platform,
+            ),
+            (
+                CompileTarget {
+                    linux: true,
+                    x86_64: false,
+                },
+                FailurePhaseV1::ArchitectureValidation,
+                FailureSourceV1::Architecture,
+            ),
+        ] {
+            let artifact = build_target_failure(&request(), target).unwrap();
+            assert_eq!(artifact.classification, ArtifactClassificationV1::Invalid);
+            let failure = artifact.first_causal_failure.unwrap();
+            assert_eq!(failure.id, "failure-0001");
+            assert_eq!(failure.phase, phase);
+            assert_eq!(failure.source, source);
+            assert_eq!(
+                artifact.lifecycle.measured_file_ownership_release,
+                OwnershipReleaseV1::PendingDrop
+            );
+        }
+    }
+    #[test]
+    fn metadata_failure_preserves_open_success_and_file_phase() {
+        let artifact = build_metadata_failure(&request(), io::Error::from(io::ErrorKind::Other));
+        assert_eq!(
+            artifact.measured_file.open,
+            PreflightOutcomeV1::Outcome(Outcome::Success(()))
+        );
+        assert!(matches!(
+            artifact.measured_file.regular_file,
+            PreflightOutcomeV1::Outcome(Outcome::Error(ErrorReason::Io(_)))
+        ));
+        let failure = artifact.first_causal_failure.unwrap();
+        assert_eq!(failure.phase, FailurePhaseV1::MeasuredFileRegularFile);
+        assert_eq!(failure.source, FailureSourceV1::MeasuredFile);
+    }
+    #[test]
+    fn serialization_rejects_a_pre_drop_artifact() {
+        let mut boundary = Synthetic;
+        let draft = execute_with_boundary(&request(), &FakeFd, &mut boundary);
+        assert_eq!(serialize(&draft), Err(()));
+        assert!(serialize(&mark_drop_completed(draft)).is_ok());
     }
     #[test]
     fn exact_r33_vector_and_repeated_output() {
@@ -1700,10 +1912,14 @@ mod tests {
         flushes: usize,
         write_error: Option<io::Error>,
         flush_error: Option<io::Error>,
+        partial_before_error: bool,
     }
     impl TargetPreflightRetention for Sink {
         fn write_all(&mut self, b: &[u8]) -> io::Result<()> {
             if let Some(e) = self.write_error.take() {
+                if self.partial_before_error {
+                    self.bytes.extend_from_slice(&b[..b.len().min(7)]);
+                }
                 return Err(e);
             }
             self.bytes.extend_from_slice(b);
@@ -1728,10 +1944,12 @@ mod tests {
         assert_eq!(x.artifact.unwrap(), a);
         let mut sink = Sink {
             write_error: Some(io::Error::from_raw_os_error(5)),
+            partial_before_error: true,
             ..Sink::default()
         };
         let x = finish_artifact(a.clone(), &mut sink);
         assert_eq!(sink.flushes, 0);
+        assert_eq!(sink.bytes.len(), 7);
         assert!(matches!(
             x.retention,
             RetentionOutcomeV1::IoFailure {
