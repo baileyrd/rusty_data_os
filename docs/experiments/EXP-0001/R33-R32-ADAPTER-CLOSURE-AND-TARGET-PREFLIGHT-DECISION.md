@@ -78,10 +78,20 @@ TargetPreflightCallDispositionV1 }`.
 
 `disposition` is exactly:
 
+- `request_invalid` when request validation failed before any file open, artifact construction, or
+  serialization;
 - `completed` when an artifact was serialized and one `write_all` plus one `flush` succeeded;
 - `serialization_failed` when no bytes were offered to the sink; or
 - `retention_failed` when `write_all` or `flush` failed, including a partial write hidden inside
   `write_all`.
+
+For `request_invalid`, `artifact` and `serialized_bytes` are both `None`, retention is
+`NotAttempted { reason: RequestInvalid(reason) }`, and `reason` is exactly one closed
+`RequestFailureReasonV1`: `InvalidRepositoryRevision`, `InvalidBuildIdentity`, or
+`InvalidMeasuredFileIdentity`.
+These values serialize nowhere and contain no rejected text or path. Revision, build-identity, and
+file-identity syntax therefore have the same pre-open outcome; there is no sanitized substitute in
+an artifact. Artifact construction is permitted only after all request fields are valid.
 
 Thus a successfully retained artifact can be `preflight_subset_ready`, `blocked`, or `invalid`,
 while the call's final disposition independently reports post-serialization execution. A failed or
@@ -89,11 +99,17 @@ partial write/flush is observable in the returned outcome and never requires alr
 to rewrite themselves. Retention failure does not retroactively alter artifact bytes or
 classification.
 
-`RetentionOutcomeV1` is exactly one of `NotAttempted { reason: SerializationFailure }`,
-`Success { serialized_byte_length: u64 }`, `Permission { operation: WriteAll|Flush, errno: i32 }`,
-`Unavailable { operation, reason: UnavailableReasonV1 }`, or
-`Error { operation, error: ErrorReasonV1 }`. A failed write reports `Flush` as not attempted inside
-the returned execution bookkeeping; flush is attempted only after successful `write_all`.
+`RetentionOutcomeV1` is exactly one of `NotAttempted { reason:
+RequestInvalid(RequestFailureReasonV1)|SerializationFailure }`,
+`Success { serialized_byte_length: u64 }`, or `IoFailure { operation: WriteAll|Flush,
+error: RetentionIoErrorV1 }`. `RetentionIoErrorV1` is exactly `{ kind: IoErrorKindV1,
+raw_os_error: Option<i32> }`: `kind` is the normalized `std::io::ErrorKind` string list frozen for
+`ErrorReasonV1::Io` below (including `other`); every future or otherwise unlisted non-exhaustive
+`ErrorKind` maps to `other`. `raw_os_error` is the unchanged result of
+`io::Error::raw_os_error()` (`None` when absent). This mapping is exhaustive and mechanical for
+every sink error; retention never maps a sink error to wrapper `Permission`, `UnavailableReasonV1`,
+or `ErrorReasonV1`. A failed write reports `Flush` as not attempted inside the returned execution
+bookkeeping; flush is attempted only after successful `write_all`.
 
 ## 5. Closed artifact schema and lossless merged-type mapping
 
@@ -154,14 +170,46 @@ unit structs (`nanoseconds`, `bytes`, `events`, or `operations`). Perf entries r
 `lifecycle` contains ordered `phases` and
 `measured_file_ownership_release:"drop_completed"`. It contains no serialization, retention, or
 OS-close result. `first_causal_failure` is null or `{id,phase,source,class,detail}`;
-`cleanup_failures` repeats that exact object shape in occurrence order. Tracefs is exactly
+`cleanup_failures` repeats that exact object shape. This is a closed `FailureObjectV1` encoding:
+
+- `id` is `failure-` plus a four-digit, zero-padded positive decimal ordinal. Ordinals follow
+  observation occurrence: the causal failure first when present, then cleanup failures in the
+  fixed perf-event cleanup order below. With no causal failure, the first cleanup failure is
+  `failure-0001`. IDs are contiguous and never reused or sorted by their text.
+- `phase` is exactly one of `platform_validation`, `architecture_validation`,
+  `measured_file_open`, `measured_file_regular_file`, `clock_resolution_realtime`,
+  `clock_resolution_monotonic_raw`, `source_capture`, `perf_open`, `perf_stop_read`,
+  `perf_cleanup`, or `ownership_release`. `source_capture` is used only for the eight non-resolution
+  source identities in their frozen order. Cleanup failures are ordered by actual cleanup
+  occurrence in the frozen independent-event order: CPU cycles, instructions, page faults, then
+  context switches.
+- `source` is exactly `platform`, `architecture`, `measured_file`, one of the ten source identities
+  frozen above, one of the four perf event names, or `lifecycle`. The complete legal phase/source
+  pairs are `platform_validation/platform`, `architecture_validation/architecture`,
+  `measured_file_open/measured_file`, `measured_file_regular_file/measured_file`, each
+  `clock_resolution_*` phase with its identically named source, `source_capture` with one of the
+  eight non-resolution source identities, each of `perf_open`, `perf_stop_read`, and `perf_cleanup`
+  with one of the four perf event names, and `ownership_release/lifecycle`. All other pairs are
+  rejected at construction.
+- `class` is exactly `unavailable`, `permission`, `overflow`, `error`, or `invalid_state`.
+  For the first four, `detail` is respectively an `UnavailableReasonV1`, `{"errno":i32}`, an
+  `OverflowReasonV1`, or an `ErrorReasonV1`, byte-for-byte the same reason object used by the
+  corresponding frozen outcome mapping. `invalid_state` detail is exactly one of
+  `{"kind":"platform_mismatch"}`, `{"kind":"architecture_mismatch"}`,
+  `{"kind":"not_regular_file"}`, `{"kind":"lifecycle_violation"}`, or
+  `{"kind":"ownership_release_incomplete"}`. No free-form detail is permitted.
+
+The causal object is the first non-cleanup failure in check order and later dependent operations
+are not attempted. `cleanup_failures` contains only cleanup failures in the deterministic order
+above, independently of the causal failure. Tracefs is exactly
 `{"state":"not_collected","reason":"R33 target preflight deliberately did not invoke tracefs"}`.
 
 `preflight_subset_ready` requires all pre-retention validations and outcomes to succeed, ownership
 release/drop to complete, no causal or cleanup failure, and the frozen tracefs state. `blocked`
-covers unavailable or permission capability outcomes. `invalid` covers malformed input, target
-OS/architecture mismatch, non-regular file, error/overflow, lifecycle violation, or cleanup
-failure. Invalid precedes blocked. Retention never participates in this classification.
+covers unavailable or permission capability outcomes. `invalid` covers only failures after a valid request is representable: target OS/architecture
+mismatch, non-regular file, error/overflow, lifecycle violation, or cleanup failure. Invalid
+precedes blocked. Request-invalid and retention outcomes never participate in artifact
+classification.
 
 ## 6. Deterministic serialization and retention
 
@@ -185,17 +233,30 @@ in a fenced block whose content ends immediately after that LF). Values are inve
 ```
 
 For that artifact, successful retention returns `Success { serialized_byte_length }` and call
-disposition `completed`. If `write_all` partially writes then fails with errno 5, the artifact bytes
-remain identical, while the returned outcome is `Error { operation: WriteAll, error:
-Errno(5) }`, flush is not attempted, and disposition is `retention_failed`. A flush permission
-failure similarly returns `Permission { operation: Flush, errno: 13 }` and
-`retention_failed`. Serialization rejection returns no artifact bytes, `NotAttempted`, and
-`serialization_failed`.
+disposition `completed`. If `write_all` partially writes then fails with an `Other` error whose raw OS error is 5, the
+artifact bytes remain identical, while the returned outcome is `IoFailure { operation: WriteAll,
+error: { kind: Other, raw_os_error: Some(5) } }`, flush is not attempted, and disposition is
+`retention_failed`. A flush permission-denied error similarly returns `IoFailure { operation:
+Flush, error: { kind: PermissionDenied, raw_os_error: Some(13) } }` and `retention_failed`. A
+serialization failure returns no artifact bytes, `NotAttempted { reason: SerializationFailure }`,
+and `serialization_failed`.
 
-Focused artifact failures use the same exact schema: CPU-cycle permission is `blocked` with
-`{"permission":{"errno":13}}`; proc I/O unsupported is `blocked` with
-`{"unavailable":{"kind":"unsupported"}}`; an unsafe identity, non-regular file, architecture
+An invalid repository revision, build identity, or measured-file identity returns no artifact or
+bytes, `NotAttempted { reason: RequestInvalid(...) }`, and `request_invalid`; rejected values never
+appear in an artifact. Focused artifact failures after a valid request use the same exact schema:
+CPU-cycle permission is `blocked` with `{"permission":{"errno":13}}`; proc I/O unsupported is
+`blocked` with `{"unavailable":{"kind":"unsupported"}}`; a non-regular file, architecture
 mismatch, overflow, wrapper error, or cleanup error is `invalid`. None depends on retention.
+
+The exact byte oracle for the CPU-cycle causal failure object (no trailing LF because this object is
+embedded in the artifact) is:
+
+```json
+{"id":"failure-0001","phase":"perf_open","source":"cpu_cycles","class":"permission","detail":{"errno":13}}
+```
+
+In a separate artifact with no causal failure, a context-switch cleanup failure with errno 5 is
+`{"id":"failure-0001","phase":"perf_cleanup","source":"context_switches","class":"error","detail":{"kind":"perf_cleanup","errno":5}}`; it is the sole element of `cleanup_failures`.
 
 ## 8. Implementation gate
 
