@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R33 closes the R32-authorized internal live adapter and authorizes only one later synthetic-tested target-preflight implementation; live target use, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — R34 records the R33 implementation conflict and authorizes only one later synthetic-tested v2 target-preflight correction; live target use, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -37,6 +37,8 @@ per-event perf ownership, and authorizes exactly one later non-live-tested adapt
 live readiness, target validation, capture, execution, publication, or performance evidence.
 
 R33 closes the R32-authorized internal adapter at PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, with both exact-head workflows successful. This is bounded deterministic adapter/ownership/lifecycle/wrapper-mapping/failure/cleanup correctness evidence only. R33 freezes one explicit operator-invoked, non-CI preflight-subset caller, a pre-retention artifact plus separately returned retention disposition, a non-artifact request-invalid outcome, deterministic sink-I/O failure mapping, a closed ordered failure-object schema, and only drop-completed ownership release—not observable OS close success. Fedora-release/effective-target validation and host invocation/observation remain unresolved and unauthorized. Exactly one later serializer-only, fail-closed, synthetic-tested implementation PR is authorized; no parser is authorized.
+
+R34 records that PR #114 exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` is not mergeable under R33 despite both head-specific workflows succeeding. R33 v1 cannot truthfully represent compile-target mismatch or a valid-request open failure without inventing closed states, and the head does not meet the exhaustive synthetic gate. R34 preserves v1 unchanged, freezes a separate v2 correction, and prospectively authorizes exactly one synthetic-only v2 correction or superseding implementation PR. This is governance design, not implementation closure or live evidence.
 
 ## 2. Approved foundation
 
@@ -262,3 +264,8 @@ R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` 
 ## R33 adapter closure and target-preflight decision
 
 [R33](experiments/EXP-0001/R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) closes the R32 adapter implementation using PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, and both successful exact-head workflows, only as bounded deterministic correctness evidence. It freezes an explicit operator-only caller, read-only pre-existing regular-file handling with pseudonymous identity, exact wrapper checks, a closed pre-retention artifact with `preflight_subset_ready` as its strongest classification, a separate request-invalid/no-artifact disposition, deterministic write/flush I/O failures, a closed ordered failure-object schema, and a separate returned retention disposition. Ordinary drop records ownership release only, not OS close success. Exactly one later serializer-only implementation PR is authorized in the existing fourth crate with synthetic tests and fail-closed input validation; parsing/round-trip support is excluded. Fedora-release/effective-target validation, live invocation/observations, workloads, measured actions, records, benchmarks, tracefs, durability/recovery/faults, baselines, and production remain blocked or unauthorized.
+
+
+## R34 R33 implementation conflict and v2 correction
+
+[R34](experiments/EXP-0001/R34-R33-IMPLEMENTATION-CONFLICT-AND-TARGET-PREFLIGHT-V2-DECISION.md) records PR #114 as non-mergeable, preserves R33 v1 unchanged, and freezes only the minimum v2 representation needed for unsupported compile targets and measured-file ownership that was never acquired. It prohibits public governance-conflict and pending-drop escape states and requires complete synthetic mapping, causality, cleanup, lifecycle, serialization, and retention coverage. Exactly one later v2 correction or superseding implementation is authorized; all R33 exclusions remain in force.
