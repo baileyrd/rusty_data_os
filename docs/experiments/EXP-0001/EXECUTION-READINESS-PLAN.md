@@ -1,6 +1,6 @@
 # EXP-0001 Execution-Readiness and Staged-Implementation Plan
 
-**Status:** Active staged plan; R34 records the R33 implementation conflict and authorizes only one synthetic-tested v2 target-preflight correction; live readiness, target validation observations, capture, execution, evidence, and confirmatory tracefs remain blocked
+**Status:** Active staged plan; R34 records closed, unmerged PR #114 as not evidence and freezes the corrected R33 implementation boundary and authorizes only one synthetic-tested v2 target-preflight correction; live readiness, target validation observations, capture, execution, evidence, and confirmatory tracefs remain blocked
 **Scope:** bridge from the completed EXP-0000 framework to an executable EXP-0001
 **Evidence classification:** planning plus reviewed Slice A and Slice B correctness-validation status; no benchmark, persistence, durability, or performance evidence
 
@@ -375,4 +375,4 @@ PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc
 
 ### R34 target-preflight v2 correction gate
 
-[R34](R34-R33-IMPLEMENTATION-CONFLICT-AND-TARGET-PREFLIGHT-V2-DECISION.md) records that PR #114 exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` cannot merge under R33 even though both head-specific workflows passed. The v1 authority cannot truthfully encode unsupported compile targets or ownership that was never acquired, and the implementation test surface is incomplete. R34 preserves v1, freezes a separate v2 correction, and authorizes exactly one later synthetic-only v2 correction or superseding implementation. It supplies no implementation closure, live-use authority, target observation, execution, or evidence; every R33 exclusion remains unchanged.
+[R34](R34-R33-IMPLEMENTATION-CONFLICT-AND-TARGET-PREFLIGHT-V2-DECISION.md) records that closed, unmerged PR #114 exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` was not mergeable under R33 even though both head-specific workflows passed. PR #114 is not evidence and created no public compatibility obligation. The v1 authority cannot truthfully encode unsupported compile targets or ownership that was never acquired, and the implementation test surface is incomplete. R34 preserves v1, freezes a separate v2 correction, and authorizes exactly one later synthetic-only v2 implementation. It supplies no implementation closure, live-use authority, target observation, execution, or evidence; every R33 exclusion remains unchanged.
