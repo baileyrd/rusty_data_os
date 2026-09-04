@@ -907,12 +907,17 @@ fn mark_drop_completed(mut artifact: TargetPreflightArtifactV2) -> TargetPreflig
     artifact
 }
 
+fn mark_file_opened(mut artifact: TargetPreflightArtifactV2) -> TargetPreflightArtifactV2 {
+    artifact.lifecycle.phases.push(LifecyclePhaseV1::FileOpened);
+    artifact
+}
+
 fn build_metadata_failure(
     r: &TargetPreflightRequest<'_>,
     e: io::Error,
 ) -> TargetPreflightArtifactV2 {
     let d = FailureDetailV1::Error(ErrorReason::Io(e.kind()));
-    empty_artifact(
+    mark_file_opened(empty_artifact(
         r,
         FailureObjectV1 {
             id: "failure-0001".into(),
@@ -925,11 +930,11 @@ fn build_metadata_failure(
             FailureDetailV1::Error(x) => Outcome::Error(x),
             _ => unreachable!(),
         }),
-    )
+    ))
 }
 
 fn build_nonregular(r: &TargetPreflightRequest<'_>) -> TargetPreflightArtifactV2 {
-    empty_artifact(
+    mark_file_opened(empty_artifact(
         r,
         FailureObjectV1 {
             id: "failure-0001".into(),
@@ -939,7 +944,7 @@ fn build_nonregular(r: &TargetPreflightRequest<'_>) -> TargetPreflightArtifactV2
         },
         PreflightOutcomeV1::Outcome(Outcome::Success(())),
         PreflightOutcomeV1::Outcome(Outcome::Success(false)),
-    )
+    ))
 }
 fn finish_artifact(
     artifact: TargetPreflightArtifactV2,
@@ -1373,7 +1378,9 @@ fn source_json<T: JsonValue>(o: &mut String, s: &SourceV1<T>) -> Result<(), ()> 
 fn perf_json(o: &mut String, p: &PerfEventV1) -> Result<(), ()> {
     o.push_str("{\"event\":");
     q(o, event(p.event))?;
-    o.push_str(",\"scope\":\"measured_thread\",\"unit\":");
+    o.push_str(",\"scope\":");
+    q(o, scope(p.scope))?;
+    o.push_str(",\"unit\":");
     unit(o, p.unit);
     o.push_str(",\"open\":");
     p.open.json(o)?;
@@ -1455,6 +1462,70 @@ fn failure_json(o: &mut String, f: &FailureObjectV1) -> Result<(), ()> {
     o.push('}');
     Ok(())
 }
+fn valid_text_identity(value: &str, max: usize) -> bool {
+    !value.is_empty()
+        && value.len() <= max
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_graphic() && b != b'/' && b != b'\\')
+}
+
+fn valid_file_identity(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 64
+        && value.is_ascii()
+        && value
+            .bytes()
+            .next()
+            .is_some_and(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"._-".contains(&b))
+        && !value.contains("..")
+        && !value.contains("://")
+}
+
+fn outcome_detail<T>(outcome: &PreflightOutcomeV1<T>) -> Option<FailureDetailV1> {
+    match outcome {
+        PreflightOutcomeV1::Outcome(value) => failure_detail(value),
+        PreflightOutcomeV1::NotAttempted { .. } => None,
+    }
+}
+
+fn check_step<T>(
+    outcome: &PreflightOutcomeV1<T>,
+    phase: FailurePhaseV1,
+    source: FailureSourceV1,
+    causal: Option<&FailureObjectV1>,
+    seen: &mut bool,
+) -> Result<(), ()> {
+    match outcome {
+        PreflightOutcomeV1::NotAttempted { failure_id } => {
+            let failure = causal.filter(|_| *seen).ok_or(())?;
+            if failure_id != &failure.id {
+                return Err(());
+            }
+        }
+        PreflightOutcomeV1::Outcome(value) => {
+            if *seen {
+                return Err(());
+            }
+            if let Some(detail) = failure_detail(value) {
+                let failure = causal.ok_or(())?;
+                if failure.phase != phase || failure.source != source || failure.detail != detail {
+                    return Err(());
+                }
+                *seen = true;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn check_skipped<T>(outcome: &PreflightOutcomeV1<T>, id: &str) -> bool {
+    matches!(outcome, PreflightOutcomeV1::NotAttempted { failure_id } if failure_id == id)
+}
+
 fn validate_artifact(a: &TargetPreflightArtifactV2) -> Result<(), ()> {
     if a.schema != TARGET_PREFLIGHT_ARTIFACT_SCHEMA_V2
         || a.repository_revision.len() != 40
@@ -1462,56 +1533,295 @@ fn validate_artifact(a: &TargetPreflightArtifactV2) -> Result<(), ()> {
             .repository_revision
             .bytes()
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-        || a.build_identity.is_empty()
-        || !a.build_identity.is_ascii()
-        || !a.measured_file.identity.is_ascii()
+        || !valid_text_identity(&a.build_identity, 128)
+        || !valid_file_identity(&a.measured_file.identity)
+        || a.platform.expected != TargetPlatformV1::Fedora44Linux
+        || a.platform.disposition != PlatformDispositionV2::ProspectiveFedora44Linux
+        || a.architecture.expected != TargetArchitectureV1::X86_64
+        || a.architecture.observed != ArchitectureObservationV2::X86_64
+        || a.tracefs.state != TracefsStateV1::NotCollected
+        || a.tracefs.reason != TRACEFS_REASON_V1
+        || !a.reasons.is_empty()
     {
         return Err(());
     }
-    let open_succeeded = matches!(
+
+    macro_rules! metadata {
+        ($field:expr,$identity:expr,$scope:expr,$unit:expr) => {
+            if $field.identity != $identity || $field.scope != $scope || $field.unit != $unit {
+                return Err(());
+            }
+        };
+    }
+    metadata!(
+        a.measured_file.length,
+        SourceIdentityV1::FileLength,
+        ScopeV1::MeasuredFile,
+        UnitV1::Bytes
+    );
+    metadata!(
+        a.sources.clock_resolution_realtime,
+        SourceIdentityV1::ClockResolutionRealtime,
+        ScopeV1::Observation,
+        UnitV1::Nanoseconds
+    );
+    metadata!(
+        a.sources.clock_resolution_monotonic_raw,
+        SourceIdentityV1::ClockResolutionMonotonicRaw,
+        ScopeV1::Observation,
+        UnitV1::Nanoseconds
+    );
+    metadata!(
+        a.sources.realtime,
+        SourceIdentityV1::Realtime,
+        ScopeV1::Observation,
+        UnitV1::Nanoseconds
+    );
+    metadata!(
+        a.sources.monotonic_raw,
+        SourceIdentityV1::MonotonicRaw,
+        ScopeV1::Observation,
+        UnitV1::Nanoseconds
+    );
+    metadata!(
+        a.sources.process_rusage,
+        SourceIdentityV1::ProcessRusage,
+        ScopeV1::Process,
+        UnitV1::ResourceUsage
+    );
+    metadata!(
+        a.sources.thread_rusage,
+        SourceIdentityV1::ThreadRusage,
+        ScopeV1::MeasuredThread,
+        UnitV1::ResourceUsage
+    );
+    metadata!(
+        a.sources.statm,
+        SourceIdentityV1::Statm,
+        ScopeV1::Process,
+        UnitV1::StatmPages
+    );
+    metadata!(
+        a.sources.status,
+        SourceIdentityV1::Status,
+        ScopeV1::Process,
+        UnitV1::Bytes
+    );
+    metadata!(
+        a.sources.process_io,
+        SourceIdentityV1::ProcessIo,
+        ScopeV1::Process,
+        UnitV1::ProcessIo
+    );
+    let events = [
+        PerfEvent::CpuCycles,
+        PerfEvent::Instructions,
+        PerfEvent::PageFaults,
+        PerfEvent::ContextSwitches,
+    ];
+    for (entry, event) in a.perf_events.iter().zip(events) {
+        if entry.event != event
+            || entry.scope != ScopeV1::MeasuredThread
+            || entry.unit != UnitV1::PerfCounter
+        {
+            return Err(());
+        }
+        if let PreflightOutcomeV1::Outcome(Outcome::Success(counter)) = &entry.stop_read
+            && counter.event != event
+        {
+            return Err(());
+        }
+    }
+
+    let causal = a.first_causal_failure.as_ref();
+    if causal.is_some_and(|f| f.id != "failure-0001") {
+        return Err(());
+    }
+    let open_success = matches!(
         a.measured_file.open,
         PreflightOutcomeV1::Outcome(Outcome::Success(()))
     );
-    let released_phase = a.lifecycle.phases.last() == Some(&LifecyclePhaseV1::OwnershipReleased);
-    match a.lifecycle.measured_file_ownership_release {
-        MeasuredFileOwnershipReleaseV2::NotAcquired => {
-            if open_succeeded
-                || released_phase
-                || a.lifecycle.phases != [LifecyclePhaseV1::RequestValidated]
-                || !matches!(
-                    a.first_causal_failure.as_ref(),
-                    Some(FailureObjectV1 {
-                        id,
-                        phase: FailurePhaseV1::MeasuredFileOpen,
-                        source: FailureSourceV1::MeasuredFile,
-                        ..
-                    }) if id == "failure-0001"
-                )
-            {
+    let regular_success = matches!(
+        a.measured_file.regular_file,
+        PreflightOutcomeV1::Outcome(Outcome::Success(true))
+    );
+    let acquired_early_failure =
+        causal.is_some_and(|f| f.phase == FailurePhaseV1::MeasuredFileRegularFile);
+    let expected_phases: &[LifecyclePhaseV1] = if !open_success {
+        &[LifecyclePhaseV1::RequestValidated]
+    } else if acquired_early_failure {
+        &[
+            LifecyclePhaseV1::RequestValidated,
+            LifecyclePhaseV1::FileOpened,
+            LifecyclePhaseV1::OwnershipReleased,
+        ]
+    } else {
+        &[
+            LifecyclePhaseV1::RequestValidated,
+            LifecyclePhaseV1::FileOpened,
+            LifecyclePhaseV1::SourcesChecked,
+            LifecyclePhaseV1::PerfChecked,
+            LifecyclePhaseV1::OwnershipReleased,
+        ]
+    };
+    let expected_ownership = if open_success {
+        MeasuredFileOwnershipReleaseV2::DropCompleted
+    } else {
+        MeasuredFileOwnershipReleaseV2::NotAcquired
+    };
+    if a.lifecycle.phases != expected_phases
+        || a.lifecycle.measured_file_ownership_release != expected_ownership
+    {
+        return Err(());
+    }
+
+    let all_dependent_skipped = |id: &str| {
+        check_skipped(&a.measured_file.length.outcome, id)
+            && check_skipped(&a.sources.clock_resolution_realtime.outcome, id)
+            && check_skipped(&a.sources.clock_resolution_monotonic_raw.outcome, id)
+            && check_skipped(&a.sources.realtime.outcome, id)
+            && check_skipped(&a.sources.monotonic_raw.outcome, id)
+            && check_skipped(&a.sources.process_rusage.outcome, id)
+            && check_skipped(&a.sources.thread_rusage.outcome, id)
+            && check_skipped(&a.sources.statm.outcome, id)
+            && check_skipped(&a.sources.status.outcome, id)
+            && check_skipped(&a.sources.process_io.outcome, id)
+            && a.perf_events.iter().all(|p| {
+                check_skipped(&p.open, id)
+                    && check_skipped(&p.stop_read, id)
+                    && check_skipped(&p.cleanup, id)
+            })
+    };
+
+    if !open_success {
+        let failure = causal.ok_or(())?;
+        if failure.phase != FailurePhaseV1::MeasuredFileOpen
+            || failure.source != FailureSourceV1::MeasuredFile
+            || outcome_detail(&a.measured_file.open) != Some(failure.detail.clone())
+            || !check_skipped(&a.measured_file.regular_file, &failure.id)
+            || !all_dependent_skipped(&failure.id)
+        {
+            return Err(());
+        }
+    } else if acquired_early_failure {
+        let failure = causal.ok_or(())?;
+        let regular_matches = match &a.measured_file.regular_file {
+            PreflightOutcomeV1::Outcome(Outcome::Success(false)) => {
+                failure.detail
+                    == FailureDetailV1::InvalidState(InvalidStateReasonV1::NotRegularFile)
+            }
+            value => outcome_detail(value) == Some(failure.detail.clone()),
+        };
+        if failure.source != FailureSourceV1::MeasuredFile
+            || !regular_matches
+            || !all_dependent_skipped(&failure.id)
+        {
+            return Err(());
+        }
+    } else {
+        if !regular_success {
+            return Err(());
+        }
+        let mut seen = false;
+        macro_rules! step {
+            ($out:expr,$phase:expr,$source:expr) => {
+                check_step(&$out, $phase, $source, causal, &mut seen)?
+            };
+        }
+        step!(
+            a.sources.clock_resolution_realtime.outcome,
+            FailurePhaseV1::ClockResolutionRealtime,
+            FailureSourceV1::Source(SourceIdentityV1::ClockResolutionRealtime)
+        );
+        step!(
+            a.sources.clock_resolution_monotonic_raw.outcome,
+            FailurePhaseV1::ClockResolutionMonotonicRaw,
+            FailureSourceV1::Source(SourceIdentityV1::ClockResolutionMonotonicRaw)
+        );
+        step!(
+            a.sources.realtime.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::Realtime)
+        );
+        step!(
+            a.sources.monotonic_raw.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::MonotonicRaw)
+        );
+        step!(
+            a.sources.process_rusage.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::ProcessRusage)
+        );
+        step!(
+            a.sources.thread_rusage.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::ThreadRusage)
+        );
+        step!(
+            a.sources.statm.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::Statm)
+        );
+        step!(
+            a.sources.status.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::Status)
+        );
+        step!(
+            a.sources.process_io.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::ProcessIo)
+        );
+        step!(
+            a.measured_file.length.outcome,
+            FailurePhaseV1::SourceCapture,
+            FailureSourceV1::Source(SourceIdentityV1::FileLength)
+        );
+        for p in &a.perf_events {
+            step!(
+                p.open,
+                FailurePhaseV1::PerfOpen,
+                FailureSourceV1::Perf(p.event)
+            );
+            step!(
+                p.stop_read,
+                FailurePhaseV1::PerfStopRead,
+                FailureSourceV1::Perf(p.event)
+            );
+            // Cleanup is independent: it is never the causal failure and remains attempted after stop-read failure.
+            if matches!(p.open, PreflightOutcomeV1::Outcome(Outcome::Success(()))) {
+                if matches!(p.cleanup, PreflightOutcomeV1::NotAttempted { .. }) {
+                    return Err(());
+                }
+            } else if !check_skipped(&p.cleanup, &causal.ok_or(())?.id) {
                 return Err(());
             }
         }
-        MeasuredFileOwnershipReleaseV2::DropCompleted => {
-            if !open_succeeded
-                || !released_phase
-                || !a.lifecycle.phases.contains(&LifecyclePhaseV1::FileOpened)
-            {
-                return Err(());
-            }
+        if seen != causal.is_some() {
+            return Err(());
         }
     }
-    let expected_first_cleanup = usize::from(a.first_causal_failure.is_some()) + 1;
-    if a.first_causal_failure
-        .as_ref()
-        .is_some_and(|failure| failure.id != "failure-0001")
-        || a.cleanup_failures
-            .iter()
-            .enumerate()
-            .any(|(index, failure)| {
-                failure.id != format!("failure-{:04}", expected_first_cleanup + index)
-                    || failure.phase != FailurePhaseV1::PerfCleanup
-            })
-    {
+
+    let expected_first_cleanup = usize::from(causal.is_some()) + 1;
+    let mut cleanup_index = 0;
+    for p in &a.perf_events {
+        if let Some(detail) = outcome_detail(&p.cleanup) {
+            let failure = a.cleanup_failures.get(cleanup_index).ok_or(())?;
+            if failure.id != format!("failure-{:04}", expected_first_cleanup + cleanup_index)
+                || failure.phase != FailurePhaseV1::PerfCleanup
+                || failure.source != FailureSourceV1::Perf(p.event)
+                || failure.detail != detail
+            {
+                return Err(());
+            }
+            cleanup_index += 1;
+        }
+    }
+    if cleanup_index != a.cleanup_failures.len() {
+        return Err(());
+    }
+    if a.classification != classify(causal, &a.cleanup_failures) {
         return Err(());
     }
     Ok(())
@@ -1710,6 +2020,95 @@ mod tests {
             "in_progress"
         );
     }
+
+    #[test]
+    fn every_closed_wrapper_and_nested_reason_has_an_exact_encoding() {
+        let unavailable = [
+            UnavailableReason::Interface(7),
+            UnavailableReason::MissingStatxSize,
+            UnavailableReason::NotFound,
+            UnavailableReason::Unsupported,
+            UnavailableReason::StatxOnlyAfterFstat,
+        ];
+        for value in unavailable {
+            let mut json = String::new();
+            PreflightOutcomeV1::Outcome(Outcome::<i32>::Unavailable(value))
+                .json(&mut json)
+                .unwrap();
+            assert!(json.starts_with("{\"unavailable\":"));
+        }
+        let overflow = [
+            OverflowReason::Arithmetic,
+            OverflowReason::FileSize,
+            OverflowReason::NumericField,
+            OverflowReason::PerfScaling,
+            OverflowReason::PerfErrno(9),
+        ];
+        for value in overflow {
+            let mut json = String::new();
+            PreflightOutcomeV1::Outcome(Outcome::<i32>::Overflow(value))
+                .json(&mut json)
+                .unwrap();
+            assert!(json.starts_with("{\"overflow\":"));
+        }
+        let parse = [
+            ParseReason::NonAscii,
+            ParseReason::LineCount,
+            ParseReason::TokenCount,
+            ParseReason::MalformedLine,
+            ParseReason::MissingField,
+            ParseReason::DuplicateField,
+            ParseReason::SignedValue,
+            ParseReason::InvalidNumber,
+            ParseReason::InvalidUnit,
+            ParseReason::TrailingToken,
+        ];
+        for value in parse {
+            let mut json = String::new();
+            PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(ErrorReason::Parse(value)))
+                .json(&mut json)
+                .unwrap();
+            assert!(json.contains("\"kind\":\"parse\""));
+        }
+        let errors = [
+            ErrorReason::Errno(1),
+            ErrorReason::InvalidFraction,
+            ErrorReason::NegativeCounter,
+            ErrorReason::NegativeFileSize,
+            ErrorReason::Io(io::ErrorKind::NotFound),
+            ErrorReason::InvalidUtf8,
+            ErrorReason::PerfShortRead(3),
+            ErrorReason::PerfInvalidTime,
+            ErrorReason::PerfDecrease,
+            ErrorReason::PerfLifecycle,
+            ErrorReason::PerfCleanup(4),
+            ErrorReason::PerfUnexpectedReturn(5),
+            ErrorReason::PerfCleanupUnexpected(6),
+            ErrorReason::PerfEventMismatch {
+                expected: PerfEvent::CpuCycles,
+                actual: PerfEvent::Instructions,
+            },
+            ErrorReason::MissingFileCapability,
+        ];
+        for value in errors {
+            let mut json = String::new();
+            PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(value))
+                .json(&mut json)
+                .unwrap();
+            assert!(json.starts_with("{\"error\":"));
+        }
+        for outcome in [
+            PreflightOutcomeV1::Outcome(Outcome::Success(1_i32)),
+            PreflightOutcomeV1::Outcome(Outcome::Permission(13)),
+            PreflightOutcomeV1::NotAttempted {
+                failure_id: "failure-0001".into(),
+            },
+        ] {
+            let mut json = String::new();
+            outcome.json(&mut json).unwrap();
+            assert!(!json.is_empty());
+        }
+    }
     use std::os::fd::{AsRawFd, RawFd};
     struct FakeFd;
     impl AsRawFd for FakeFd {
@@ -1838,7 +2237,10 @@ mod tests {
     }
     #[test]
     fn metadata_failure_preserves_open_success_and_file_phase() {
-        let artifact = build_metadata_failure(&request(), io::Error::from(io::ErrorKind::Other));
+        let artifact = mark_drop_completed(build_metadata_failure(
+            &request(),
+            io::Error::from(io::ErrorKind::Other),
+        ));
         assert_eq!(
             artifact.measured_file.open,
             PreflightOutcomeV1::Outcome(Outcome::Success(()))
@@ -1847,9 +2249,49 @@ mod tests {
             artifact.measured_file.regular_file,
             PreflightOutcomeV1::Outcome(Outcome::Error(ErrorReason::Io(_)))
         ));
-        let failure = artifact.first_causal_failure.unwrap();
+        let failure = artifact.first_causal_failure.as_ref().unwrap();
         assert_eq!(failure.phase, FailurePhaseV1::MeasuredFileRegularFile);
         assert_eq!(failure.source, FailureSourceV1::MeasuredFile);
+        assert_eq!(
+            artifact.lifecycle.phases,
+            [
+                LifecyclePhaseV1::RequestValidated,
+                LifecyclePhaseV1::FileOpened,
+                LifecyclePhaseV1::OwnershipReleased
+            ]
+        );
+        let mut sink = Sink::default();
+        let execution = finish_artifact(artifact, &mut sink);
+        assert_eq!(
+            execution.disposition,
+            TargetPreflightCallDispositionV1::Completed
+        );
+        assert_eq!(
+            execution.artifact.unwrap().classification,
+            ArtifactClassificationV1::Invalid
+        );
+    }
+
+    #[test]
+    fn nonregular_execution_is_retained_as_invalid_after_drop() {
+        let artifact = mark_drop_completed(build_nonregular(&request()));
+        let mut sink = Sink::default();
+        let execution = finish_artifact(artifact, &mut sink);
+        assert_eq!(
+            execution.disposition,
+            TargetPreflightCallDispositionV1::Completed
+        );
+        let retained = execution.artifact.unwrap();
+        assert_eq!(retained.classification, ArtifactClassificationV1::Invalid);
+        assert_eq!(
+            retained.lifecycle.measured_file_ownership_release,
+            MeasuredFileOwnershipReleaseV2::DropCompleted
+        );
+        assert!(
+            std::str::from_utf8(execution.serialized_bytes.as_ref().unwrap())
+                .unwrap()
+                .contains("not_regular_file")
+        );
     }
     #[test]
     fn supported_target_and_open_failure_are_exact() {
@@ -1879,6 +2321,14 @@ mod tests {
         let mut artifact = fictional();
         artifact.schema = "EXP-0001-R33/target-preflight-artifact-v1";
         assert_eq!(serialize(&artifact), Err(()));
+        let mut sink = Sink::default();
+        let execution = finish_artifact(artifact, &mut sink);
+        assert_eq!(
+            execution.disposition,
+            TargetPreflightCallDispositionV1::SerializationFailed
+        );
+        assert!(sink.bytes.is_empty());
+        assert_eq!(sink.flushes, 0);
 
         let mut artifact = fictional();
         artifact.lifecycle.measured_file_ownership_release =
@@ -1900,6 +2350,48 @@ mod tests {
         let draft = execute_with_boundary(&request(), &FakeFd, &mut boundary);
         assert_eq!(serialize(&draft), Err(()));
         assert!(serialize(&mark_drop_completed(draft)).is_ok());
+    }
+
+    #[test]
+    fn complete_public_artifact_contradictions_fail_closed() {
+        fn rejected(mutator: impl FnOnce(&mut TargetPreflightArtifactV2)) {
+            let mut artifact = fictional();
+            mutator(&mut artifact);
+            assert_eq!(serialize(&artifact), Err(()));
+        }
+        rejected(|a| a.repository_revision = "A".repeat(40));
+        rejected(|a| a.build_identity = "x".repeat(129));
+        rejected(|a| a.build_identity = "bad/path".into());
+        rejected(|a| a.measured_file.identity = "Bad".into());
+        rejected(|a| a.measured_file.length.identity = SourceIdentityV1::Realtime);
+        rejected(|a| a.sources.realtime.scope = ScopeV1::Process);
+        rejected(|a| a.sources.status.unit = UnitV1::Nanoseconds);
+        rejected(|a| a.perf_events.swap(0, 1));
+        rejected(|a| a.perf_events[0].scope = ScopeV1::Process);
+        rejected(|a| a.perf_events[0].unit = UnitV1::Bytes);
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(counter)) =
+                &mut a.perf_events[0].stop_read
+            {
+                counter.event = PerfEvent::Instructions
+            }
+        });
+        rejected(|a| a.lifecycle.phases.swap(1, 2));
+        rejected(|a| {
+            a.lifecycle.phases.pop();
+        });
+        rejected(|a| a.classification = ArtifactClassificationV1::Blocked);
+        rejected(|a| a.tracefs.reason = "fabricated");
+        rejected(|a| a.reasons.push("open text is closed".into()));
+        rejected(|a| {
+            a.first_causal_failure = Some(FailureObjectV1 {
+                id: "failure-0001".into(),
+                phase: FailurePhaseV1::PlatformValidation,
+                source: FailureSourceV1::Platform,
+                detail: FailureDetailV1::InvalidState(InvalidStateReasonV1::PlatformMismatch),
+            })
+        });
+        rejected(|a| a.perf_events[0].open = skipped("failure-9999"));
     }
     #[test]
     fn exact_r33_vector_and_repeated_output() {
@@ -1972,6 +2464,23 @@ mod tests {
                 operation: RetentionOperationV1::WriteAll,
                 error: RetentionIoErrorV1 {
                     raw_os_error: Some(5),
+                    ..
+                }
+            }
+        ));
+        let mut sink = Sink {
+            write_error: Some(io::Error::from(io::ErrorKind::WriteZero)),
+            ..Sink::default()
+        };
+        let x = finish_artifact(a.clone(), &mut sink);
+        assert!(sink.bytes.is_empty());
+        assert_eq!(sink.flushes, 0);
+        assert!(matches!(
+            x.retention,
+            RetentionOutcomeV1::IoFailure {
+                operation: RetentionOperationV1::WriteAll,
+                error: RetentionIoErrorV1 {
+                    kind: IoErrorKindV1::WriteZero,
                     ..
                 }
             }
