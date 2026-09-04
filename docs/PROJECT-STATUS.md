@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — the R32-authorized internal live-adapter implementation is open pending external exact-head review and CI; live capture, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — R33 closes the R32-authorized internal live adapter and authorizes only one later synthetic-tested target-preflight implementation; live target use, execution, confirmatory tracefs, and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -36,7 +36,7 @@ identity-plus-`AsRawFd` measured-file reference, one internal `LiveCaptureBounda
 per-event perf ownership, and authorizes exactly one later non-live-tested adapter PR. It is not
 live readiness, target validation, capture, execution, publication, or performance evidence.
 
-The R32-authorized internal adapter is now implemented on this branch with only synthetic tests. Its borrowed measured-file capability, per-event perf ownership, wrapper mapping, and retained aggregate API are **open pending external exact-head review and CI**. This branch is not completed adapter correctness evidence and authorizes no invocation. All R32 exclusions remain in force.
+R33 closes the R32-authorized internal adapter at PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, with both exact-head workflows successful. This is bounded deterministic adapter/ownership/lifecycle/wrapper-mapping/failure/cleanup correctness evidence only. R33 freezes one explicit operator-invoked, non-CI Fedora 44 Linux/x86_64 target-preflight caller and a closed retained diagnostic result, and authorizes exactly one later synthetic-tested implementation PR. No host invocation or observation is authorized.
 
 ## 2. Approved foundation
 
@@ -258,3 +258,7 @@ R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` 
 ## R32 orchestration closure and internal live-adapter decision
 
 [R32](experiments/EXP-0001/R32-R31-ORCHESTRATION-CLOSURE-AND-LIVE-ADAPTER-DECISION.md) closes PR #108 reviewed head `fb1200c31e4730404a1ee941cfb58fa77520f43b`, merged as `0a5c2471a6f1d5d87a4d58a7b12ec921ec6bddcb`, after both exact-head workflows succeeded, only as bounded deterministic injected orchestration/lifecycle/source-metadata/failure/cleanup correctness evidence. It freezes an explicit borrowed measured-file identity plus `AsRawFd` capability without ownership transfer, one Linux/x86_64 dependency-free `LiveCaptureBoundary`, and independently owned per-event perf sessions while preserving aggregate compatibility. Exactly one later synthetic-only internal adapter implementation PR is authorized. Target probing/validation, live calls/tests, tracefs, records, workloads, capture, execution, publication, performance, durability/recovery/faults, external adapters/baselines, and production remain blocked or unauthorized.
+
+## R33 adapter closure and target-preflight decision
+
+[R33](experiments/EXP-0001/R33-R32-ADAPTER-CLOSURE-AND-TARGET-PREFLIGHT-DECISION.md) closes the R32 adapter implementation using PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc0980df2914dff5814ab5f5fba5b8e09e0`, and both successful exact-head workflows, only as bounded deterministic correctness evidence. It freezes an explicit operator-only caller, read-only pre-existing regular-file handling with pseudonymous identity, exact wrapper checks, fail-closed `TargetPreflightResultV1`, and deterministic diagnostic retention. Exactly one later implementation PR is authorized in the existing fourth crate with synthetic tests only. Live invocation/observations, workloads, measured actions, records, benchmarks, tracefs, durability/recovery/faults, baselines, and production remain blocked or unauthorized.
