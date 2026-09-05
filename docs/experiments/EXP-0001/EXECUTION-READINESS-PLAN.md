@@ -380,3 +380,20 @@ PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merge `05dd7cc
 ### R35 compile-target boundary correction gate
 
 [R35](R35-R34-COMPILE-TARGET-BOUNDARY-CORRECTION.md) supersedes only R34's unsupported-target runtime artifacts, mismatch lifecycle, and mismatch tests. The existing fourth crate remains compile-time restricted to Linux/x86_64, and `run_target_preflight` is compiled and callable only there. Unsupported targets are build-time rejection, never artifact values, dispositions, retention outcomes, or observations. V2 preserves `not_acquired` for valid-request open failure, the exact R34 public/type, failure-order, serializer, retention, and exhaustive synthetic boundary, and successful constants `prospective_fedora_44_linux` and `x86_64`. Supported-target constant and absence-of-unsupported-value tests replace mismatch tests. Fedora-release/effective-host validation remains unresolved because the compile gate proves only the Rust target. Exactly one later synthetic-only v2 implementation PR is authorized after R35 merges; no live use, portability refactor, execution, or evidence is authorized.
+
+### R36 — v2 implementation closure and operator-runner gate
+
+[R36](R36-R35-IMPLEMENTATION-CLOSURE-AND-OPERATOR-PREFLIGHT-AUTHORIZATION.md) closes PR #119
+reviewed head `44a61290db7b9929502e630608c0fea860105e96`, merge
+`dd9f8ae6c81681ea5943058b63f5e74117b234c8`, and both successful exact-head workflows only as
+bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention, and
+synthetic correctness evidence. It closes the R35 authorization without supplying live host,
+Fedora, benchmark, or performance evidence. Exactly one immediate PR may add only
+`examples/target_preflight.rs`: a standard-library operator runner using the existing
+`run_target_preflight`, frozen target constants, locked stdout, exact JSON-lines retention, fixed
+stderr diagnostics, path non-retention, and exit statuses 0/2/64/70. Synthetic tests must cover
+arguments, dispatch, and exits without invoking the live boundary; all-targets may compile but must
+not run the example. After review and merge, one manual invocation on the intended Linux/x86_64
+host with a pre-existing disposable file is permitted as a staged diagnostic, not an R7 record,
+Fedora proof, benchmark result, or performance evidence. Every other live workload, record,
+tracefs, benchmark, durability, fault, and production exclusion remains in force.

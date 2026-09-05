@@ -142,3 +142,9 @@ and unchanged exact-head CI gate. R17 grants no later-slice authority.
 | Authority | Inputs | Establishes / authorizes | Does not establish / remains excluded |
 |---|---|---|---|
 | [R35](experiments/EXP-0001/R35-R34-COMPILE-TARGET-BOUNDARY-CORRECTION.md) | R34; existing fourth-crate `compile_error!` and Linux-dependent module/type boundary; UNK-022 | Supersedes only unsupported-target runtime artifacts and mismatch tests; preserves Linux/x86_64 build rejection; freezes v2 target values as `prospective_fedora_44_linux` and `x86_64`; preserves `not_acquired`, R34's remaining exact public/serialization/retention/failure boundary, and one later post-merge synthetic-only implementation PR | Portability refactor; unsupported-target preflight output; Fedora-release/effective-host validation; live invocation/observations; records/workloads/capture/execution/evidence/performance; tracefs; D2/D3/`fsync`/durability/recovery/faults; baselines and production |
+
+## R36 v2 implementation-closure and operator-runner trace
+
+| Authority / evidence | Inputs | Establishes / authorizes | Does not establish / remains excluded |
+|---|---|---|---|
+| [R36](experiments/EXP-0001/R36-R35-IMPLEMENTATION-CLOSURE-AND-OPERATOR-PREFLIGHT-AUTHORIZATION.md) | R33–R35 contracts; PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`; merge `dd9f8ae6c81681ea5943058b63f5e74117b234c8`; both exact-head workflows successful | Closes R35 as bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention, and synthetic correctness evidence; authorizes exactly one PR adding only `examples/target_preflight.rs`, synthetic argument/dispatch/exit tests, and—after merge—one controlled operator invocation | Live host or Fedora validation; R7 environment record; workload, record, tracefs, capture, benchmark or performance evidence; durability/recovery, `fsync`, D2/D3, faults, manifests/dependencies/workflows/toolchain, production and later work |

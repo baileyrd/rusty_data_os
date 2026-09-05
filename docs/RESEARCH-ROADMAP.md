@@ -314,3 +314,16 @@ PR #111 reviewed head `71f58f65772fea2f0f58f5727d42e1405c7f09fb`, merged as `05d
 ## R35 checkpoint: compile-target boundary corrected
 
 [R35](experiments/EXP-0001/R35-R34-COMPILE-TARGET-BOUNDARY-CORRECTION.md) supersedes only R34's unsupported-target runtime artifacts and mismatch tests. The fourth crate preserves its Linux/x86_64 compile rejection, and `run_target_preflight` is compiled and callable only there; unsupported OS/architecture is not an artifact, disposition, retention outcome, or observation. V2 retains `not_acquired` for valid-request open failure and all other R34 boundaries, while its only successful target values are `prospective_fedora_44_linux` and `x86_64`. Fedora-release and effective-host validation remain unresolved because compilation proves only the Rust target. Exactly one later synthetic-only v2 implementation PR is authorized after R35 merges. No live use, portability work, execution, evidence, or other later work is authorized.
+
+## R36 checkpoint: v2 preflight closed and operator runner authorized
+
+[R36](experiments/EXP-0001/R36-R35-IMPLEMENTATION-CLOSURE-AND-OPERATOR-PREFLIGHT-AUTHORIZATION.md)
+closes PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`, merge
+`dd9f8ae6c81681ea5943058b63f5e74117b234c8`, with both exact-head workflows successful, only as
+bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention, and
+synthetic correctness evidence. It provides no live host observation, Fedora validation, benchmark
+execution, or performance evidence. Exactly one immediate PR may add only the standard-library
+operator `target_preflight` example and synthetic argument/dispatch/exit tests. After that PR is
+reviewed and merged, one manual invocation on the intended Linux/x86_64 target with a pre-existing
+disposable measured file is permitted as a staged diagnostic only. All workload, record-production,
+tracefs, benchmark, durability, fault, production, and other live gates remain closed.
