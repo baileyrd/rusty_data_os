@@ -1171,7 +1171,10 @@ fn overflow(o: &mut String, v: OverflowReason) {
     }
 }
 fn io_name(k: io::ErrorKind) -> &'static str {
-    match map_io(k) {
+    io_kind_name(map_io(k))
+}
+fn io_kind_name(k: IoErrorKindV1) -> &'static str {
+    match k {
         IoErrorKindV1::NotFound => "not_found",
         IoErrorKindV1::PermissionDenied => "permission_denied",
         IoErrorKindV1::ConnectionRefused => "connection_refused",
@@ -1627,7 +1630,63 @@ fn validate_artifact(a: &TargetPreflightArtifactV2) -> Result<(), ()> {
             return Err(());
         }
         if let PreflightOutcomeV1::Outcome(Outcome::Success(counter)) = &entry.stop_read
-            && counter.event != event
+            && (counter.event != event
+                || counter.time_enabled_ns == 0
+                || counter.time_running_ns == 0
+                || counter.time_running_ns > counter.time_enabled_ns
+                || counter.multiplexed != (counter.time_running_ns < counter.time_enabled_ns))
+        {
+            return Err(());
+        }
+        if let PreflightOutcomeV1::Outcome(Outcome::Success(counter)) = &entry.stop_read {
+            let expected = u128::from(counter.raw_count)
+                .checked_mul(u128::from(counter.time_enabled_ns))
+                .and_then(|n| n.checked_add(u128::from(counter.time_running_ns / 2)))
+                .map(|n| n / u128::from(counter.time_running_ns))
+                .and_then(|n| u64::try_from(n).ok());
+            if counter.scaled_count
+                != expected
+                    .map(Outcome::Success)
+                    .unwrap_or(Outcome::Overflow(OverflowReason::PerfScaling))
+            {
+                return Err(());
+            }
+        }
+    }
+    if let PreflightOutcomeV1::Outcome(Outcome::Success(length)) = &a.measured_file.length.outcome
+        && (length.bytes < 0
+            || !matches!(
+                (length.source, length.statx_only_fields),
+                (FileLengthSource::Statx, Ok(()))
+                    | (
+                        FileLengthSource::FstatFallback,
+                        Err(UnavailableReason::StatxOnlyAfterFstat)
+                    )
+            ))
+    {
+        return Err(());
+    }
+    for value in [
+        &a.sources.realtime.outcome,
+        &a.sources.monotonic_raw.outcome,
+    ] {
+        if matches!(value, PreflightOutcomeV1::Outcome(Outcome::Success(v)) if *v < 0) {
+            return Err(());
+        }
+    }
+    for value in [
+        &a.sources.clock_resolution_realtime.outcome,
+        &a.sources.clock_resolution_monotonic_raw.outcome,
+    ] {
+        if matches!(value, PreflightOutcomeV1::Outcome(Outcome::Success(v)) if *v <= 0) {
+            return Err(());
+        }
+    }
+    for value in [
+        &a.sources.process_rusage.outcome,
+        &a.sources.thread_rusage.outcome,
+    ] {
+        if matches!(value, PreflightOutcomeV1::Outcome(Outcome::Success(v)) if v.user_nanoseconds < 0 || v.system_nanoseconds < 0)
         {
             return Err(());
         }
@@ -2023,91 +2082,233 @@ mod tests {
 
     #[test]
     fn every_closed_wrapper_and_nested_reason_has_an_exact_encoding() {
-        let unavailable = [
-            UnavailableReason::Interface(7),
-            UnavailableReason::MissingStatxSize,
-            UnavailableReason::NotFound,
-            UnavailableReason::Unsupported,
-            UnavailableReason::StatxOnlyAfterFstat,
-        ];
-        for value in unavailable {
+        fn encoded<T: JsonValue>(value: &PreflightOutcomeV1<T>) -> String {
             let mut json = String::new();
-            PreflightOutcomeV1::Outcome(Outcome::<i32>::Unavailable(value))
-                .json(&mut json)
-                .unwrap();
-            assert!(json.starts_with("{\"unavailable\":"));
+            value.json(&mut json).unwrap();
+            json
         }
-        let overflow = [
-            OverflowReason::Arithmetic,
-            OverflowReason::FileSize,
-            OverflowReason::NumericField,
-            OverflowReason::PerfScaling,
-            OverflowReason::PerfErrno(9),
-        ];
-        for value in overflow {
-            let mut json = String::new();
-            PreflightOutcomeV1::Outcome(Outcome::<i32>::Overflow(value))
-                .json(&mut json)
-                .unwrap();
-            assert!(json.starts_with("{\"overflow\":"));
-        }
-        let parse = [
-            ParseReason::NonAscii,
-            ParseReason::LineCount,
-            ParseReason::TokenCount,
-            ParseReason::MalformedLine,
-            ParseReason::MissingField,
-            ParseReason::DuplicateField,
-            ParseReason::SignedValue,
-            ParseReason::InvalidNumber,
-            ParseReason::InvalidUnit,
-            ParseReason::TrailingToken,
-        ];
-        for value in parse {
-            let mut json = String::new();
-            PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(ErrorReason::Parse(value)))
-                .json(&mut json)
-                .unwrap();
-            assert!(json.contains("\"kind\":\"parse\""));
-        }
-        let errors = [
-            ErrorReason::Errno(1),
-            ErrorReason::InvalidFraction,
-            ErrorReason::NegativeCounter,
-            ErrorReason::NegativeFileSize,
-            ErrorReason::Io(io::ErrorKind::NotFound),
-            ErrorReason::InvalidUtf8,
-            ErrorReason::PerfShortRead(3),
-            ErrorReason::PerfInvalidTime,
-            ErrorReason::PerfDecrease,
-            ErrorReason::PerfLifecycle,
-            ErrorReason::PerfCleanup(4),
-            ErrorReason::PerfUnexpectedReturn(5),
-            ErrorReason::PerfCleanupUnexpected(6),
-            ErrorReason::PerfEventMismatch {
-                expected: PerfEvent::CpuCycles,
-                actual: PerfEvent::Instructions,
-            },
-            ErrorReason::MissingFileCapability,
-        ];
-        for value in errors {
-            let mut json = String::new();
-            PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(value))
-                .json(&mut json)
-                .unwrap();
-            assert!(json.starts_with("{\"error\":"));
-        }
-        for outcome in [
-            PreflightOutcomeV1::Outcome(Outcome::Success(1_i32)),
-            PreflightOutcomeV1::Outcome(Outcome::Permission(13)),
-            PreflightOutcomeV1::NotAttempted {
-                failure_id: "failure-0001".into(),
-            },
+        for (value, expected) in [
+            (
+                UnavailableReason::Interface(7),
+                r#"{"unavailable":{"kind":"interface","errno":7}}"#,
+            ),
+            (
+                UnavailableReason::MissingStatxSize,
+                r#"{"unavailable":{"kind":"missing_statx_size"}}"#,
+            ),
+            (
+                UnavailableReason::NotFound,
+                r#"{"unavailable":{"kind":"not_found"}}"#,
+            ),
+            (
+                UnavailableReason::Unsupported,
+                r#"{"unavailable":{"kind":"unsupported"}}"#,
+            ),
+            (
+                UnavailableReason::StatxOnlyAfterFstat,
+                r#"{"unavailable":{"kind":"statx_only_after_fstat"}}"#,
+            ),
         ] {
-            let mut json = String::new();
-            outcome.json(&mut json).unwrap();
-            assert!(!json.is_empty());
+            assert_eq!(
+                encoded(&PreflightOutcomeV1::Outcome(Outcome::<i32>::Unavailable(
+                    value
+                ))),
+                expected
+            );
         }
+        for (value, expected) in [
+            (
+                OverflowReason::Arithmetic,
+                r#"{"overflow":{"kind":"arithmetic"}}"#,
+            ),
+            (
+                OverflowReason::FileSize,
+                r#"{"overflow":{"kind":"file_size"}}"#,
+            ),
+            (
+                OverflowReason::NumericField,
+                r#"{"overflow":{"kind":"numeric_field"}}"#,
+            ),
+            (
+                OverflowReason::PerfScaling,
+                r#"{"overflow":{"kind":"perf_scaling"}}"#,
+            ),
+            (
+                OverflowReason::PerfErrno(9),
+                r#"{"overflow":{"kind":"perf_errno","errno":9}}"#,
+            ),
+        ] {
+            assert_eq!(
+                encoded(&PreflightOutcomeV1::Outcome(Outcome::<i32>::Overflow(
+                    value
+                ))),
+                expected
+            );
+        }
+        for (value, name) in [
+            (ParseReason::NonAscii, "non_ascii"),
+            (ParseReason::LineCount, "line_count"),
+            (ParseReason::TokenCount, "token_count"),
+            (ParseReason::MalformedLine, "malformed_line"),
+            (ParseReason::MissingField, "missing_field"),
+            (ParseReason::DuplicateField, "duplicate_field"),
+            (ParseReason::SignedValue, "signed_value"),
+            (ParseReason::InvalidNumber, "invalid_number"),
+            (ParseReason::InvalidUnit, "invalid_unit"),
+            (ParseReason::TrailingToken, "trailing_token"),
+        ] {
+            assert_eq!(
+                encoded(&PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(
+                    ErrorReason::Parse(value)
+                ))),
+                format!(r#"{{"error":{{"kind":"parse","reason":"{name}"}}}}"#)
+            );
+        }
+        for (value, expected) in [
+            (
+                ErrorReason::Errno(1),
+                r#"{"error":{"kind":"errno","errno":1}}"#,
+            ),
+            (
+                ErrorReason::InvalidFraction,
+                r#"{"error":{"kind":"invalid_fraction"}}"#,
+            ),
+            (
+                ErrorReason::NegativeCounter,
+                r#"{"error":{"kind":"negative_counter"}}"#,
+            ),
+            (
+                ErrorReason::NegativeFileSize,
+                r#"{"error":{"kind":"negative_file_size"}}"#,
+            ),
+            (
+                ErrorReason::InvalidUtf8,
+                r#"{"error":{"kind":"invalid_utf8"}}"#,
+            ),
+            (
+                ErrorReason::PerfShortRead(3),
+                r#"{"error":{"kind":"perf_short_read","actual":3}}"#,
+            ),
+            (
+                ErrorReason::PerfInvalidTime,
+                r#"{"error":{"kind":"perf_invalid_time"}}"#,
+            ),
+            (
+                ErrorReason::PerfDecrease,
+                r#"{"error":{"kind":"perf_decrease"}}"#,
+            ),
+            (
+                ErrorReason::PerfLifecycle,
+                r#"{"error":{"kind":"perf_lifecycle"}}"#,
+            ),
+            (
+                ErrorReason::PerfCleanup(4),
+                r#"{"error":{"kind":"perf_cleanup","errno":4}}"#,
+            ),
+            (
+                ErrorReason::PerfUnexpectedReturn(5),
+                r#"{"error":{"kind":"perf_unexpected_return","actual":5}}"#,
+            ),
+            (
+                ErrorReason::PerfCleanupUnexpected(6),
+                r#"{"error":{"kind":"perf_cleanup_unexpected","actual":6}}"#,
+            ),
+            (
+                ErrorReason::PerfEventMismatch {
+                    expected: PerfEvent::CpuCycles,
+                    actual: PerfEvent::Instructions,
+                },
+                r#"{"error":{"kind":"perf_event_mismatch","expected":"cpu_cycles","actual":"instructions"}}"#,
+            ),
+            (
+                ErrorReason::MissingFileCapability,
+                r#"{"error":{"kind":"missing_file_capability"}}"#,
+            ),
+        ] {
+            assert_eq!(
+                encoded(&PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(value))),
+                expected
+            );
+        }
+        assert_eq!(
+            encoded(&PreflightOutcomeV1::Outcome(Outcome::Success(1_i32))),
+            r#"{"success":1}"#
+        );
+        assert_eq!(
+            encoded(&PreflightOutcomeV1::<i32>::Outcome(Outcome::Permission(13))),
+            r#"{"permission":{"errno":13}}"#
+        );
+        assert_eq!(
+            encoded(&PreflightOutcomeV1::<i32>::NotAttempted {
+                failure_id: "failure-0001".into()
+            }),
+            r#"{"not_attempted":{"failure_id":"failure-0001"}}"#
+        );
+    }
+
+    #[test]
+    fn every_normalized_io_kind_has_an_exact_encoding() {
+        use io::ErrorKind as E;
+        let representable = [
+            (E::NotFound, "not_found"),
+            (E::PermissionDenied, "permission_denied"),
+            (E::ConnectionRefused, "connection_refused"),
+            (E::ConnectionReset, "connection_reset"),
+            (E::HostUnreachable, "host_unreachable"),
+            (E::NetworkUnreachable, "network_unreachable"),
+            (E::ConnectionAborted, "connection_aborted"),
+            (E::NotConnected, "not_connected"),
+            (E::AddrInUse, "addr_in_use"),
+            (E::AddrNotAvailable, "addr_not_available"),
+            (E::NetworkDown, "network_down"),
+            (E::BrokenPipe, "broken_pipe"),
+            (E::AlreadyExists, "already_exists"),
+            (E::WouldBlock, "would_block"),
+            (E::NotADirectory, "not_a_directory"),
+            (E::IsADirectory, "is_a_directory"),
+            (E::DirectoryNotEmpty, "directory_not_empty"),
+            (E::ReadOnlyFilesystem, "read_only_filesystem"),
+            (E::StaleNetworkFileHandle, "stale_network_file_handle"),
+            (E::InvalidInput, "invalid_input"),
+            (E::InvalidData, "invalid_data"),
+            (E::TimedOut, "timed_out"),
+            (E::WriteZero, "write_zero"),
+            (E::StorageFull, "storage_full"),
+            (E::NotSeekable, "not_seekable"),
+            (E::QuotaExceeded, "quota_exceeded"),
+            (E::FileTooLarge, "file_too_large"),
+            (E::ResourceBusy, "resource_busy"),
+            (E::ExecutableFileBusy, "executable_file_busy"),
+            (E::Deadlock, "deadlock"),
+            (E::CrossesDevices, "crosses_devices"),
+            (E::TooManyLinks, "too_many_links"),
+            (E::InvalidFilename, "invalid_filename"),
+            (E::ArgumentListTooLong, "argument_list_too_long"),
+            (E::Interrupted, "interrupted"),
+            (E::Unsupported, "unsupported"),
+            (E::UnexpectedEof, "unexpected_eof"),
+            (E::OutOfMemory, "out_of_memory"),
+            (E::Other, "other"),
+        ];
+        for (kind, name) in representable {
+            let mut json = String::new();
+            PreflightOutcomeV1::Outcome(Outcome::<i32>::Error(ErrorReason::Io(kind)))
+                .json(&mut json)
+                .unwrap();
+            assert_eq!(
+                json,
+                format!(r#"{{"error":{{"kind":"io","error_kind":"{name}"}}}}"#)
+            );
+        }
+        // Rust 1.89 cannot construct these unstable ErrorKind variants; prove their
+        // closed schema spellings directly and that the non-exhaustive fallback is other.
+        assert_eq!(
+            io_kind_name(IoErrorKindV1::FilesystemLoop),
+            "filesystem_loop"
+        );
+        assert_eq!(io_kind_name(IoErrorKindV1::InProgress), "in_progress");
+        assert_eq!(map_io(E::Other), IoErrorKindV1::Other);
+        assert_eq!(io_kind_name(IoErrorKindV1::Other), "other");
     }
     use std::os::fd::{AsRawFd, RawFd};
     struct FakeFd;
@@ -2214,6 +2415,101 @@ mod tests {
             Outcome::Success(1)
         }
     }
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum FailurePoint {
+        ResolutionRealtime,
+        ResolutionMonotonicRaw,
+        Realtime,
+        MonotonicRaw,
+        ProcessRusage,
+        ThreadRusage,
+        Statm,
+        Status,
+        ProcessIo,
+        FileLength,
+        PerfOpen(PerfEvent),
+        PerfStop(PerfEvent),
+    }
+    struct ConfigurableSynthetic {
+        causal: Option<FailurePoint>,
+        cleanup: Vec<PerfEvent>,
+        success: Synthetic,
+    }
+    impl ConfigurableSynthetic {
+        fn new(causal: Option<FailurePoint>, cleanup: &[PerfEvent]) -> Self {
+            Self {
+                causal,
+                cleanup: cleanup.to_vec(),
+                success: Synthetic,
+            }
+        }
+        fn fails(&self, point: FailurePoint) -> bool {
+            self.causal == Some(point)
+        }
+    }
+    macro_rules! configurable_source {
+        ($name:ident,$ty:ty,$point:expr) => {
+            fn $name(&mut self) -> Outcome<$ty> {
+                if self.fails($point) {
+                    Outcome::Permission(13)
+                } else {
+                    self.success.$name()
+                }
+            }
+        };
+    }
+    impl CaptureBoundary for ConfigurableSynthetic {
+        type PerfOwner = PerfEvent;
+        configurable_source!(realtime, i128, FailurePoint::Realtime);
+        configurable_source!(monotonic_raw, i128, FailurePoint::MonotonicRaw);
+        configurable_source!(process_rusage, ResourceUsage, FailurePoint::ProcessRusage);
+        configurable_source!(thread_rusage, ResourceUsage, FailurePoint::ThreadRusage);
+        configurable_source!(statm, Statm, FailurePoint::Statm);
+        configurable_source!(status, StatusMemory, FailurePoint::Status);
+        configurable_source!(process_io, ProcessIo, FailurePoint::ProcessIo);
+        fn file_length(&mut self, file: MeasuredFileReference<'_>) -> Outcome<FileLength> {
+            if self.fails(FailurePoint::FileLength) {
+                Outcome::Permission(13)
+            } else {
+                self.success.file_length(file)
+            }
+        }
+        fn open_perf(&mut self, event: PerfEvent) -> Outcome<PerfEvent> {
+            if self.fails(FailurePoint::PerfOpen(event)) {
+                Outcome::Permission(13)
+            } else {
+                self.success.open_perf(event)
+            }
+        }
+        fn stop_perf(&mut self, owner: &mut PerfEvent, event: PerfEvent) -> Outcome<PerfCounter> {
+            if self.fails(FailurePoint::PerfStop(event)) {
+                Outcome::Permission(13)
+            } else {
+                self.success.stop_perf(owner, event)
+            }
+        }
+        fn cleanup_perf(&mut self, owner: PerfEvent, event: PerfEvent) -> Outcome<()> {
+            if self.cleanup.contains(&event) {
+                Outcome::Error(ErrorReason::PerfCleanup(event as i32 + 40))
+            } else {
+                self.success.cleanup_perf(owner, event)
+            }
+        }
+    }
+    impl ExecutionBoundary for ConfigurableSynthetic {
+        fn resolution(&mut self, clock: Clock) -> Outcome<i128> {
+            let point = match clock {
+                Clock::Realtime => FailurePoint::ResolutionRealtime,
+                Clock::MonotonicRaw => FailurePoint::ResolutionMonotonicRaw,
+            };
+            if self.fails(point) {
+                Outcome::Permission(13)
+            } else {
+                self.success.resolution(clock)
+            }
+        }
+    }
+
     fn fictional() -> TargetPreflightArtifactV2 {
         let r = TargetPreflightRequest {
             repository_revision: "1111111111111111111111111111111111111111",
@@ -2443,19 +2739,335 @@ mod tests {
         }
     }
     #[test]
+    fn configurable_boundary_covers_every_causal_and_dependency_point() {
+        let cases = [
+            (
+                FailurePoint::ResolutionRealtime,
+                FailurePhaseV1::ClockResolutionRealtime,
+                FailureSourceV1::Source(SourceIdentityV1::ClockResolutionRealtime),
+            ),
+            (
+                FailurePoint::ResolutionMonotonicRaw,
+                FailurePhaseV1::ClockResolutionMonotonicRaw,
+                FailureSourceV1::Source(SourceIdentityV1::ClockResolutionMonotonicRaw),
+            ),
+            (
+                FailurePoint::Realtime,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::Realtime),
+            ),
+            (
+                FailurePoint::MonotonicRaw,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::MonotonicRaw),
+            ),
+            (
+                FailurePoint::ProcessRusage,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::ProcessRusage),
+            ),
+            (
+                FailurePoint::ThreadRusage,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::ThreadRusage),
+            ),
+            (
+                FailurePoint::Statm,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::Statm),
+            ),
+            (
+                FailurePoint::Status,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::Status),
+            ),
+            (
+                FailurePoint::ProcessIo,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::ProcessIo),
+            ),
+            (
+                FailurePoint::FileLength,
+                FailurePhaseV1::SourceCapture,
+                FailureSourceV1::Source(SourceIdentityV1::FileLength),
+            ),
+        ];
+        for (point, phase, source) in cases {
+            let mut boundary = ConfigurableSynthetic::new(Some(point), &[]);
+            let artifact =
+                mark_drop_completed(execute_with_boundary(&request(), &FakeFd, &mut boundary));
+            assert_eq!(
+                artifact.first_causal_failure,
+                Some(FailureObjectV1 {
+                    id: "failure-0001".into(),
+                    phase,
+                    source,
+                    detail: FailureDetailV1::Permission(13)
+                })
+            );
+            assert_eq!(artifact.classification, ArtifactClassificationV1::Blocked);
+            assert!(
+                artifact
+                    .perf_events
+                    .iter()
+                    .all(|p| check_skipped(&p.open, "failure-0001")
+                        && check_skipped(&p.stop_read, "failure-0001")
+                        && check_skipped(&p.cleanup, "failure-0001"))
+            );
+            assert!(serialize(&artifact).is_ok());
+        }
+        for event in [
+            PerfEvent::CpuCycles,
+            PerfEvent::Instructions,
+            PerfEvent::PageFaults,
+            PerfEvent::ContextSwitches,
+        ] {
+            for (point, phase) in [
+                (FailurePoint::PerfOpen(event), FailurePhaseV1::PerfOpen),
+                (FailurePoint::PerfStop(event), FailurePhaseV1::PerfStopRead),
+            ] {
+                let mut boundary = ConfigurableSynthetic::new(Some(point), &[]);
+                let artifact =
+                    mark_drop_completed(execute_with_boundary(&request(), &FakeFd, &mut boundary));
+                assert_eq!(
+                    artifact.first_causal_failure,
+                    Some(FailureObjectV1 {
+                        id: "failure-0001".into(),
+                        phase,
+                        source: FailureSourceV1::Perf(event),
+                        detail: FailureDetailV1::Permission(13)
+                    })
+                );
+                let index = [
+                    PerfEvent::CpuCycles,
+                    PerfEvent::Instructions,
+                    PerfEvent::PageFaults,
+                    PerfEvent::ContextSwitches,
+                ]
+                .iter()
+                .position(|v| *v == event)
+                .unwrap();
+                let failed = &artifact.perf_events[index];
+                if phase == FailurePhaseV1::PerfOpen {
+                    assert!(
+                        check_skipped(&failed.stop_read, "failure-0001")
+                            && check_skipped(&failed.cleanup, "failure-0001")
+                    );
+                } else {
+                    assert_eq!(
+                        failed.cleanup,
+                        PreflightOutcomeV1::Outcome(Outcome::Success(()))
+                    );
+                }
+                assert!(
+                    artifact.perf_events[index + 1..]
+                        .iter()
+                        .all(|p| check_skipped(&p.open, "failure-0001")
+                            && check_skipped(&p.stop_read, "failure-0001")
+                            && check_skipped(&p.cleanup, "failure-0001"))
+                );
+                assert!(serialize(&artifact).is_ok());
+            }
+        }
+    }
+
+    #[test]
+    fn configurable_boundary_covers_cleanup_only_and_combined_ordering() {
+        let events = [
+            PerfEvent::CpuCycles,
+            PerfEvent::Instructions,
+            PerfEvent::PageFaults,
+            PerfEvent::ContextSwitches,
+        ];
+        for event in events {
+            let mut boundary = ConfigurableSynthetic::new(None, &[event]);
+            let artifact =
+                mark_drop_completed(execute_with_boundary(&request(), &FakeFd, &mut boundary));
+            assert_eq!(artifact.first_causal_failure, None);
+            assert_eq!(
+                artifact.cleanup_failures,
+                vec![FailureObjectV1 {
+                    id: "failure-0001".into(),
+                    phase: FailurePhaseV1::PerfCleanup,
+                    source: FailureSourceV1::Perf(event),
+                    detail: FailureDetailV1::Error(ErrorReason::PerfCleanup(event as i32 + 40))
+                }]
+            );
+            assert_eq!(artifact.classification, ArtifactClassificationV1::Invalid);
+            assert!(serialize(&artifact).is_ok());
+        }
+        let mut boundary = ConfigurableSynthetic::new(
+            Some(FailurePoint::PerfStop(PerfEvent::Instructions)),
+            &[PerfEvent::CpuCycles, PerfEvent::Instructions],
+        );
+        let artifact =
+            mark_drop_completed(execute_with_boundary(&request(), &FakeFd, &mut boundary));
+        assert_eq!(
+            artifact.first_causal_failure.as_ref().unwrap().id,
+            "failure-0001"
+        );
+        assert_eq!(
+            artifact
+                .cleanup_failures
+                .iter()
+                .map(|f| (f.id.as_str(), f.source))
+                .collect::<Vec<_>>(),
+            vec![
+                ("failure-0002", FailureSourceV1::Perf(PerfEvent::CpuCycles)),
+                (
+                    "failure-0003",
+                    FailureSourceV1::Perf(PerfEvent::Instructions)
+                )
+            ]
+        );
+        assert_eq!(artifact.classification, ArtifactClassificationV1::Invalid);
+        assert!(serialize(&artifact).is_ok());
+    }
+
+    #[test]
+    fn successful_boundary_retains_every_value_and_metadata_field() {
+        let artifact = fictional();
+        assert_eq!(
+            artifact.sources.clock_resolution_realtime.outcome,
+            PreflightOutcomeV1::Outcome(Outcome::Success(1))
+        );
+        assert_eq!(
+            artifact.sources.clock_resolution_monotonic_raw.outcome,
+            PreflightOutcomeV1::Outcome(Outcome::Success(1))
+        );
+        assert_eq!(
+            artifact.sources.realtime.outcome,
+            PreflightOutcomeV1::Outcome(Outcome::Success(1_000_000_000))
+        );
+        assert_eq!(
+            artifact.sources.monotonic_raw.outcome,
+            PreflightOutcomeV1::Outcome(Outcome::Success(2_000_000_000))
+        );
+        assert_eq!(
+            artifact.sources.process_rusage.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.process_rusage())
+        );
+        assert_eq!(
+            artifact.sources.thread_rusage.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.thread_rusage())
+        );
+        assert_eq!(
+            artifact.sources.statm.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.statm())
+        );
+        assert_eq!(
+            artifact.sources.status.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.status())
+        );
+        assert_eq!(
+            artifact.sources.process_io.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.process_io())
+        );
+        assert_eq!(
+            artifact.measured_file.length.outcome,
+            PreflightOutcomeV1::Outcome(Synthetic.file_length(MeasuredFileReference::borrowed(
+                "measured-file-alpha",
+                &FakeFd
+            )))
+        );
+        for (entry, event) in artifact.perf_events.iter().zip([
+            PerfEvent::CpuCycles,
+            PerfEvent::Instructions,
+            PerfEvent::PageFaults,
+            PerfEvent::ContextSwitches,
+        ]) {
+            assert_eq!(
+                (entry.event, entry.scope, entry.unit),
+                (event, ScopeV1::MeasuredThread, UnitV1::PerfCounter)
+            );
+            assert_eq!(
+                entry.open,
+                PreflightOutcomeV1::Outcome(Outcome::Success(()))
+            );
+            assert_eq!(
+                entry.cleanup,
+                PreflightOutcomeV1::Outcome(Outcome::Success(()))
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_merged_success_cross_fields_fail_closed() {
+        fn rejected(mutator: impl FnOnce(&mut TargetPreflightArtifactV2)) {
+            let mut a = fictional();
+            mutator(&mut a);
+            assert_eq!(serialize(&a), Err(()));
+        }
+        rejected(|a| {
+            a.sources.clock_resolution_realtime.outcome =
+                PreflightOutcomeV1::Outcome(Outcome::Success(0))
+        });
+        rejected(|a| {
+            a.sources.realtime.outcome = PreflightOutcomeV1::Outcome(Outcome::Success(-1))
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.sources.process_rusage.outcome
+            {
+                v.user_nanoseconds = -1
+            }
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.measured_file.length.outcome
+            {
+                v.bytes = -1
+            }
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.measured_file.length.outcome
+            {
+                v.source = FileLengthSource::FstatFallback
+            }
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.perf_events[0].stop_read
+            {
+                v.time_running_ns = 11
+            }
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.perf_events[0].stop_read
+            {
+                v.multiplexed = true
+            }
+        });
+        rejected(|a| {
+            if let PreflightOutcomeV1::Outcome(Outcome::Success(v)) =
+                &mut a.perf_events[0].stop_read
+            {
+                v.scaled_count = Outcome::Success(v.raw_count + 1)
+            }
+        });
+    }
+
+    #[test]
     fn retention_is_separate_and_ordered() {
         let a = fictional();
+        let fixed_bytes = serialize(&a).unwrap();
         let mut sink = Sink::default();
         let x = finish_artifact(a.clone(), &mut sink);
         assert_eq!(x.disposition, TargetPreflightCallDispositionV1::Completed);
         assert_eq!(sink.flushes, 1);
-        assert_eq!(x.artifact.unwrap(), a);
+        assert_eq!(x.artifact, Some(a.clone()));
+        assert_eq!(x.serialized_bytes, Some(fixed_bytes.clone()));
+        assert_eq!(sink.bytes, fixed_bytes);
         let mut sink = Sink {
             write_error: Some(io::Error::from_raw_os_error(5)),
             partial_before_error: true,
             ..Sink::default()
         };
         let x = finish_artifact(a.clone(), &mut sink);
+        assert_eq!(x.artifact, Some(a.clone()));
+        assert_eq!(x.serialized_bytes, Some(fixed_bytes.clone()));
         assert_eq!(sink.flushes, 0);
         assert_eq!(sink.bytes.len(), 7);
         assert!(matches!(
@@ -2473,6 +3085,8 @@ mod tests {
             ..Sink::default()
         };
         let x = finish_artifact(a.clone(), &mut sink);
+        assert_eq!(x.artifact, Some(a.clone()));
+        assert_eq!(x.serialized_bytes, Some(fixed_bytes.clone()));
         assert!(sink.bytes.is_empty());
         assert_eq!(sink.flushes, 0);
         assert!(matches!(
@@ -2490,6 +3104,9 @@ mod tests {
             ..Sink::default()
         };
         let x = finish_artifact(a, &mut sink);
+        assert_eq!(x.artifact, Some(fictional()));
+        assert_eq!(x.serialized_bytes, Some(fixed_bytes.clone()));
+        assert_eq!(sink.bytes, fixed_bytes);
         assert_eq!(sink.flushes, 1);
         assert!(matches!(
             x.retention,
