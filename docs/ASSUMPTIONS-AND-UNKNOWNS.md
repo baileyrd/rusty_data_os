@@ -145,3 +145,14 @@ R34 records the governance conflict found at closed, unmerged PR #114 exact head
 ### R35 disposition
 
 R35 supersedes only R34's unsupported-target runtime-artifact, mismatch-lifecycle, and mismatch-test requirements. The crate remains compile-time restricted to Linux/x86_64; unsupported targets are build failures, while v2 retains `not_acquired` for valid-request file-open failure and every other R34 boundary. Successful artifact constants are only `prospective_fedora_44_linux` and `x86_64`. Compilation does not establish Fedora 44 or effective-host identity, so those portions of UNK-022 remain unresolved alongside live use, records, capture, execution, publication, and evidence.
+
+### R36 disposition
+
+R36 closes the R35 v2 implementation authorization at PR #119 reviewed head
+`44a61290db7b9929502e630608c0fea860105e96`, merge
+`dd9f8ae6c81681ea5943058b63f5e74117b234c8`, with both exact-head workflows successful, as bounded
+deterministic construction, serialization, lifecycle, failure-ordering, retention, and synthetic
+correctness evidence only. UNK-022 remains unresolved for live and effective-host validation,
+Fedora-release proof, R7 records, calibration, capture, execution, publication, and performance.
+R36 authorizes one minimal operator example PR and then one controlled manual diagnostic; neither
+that authorization nor that first invocation resolves those unknowns.

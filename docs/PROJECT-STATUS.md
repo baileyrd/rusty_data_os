@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R35 corrects R34 to the existing Linux/x86_64 compile boundary and authorizes only one later synthetic-tested v2 target-preflight implementation after merge; live target use, execution, confirmatory tracefs, and evidence remain blocked
+**Status:** Phase 1 planning/readiness — R36 closes the merged R35 v2 target-preflight implementation and authorizes one minimal operator-only example PR followed by one controlled diagnostic invocation; all other execution and evidence remain blocked
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -40,7 +40,7 @@ R33 closes the R32-authorized internal adapter at PR #111 reviewed head `71f58f6
 
 R34 records that closed, unmerged PR #114 exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` was not mergeable under R33 despite both head-specific workflows succeeding. R33 v1 cannot truthfully represent compile-target mismatch or a valid-request open failure without inventing closed states, and the head did not meet the exhaustive synthetic gate. PR #114 is not evidence and created no public compatibility obligation. R34 preserves v1 unchanged, freezes a separate v2 correction, and prospectively authorizes exactly one synthetic-only v2 implementation PR. This is governance design, not implementation closure or live evidence.
 
-R35 supersedes only R34's unsupported-target runtime-artifact and test requirements. The fourth crate continues to reject compilation outside Linux/x86_64, so unsupported OS/architecture is a build-time rejection and `run_target_preflight` is callable only on that supported target. V2 keeps `not_acquired` for valid-request open failure, freezes successful target values as `prospective_fedora_44_linux` and `x86_64`, and preserves R34's remaining type, failure, serialization, retention, and exhaustive synthetic contracts. Fedora-release and effective-host validation remain unresolved. Exactly one later synthetic-only v2 implementation PR is authorized after R35 merges; R35 is documentation design only.
+R36 closes the R35-authorized v2 target-preflight implementation at PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`, merged as `dd9f8ae6c81681ea5943058b63f5e74117b234c8`, after both exact-head workflows succeeded. It is bounded deterministic construction, serialization, lifecycle, failure-ordering, retention, and synthetic correctness evidence only—not live host observation, Fedora validation, benchmark execution, or performance evidence. R36 authorizes exactly one immediate PR adding only the operator-only `target_preflight` example with synthetic argument/dispatch/exit tests. After review and merge, one manual invocation on the intended Linux/x86_64 target with a pre-existing disposable file is permitted solely as a staged diagnostic; all other live and execution gates remain closed.
 
 ## 2. Approved foundation
 
@@ -271,3 +271,23 @@ R31 requires monotonic lifecycle timing, realtime correlation, both `getrusage` 
 ## R34 R33 implementation conflict and v2 correction
 
 [R34](experiments/EXP-0001/R34-R33-IMPLEMENTATION-CONFLICT-AND-TARGET-PREFLIGHT-V2-DECISION.md) records PR #114 as closed, unmerged, and not evidence; it created no public compatibility obligation. R34 preserves R33 v1 unchanged and freezes only the minimum v2 representation needed for unsupported compile targets and measured-file ownership that was never acquired. It prohibits public governance-conflict and pending-drop escape states and requires complete synthetic mapping, causality, cleanup, lifecycle, serialization, and retention coverage. Exactly one later v2 implementation is authorized; all R33 exclusions remain in force.
+
+## R36 R35 implementation closure and operator preflight authorization
+
+[R36](experiments/EXP-0001/R36-R35-IMPLEMENTATION-CLOSURE-AND-OPERATOR-PREFLIGHT-AUTHORIZATION.md)
+closes PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`, merged as
+`dd9f8ae6c81681ea5943058b63f5e74117b234c8`, after both exact-head workflows succeeded. The result
+is bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention,
+and synthetic correctness evidence only. It provides no live host observation, Fedora validation,
+benchmark execution, or performance evidence.
+
+Exactly one immediate implementation PR may add only
+`experiments/exp-0001/crates/exp1-descriptive-d1-harness/examples/target_preflight.rs`, with the
+frozen four-argument contract, existing `run_target_preflight`, hardcoded `Fedora44Linux` and
+`X86_64`, locked-stdout exact JSON-lines retention, fixed stderr diagnostics, path non-retention,
+exit statuses 0/2/64/70, and synthetic argument/dispatch/exit tests that never invoke the live
+boundary. After that PR is reviewed and merged, one operator invocation is permitted on the
+intended Linux/x86_64 target using a pre-existing disposable measured file. It is a staged
+diagnostic, not an R7 environment record, Fedora proof, benchmark result, or performance evidence.
+Every other live workload, record-production, tracefs, benchmark, durability, fault, and production
+exclusion remains in force.
