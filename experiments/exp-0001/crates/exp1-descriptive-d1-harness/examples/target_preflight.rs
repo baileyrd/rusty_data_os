@@ -1,7 +1,7 @@
 use exp1_descriptive_d1_harness::{
     ArtifactClassificationV1, RetentionOutcomeV1, TargetArchitectureV1, TargetPlatformV1,
-    TargetPreflightCallDispositionV1, TargetPreflightRequest, TargetPreflightRetention,
-    run_target_preflight,
+    TargetPreflightCallDispositionV1, TargetPreflightExecutionV2, TargetPreflightRequest,
+    TargetPreflightRetention, run_target_preflight,
 };
 use std::ffi::{OsStr, OsString};
 use std::io::{self, Write};
@@ -65,6 +65,10 @@ fn live_dispatch(
     retention: &mut dyn TargetPreflightRetention,
 ) -> DispatchOutcome {
     let execution = run_target_preflight(request, retention);
+    dispatch_outcome(&execution)
+}
+
+fn dispatch_outcome(execution: &TargetPreflightExecutionV2) -> DispatchOutcome {
     match execution.disposition {
         TargetPreflightCallDispositionV1::RequestInvalid => DispatchOutcome::RequestInvalid,
         TargetPreflightCallDispositionV1::SerializationFailed
@@ -75,7 +79,11 @@ fn live_dispatch(
             if !matches!(execution.retention, RetentionOutcomeV1::Success { .. }) {
                 return DispatchOutcome::SerializationOrRetentionFailed;
             }
-            match execution.artifact.map(|artifact| artifact.classification) {
+            match execution
+                .artifact
+                .as_ref()
+                .map(|artifact| artifact.classification)
+            {
                 Some(ArtifactClassificationV1::PreflightSubsetReady) => {
                     DispatchOutcome::ReadyRetained
                 }
@@ -150,6 +158,15 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use exp1_descriptive_d1_harness::linux_capture::PerfEvent;
+    use exp1_descriptive_d1_harness::{
+        ArchitectureObservationV2, IoErrorKindV1, LifecyclePhaseV1, MeasuredFileOwnershipReleaseV2,
+        MeasuredFileV1, NotAttemptedReasonV1, PerfEventV1, PlatformDispositionV2,
+        PreflightOutcomeV1, RetentionIoErrorV1, RetentionOperationV1, ScopeV1, SourceIdentityV1,
+        SourceV1, SourcesV1, TARGET_PREFLIGHT_ARTIFACT_SCHEMA_V2, TRACEFS_REASON_V1,
+        TargetArchitectureV2, TargetPlatformV2, TargetPreflightArtifactV2,
+        TargetPreflightLifecycleV2, TracefsStateV1, TracefsV1, UnitV1,
+    };
     use std::cell::Cell;
     use std::path::Path;
 
@@ -171,6 +188,129 @@ mod tests {
             "measured-alpha",
             Path::new("/tmp/input"),
         )
+    }
+
+    fn skipped<T>() -> PreflightOutcomeV1<T> {
+        PreflightOutcomeV1::NotAttempted {
+            failure_id: "synthetic".into(),
+        }
+    }
+
+    fn source<T>(identity: SourceIdentityV1, scope: ScopeV1, unit: UnitV1) -> SourceV1<T> {
+        SourceV1 {
+            identity,
+            scope,
+            unit,
+            outcome: skipped(),
+        }
+    }
+
+    fn artifact(classification: ArtifactClassificationV1) -> TargetPreflightArtifactV2 {
+        TargetPreflightArtifactV2 {
+            schema: TARGET_PREFLIGHT_ARTIFACT_SCHEMA_V2,
+            repository_revision: REVISION.into(),
+            build_identity: "synthetic".into(),
+            platform: TargetPlatformV2 {
+                expected: TargetPlatformV1::Fedora44Linux,
+                disposition: PlatformDispositionV2::ProspectiveFedora44Linux,
+            },
+            architecture: TargetArchitectureV2 {
+                expected: TargetArchitectureV1::X86_64,
+                observed: ArchitectureObservationV2::X86_64,
+            },
+            measured_file: MeasuredFileV1 {
+                identity: "synthetic".into(),
+                open: skipped(),
+                regular_file: skipped(),
+                length: source(
+                    SourceIdentityV1::FileLength,
+                    ScopeV1::MeasuredFile,
+                    UnitV1::Bytes,
+                ),
+            },
+            sources: SourcesV1 {
+                clock_resolution_realtime: source(
+                    SourceIdentityV1::ClockResolutionRealtime,
+                    ScopeV1::Observation,
+                    UnitV1::Nanoseconds,
+                ),
+                clock_resolution_monotonic_raw: source(
+                    SourceIdentityV1::ClockResolutionMonotonicRaw,
+                    ScopeV1::Observation,
+                    UnitV1::Nanoseconds,
+                ),
+                realtime: source(
+                    SourceIdentityV1::Realtime,
+                    ScopeV1::Observation,
+                    UnitV1::Nanoseconds,
+                ),
+                monotonic_raw: source(
+                    SourceIdentityV1::MonotonicRaw,
+                    ScopeV1::Observation,
+                    UnitV1::Nanoseconds,
+                ),
+                process_rusage: source(
+                    SourceIdentityV1::ProcessRusage,
+                    ScopeV1::Process,
+                    UnitV1::ResourceUsage,
+                ),
+                thread_rusage: source(
+                    SourceIdentityV1::ThreadRusage,
+                    ScopeV1::MeasuredThread,
+                    UnitV1::ResourceUsage,
+                ),
+                statm: source(
+                    SourceIdentityV1::Statm,
+                    ScopeV1::Process,
+                    UnitV1::StatmPages,
+                ),
+                status: source(SourceIdentityV1::Status, ScopeV1::Process, UnitV1::Bytes),
+                process_io: source(
+                    SourceIdentityV1::ProcessIo,
+                    ScopeV1::Process,
+                    UnitV1::ProcessIo,
+                ),
+            },
+            perf_events: [
+                PerfEvent::CpuCycles,
+                PerfEvent::Instructions,
+                PerfEvent::PageFaults,
+                PerfEvent::ContextSwitches,
+            ]
+            .map(|event| PerfEventV1 {
+                event,
+                scope: ScopeV1::MeasuredThread,
+                unit: UnitV1::PerfCounter,
+                open: skipped(),
+                stop_read: skipped(),
+                cleanup: skipped(),
+            }),
+            lifecycle: TargetPreflightLifecycleV2 {
+                phases: vec![LifecyclePhaseV1::RequestValidated],
+                measured_file_ownership_release: MeasuredFileOwnershipReleaseV2::DropCompleted,
+            },
+            first_causal_failure: None,
+            cleanup_failures: Vec::new(),
+            tracefs: TracefsV1 {
+                state: TracefsStateV1::NotCollected,
+                reason: TRACEFS_REASON_V1,
+            },
+            classification,
+            reasons: Vec::new(),
+        }
+    }
+
+    fn execution(
+        disposition: TargetPreflightCallDispositionV1,
+        retention: RetentionOutcomeV1,
+        classification: Option<ArtifactClassificationV1>,
+    ) -> TargetPreflightExecutionV2 {
+        TargetPreflightExecutionV2 {
+            artifact: classification.map(artifact),
+            serialized_bytes: None,
+            retention,
+            disposition,
+        }
     }
 
     #[test]
@@ -304,6 +444,119 @@ mod tests {
                 RETENTION_DIAGNOSTIC,
             ),
         ] {
+            let mut stdout = Vec::new();
+            let mut stderr = Vec::new();
+            assert_eq!(
+                run_with(valid_arguments(), &mut stdout, &mut stderr, |_, _| outcome),
+                status
+            );
+            assert!(stdout.is_empty());
+            assert_eq!(stderr, diagnostic.as_bytes());
+        }
+    }
+
+    #[test]
+    fn execution_results_use_the_production_mapping_and_frozen_precedence() {
+        let success = RetentionOutcomeV1::Success {
+            serialized_byte_length: 1,
+        };
+        let request_invalid = RetentionOutcomeV1::NotAttempted {
+            reason: NotAttemptedReasonV1::RequestInvalid(
+                exp1_descriptive_d1_harness::RequestFailureReasonV1::InvalidBuildIdentity,
+            ),
+        };
+        let serialization_failed = RetentionOutcomeV1::NotAttempted {
+            reason: NotAttemptedReasonV1::SerializationFailure,
+        };
+        let retention_failed = |operation| RetentionOutcomeV1::IoFailure {
+            operation,
+            error: RetentionIoErrorV1 {
+                kind: IoErrorKindV1::BrokenPipe,
+                raw_os_error: None,
+            },
+        };
+        let cases = [
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::Completed,
+                    success,
+                    Some(ArtifactClassificationV1::PreflightSubsetReady),
+                ),
+                0,
+                READY_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::Completed,
+                    success,
+                    Some(ArtifactClassificationV1::Blocked),
+                ),
+                2,
+                NOT_READY_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::Completed,
+                    success,
+                    Some(ArtifactClassificationV1::Invalid),
+                ),
+                2,
+                NOT_READY_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::RequestInvalid,
+                    request_invalid,
+                    None,
+                ),
+                64,
+                INVALID_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::SerializationFailed,
+                    serialization_failed,
+                    Some(ArtifactClassificationV1::PreflightSubsetReady),
+                ),
+                70,
+                RETENTION_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::RetentionFailed,
+                    retention_failed(RetentionOperationV1::WriteAll),
+                    Some(ArtifactClassificationV1::PreflightSubsetReady),
+                ),
+                70,
+                RETENTION_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::RetentionFailed,
+                    retention_failed(RetentionOperationV1::Flush),
+                    Some(ArtifactClassificationV1::PreflightSubsetReady),
+                ),
+                70,
+                RETENTION_DIAGNOSTIC,
+            ),
+            (
+                execution(
+                    TargetPreflightCallDispositionV1::Completed,
+                    serialization_failed,
+                    Some(ArtifactClassificationV1::PreflightSubsetReady),
+                ),
+                70,
+                RETENTION_DIAGNOSTIC,
+            ),
+            (
+                execution(TargetPreflightCallDispositionV1::Completed, success, None),
+                70,
+                RETENTION_DIAGNOSTIC,
+            ),
+        ];
+
+        for (execution, status, diagnostic) in cases {
+            let outcome = dispatch_outcome(&execution);
             let mut stdout = Vec::new();
             let mut stderr = Vec::new();
             assert_eq!(
