@@ -189,3 +189,187 @@ fn physical_ordinals_and_commit_order_must_strictly_advance() {
     b.physical_ordinal = a.physical_ordinal;
     assert_eq!(validate_lifecycle(&[a, b]), Err(Error::OrdinalOrder));
 }
+
+fn binding(ordinal: u64, request: Uuid, event: Uuid) -> Record {
+    Record {
+        physical_ordinal: ordinal,
+        integrity: IntegrityProfile::Structural,
+        body: Body::Binding {
+            request_id: request,
+            event_id: event,
+            normalized_request: vec![ordinal as u8],
+        },
+    }
+}
+
+fn reservation(ordinal: u64, request: Uuid, event: Uuid, sequence: u64) -> Record {
+    Record {
+        physical_ordinal: ordinal,
+        integrity: IntegrityProfile::Crc32c,
+        body: Body::Reservation {
+            request_id: request,
+            event_id: event,
+            sequence,
+            high_water: sequence,
+        },
+    }
+}
+
+fn final_and_commit(ordinal: u64, request: Uuid, event: Uuid, sequence: u64) -> [Record; 2] {
+    let final_record = Record {
+        physical_ordinal: ordinal,
+        integrity: IntegrityProfile::Crc32c,
+        body: Body::Final {
+            event_id: event,
+            request_id: request,
+            sequence,
+            durability_time: sequence as i64,
+            complete_envelope: vec![sequence as u8],
+        },
+    };
+    let encoded = encode(&final_record).unwrap();
+    let commit = Record {
+        physical_ordinal: ordinal + 1,
+        integrity: IntegrityProfile::Crc32c,
+        body: Body::Commit {
+            event_id: event,
+            sequence,
+            final_ordinal: ordinal,
+            final_crc32c: u32::from_le_bytes(encoded[28..32].try_into().unwrap()),
+            group_id: 0,
+            member_index: 0,
+            member_count: 1,
+        },
+    };
+    [final_record, commit]
+}
+
+#[test]
+fn mixed_lifecycle_and_prefix_failures_preserve_rules_and_precedence() {
+    let (request_a, event_a) = (id(10), id(20));
+    let (request_b, event_b) = (id(11), id(21));
+    let [final_a, commit_a] = final_and_commit(5, request_a, event_a, 1);
+    let valid = vec![
+        binding(1, request_a, event_a),
+        reservation(2, request_a, event_a, 1),
+        Record {
+            physical_ordinal: 3,
+            integrity: IntegrityProfile::Structural,
+            body: Body::Provisional {
+                event_id: event_a,
+                sequence: 1,
+                group_id: 0,
+                member_index: 0,
+                member_count: 1,
+                stable_core: vec![7],
+            },
+        },
+        Record {
+            physical_ordinal: 4,
+            integrity: IntegrityProfile::Structural,
+            body: Body::Membership {
+                group_id: 9,
+                members: vec![(event_a, 1)],
+            },
+        },
+        final_a.clone(),
+        commit_a.clone(),
+    ];
+    assert_eq!(validate_lifecycle(&valid), Ok(()));
+
+    let mut candidate = binding(7, request_a, event_b);
+    assert_eq!(
+        validate_lifecycle(&[valid.clone(), vec![candidate.clone()]].concat()),
+        Err(Error::DuplicateIdentity)
+    );
+    candidate = reservation(7, request_b, event_b, 2);
+    assert_eq!(
+        validate_lifecycle(&[valid.clone(), vec![candidate]].concat()),
+        Err(Error::MissingBinding)
+    );
+
+    let mut duplicate_sequence_prefix = valid.clone();
+    duplicate_sequence_prefix.push(binding(7, request_b, event_b));
+    duplicate_sequence_prefix.push(reservation(8, request_b, event_b, 1));
+    assert_eq!(
+        validate_lifecycle(&duplicate_sequence_prefix),
+        Err(Error::DuplicateSequence)
+    );
+
+    let mut missing_reservation = valid.clone();
+    missing_reservation.push(binding(7, request_b, event_b));
+    missing_reservation.push(final_and_commit(8, request_b, event_b, 2)[0].clone());
+    assert_eq!(
+        validate_lifecycle(&missing_reservation),
+        Err(Error::MissingReservation)
+    );
+
+    let mut duplicate_final = valid.clone();
+    let mut repeated_final = final_a.clone();
+    repeated_final.physical_ordinal = 7;
+    duplicate_final.push(repeated_final);
+    assert_eq!(
+        validate_lifecycle(&duplicate_final),
+        Err(Error::DuplicateFinal)
+    );
+
+    let mut nonadjacent = commit_a.clone();
+    nonadjacent.physical_ordinal = 7;
+    assert_eq!(
+        validate_lifecycle(&[valid, vec![nonadjacent]].concat()),
+        Err(Error::FinalNotAdjacent)
+    );
+}
+
+#[test]
+fn ordinal_arithmetic_commit_order_and_competing_errors_are_stable() {
+    let first = binding(u64::MAX, id(30), id(40));
+    let second = binding(1, id(31), id(41));
+    assert_eq!(
+        validate_lifecycle(&[first, second]),
+        Err(Error::LengthOverflow)
+    );
+
+    let (request_a, event_a) = (id(50), id(60));
+    let (request_b, event_b) = (id(51), id(61));
+    let [final_a, commit_a] = final_and_commit(5, request_a, event_a, 2);
+    let [final_b, commit_b] = final_and_commit(9, request_b, event_b, 1);
+    let stream = vec![
+        binding(1, request_a, event_a),
+        reservation(2, request_a, event_a, 2),
+        binding(3, request_b, event_b),
+        reservation(4, request_b, event_b, 1),
+        final_a,
+        commit_a,
+        Record {
+            physical_ordinal: 7,
+            integrity: IntegrityProfile::Structural,
+            body: Body::Provisional {
+                event_id: event_b,
+                sequence: 1,
+                group_id: 0,
+                member_index: 0,
+                member_count: 1,
+                stable_core: vec![],
+            },
+        },
+        Record {
+            physical_ordinal: 8,
+            integrity: IntegrityProfile::Structural,
+            body: Body::Membership {
+                group_id: 3,
+                members: vec![(event_b, 1)],
+            },
+        },
+        final_b,
+        commit_b,
+    ];
+    assert_eq!(validate_lifecycle(&stream), Err(Error::SequenceOrder));
+
+    let mut bad_ordinal_and_missing_binding = reservation(4, id(70), id(71), 1);
+    bad_ordinal_and_missing_binding.physical_ordinal = 9;
+    assert_eq!(
+        validate_lifecycle(&[binding(1, id(72), id(73)), bad_ordinal_and_missing_binding]),
+        Err(Error::OrdinalOrder)
+    );
+}
