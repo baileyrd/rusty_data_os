@@ -160,20 +160,42 @@ pub fn rows_from_events(events: &[(u64, Event)], cutoff: u64) -> Vec<Row> {
 }
 
 pub fn columns_from_events(events: &[(u64, Event)], cutoff: u64) -> ColumnView {
-    let rows = rows_from_events(events, cutoff);
+    let mut entity_to_index = BTreeMap::new();
     let mut view = ColumnView {
-        entity_ids: Vec::with_capacity(rows.len()),
-        logical_times: Vec::with_capacity(rows.len()),
-        values: Vec::with_capacity(rows.len()),
-        sequences: Vec::with_capacity(rows.len()),
+        entity_ids: Vec::new(),
+        logical_times: Vec::new(),
+        values: Vec::new(),
+        sequences: Vec::new(),
     };
-    for row in rows {
-        view.entity_ids.push(row.entity_id);
-        view.logical_times.push(row.logical_time);
-        view.values.push(row.value);
-        view.sequences.push(row.sequence);
+    for &(sequence, event) in events.iter().filter(|(sequence, _)| *sequence <= cutoff) {
+        if let Some(&index) = entity_to_index.get(&event.entity_id) {
+            view.logical_times[index] = event.logical_time;
+            view.values[index] = event.value;
+            view.sequences[index] = sequence;
+        } else {
+            let index = view.entity_ids.len();
+            entity_to_index.insert(event.entity_id, index);
+            view.entity_ids.push(event.entity_id);
+            view.logical_times.push(event.logical_time);
+            view.values.push(event.value);
+            view.sequences.push(sequence);
+        }
     }
-    view
+
+    // Canonical view order is entity order, independent of first-observation order.
+    let indices: Vec<_> = entity_to_index.into_values().collect();
+    ColumnView {
+        entity_ids: indices
+            .iter()
+            .map(|&index| view.entity_ids[index])
+            .collect(),
+        logical_times: indices
+            .iter()
+            .map(|&index| view.logical_times[index])
+            .collect(),
+        values: indices.iter().map(|&index| view.values[index]).collect(),
+        sequences: indices.iter().map(|&index| view.sequences[index]).collect(),
+    }
 }
 
 fn expected(events: &[Event], cutoff: usize) -> Vec<Row> {
@@ -265,15 +287,15 @@ pub fn run_trial(root: &Path, event_count: usize, trial_name: &str) -> Result<Tr
     let start = Instant::now();
     let columns = columns_from_records(&replay.records, event_count as u64)?;
     let column_rebuild = start.elapsed();
-    let start = Instant::now();
-    let direct_rows = expected(&events, event_count);
-    let direct_row = start.elapsed();
     let direct_input: Vec<_> = events
         .iter()
         .copied()
         .enumerate()
         .map(|(i, event)| (i as u64 + 1, event))
         .collect();
+    let start = Instant::now();
+    let direct_rows = rows_from_events(&direct_input, event_count as u64);
+    let direct_row = start.elapsed();
     let start = Instant::now();
     let direct_columns = columns_from_events(&direct_input, event_count as u64);
     let direct_column = start.elapsed();
@@ -373,8 +395,22 @@ mod tests {
         assert_eq!(rows_from_events(&events, 2), midpoint);
         assert_eq!(rows_from_events(&events, 4), final_rows);
         assert_eq!(
+            columns_from_events(&events, 2),
+            ColumnView {
+                entity_ids: vec![1, 2],
+                logical_times: vec![90, 100],
+                values: vec![3, 7],
+                sequences: vec![2, 1],
+            }
+        );
+        assert_eq!(
             columns_from_events(&events, 4),
-            columns_for_rows(&final_rows)
+            ColumnView {
+                entity_ids: vec![1, 2],
+                logical_times: vec![110, 80],
+                values: vec![5, 9],
+                sequences: vec![4, 3],
+            }
         );
     }
 

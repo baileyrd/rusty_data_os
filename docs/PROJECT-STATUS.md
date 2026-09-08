@@ -58,7 +58,7 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 3. Active hypothesis
 
-[HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. The owner-authorized [exploratory history-to-views experiment](experiments/exploratory-history-views/README.md) correctly rebuilt row, column, final, and midpoint states, while physical replay dominated the 10,000-event observation. This is bounded exploratory feasibility/cost-direction evidence, not confirmatory EXP-0001 evidence or an architecture decision.
+[HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. The owner-authorized [exploratory history-to-views experiment](experiments/exploratory-history-views/README.md) independently rebuilt row and column final and midpoint states in its corrected run, while physical replay dominated the 10,000-event observation. The original dependent-column result set is retained but superseded for independent-view comparison. This is bounded exploratory feasibility/cost-direction evidence, not confirmatory EXP-0001 evidence or an architecture decision.
 
 ## 4. Active and next incomplete increments
 
