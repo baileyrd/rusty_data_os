@@ -57,4 +57,4 @@ No single synthetic benchmark can prove HYP-0001. The purpose of the research pr
 
 ## Evidence summary
 
-No implementation evidence yet.
+The [bounded exploratory history-to-views run](../experiments/exploratory-history-views/README.md) independently reconstructed row and column final and midpoint states correctly from reopened RF1 history in every corrected measured trial. The original dependent-column results are retained but superseded for independent-view comparison. Physical replay dominated at 10,000 events and showed sharply declining throughput in both runs. This is feasibility and cost-direction evidence only, not confirmatory EXP-0001 evidence; HYP-0001 remains active and unproven.

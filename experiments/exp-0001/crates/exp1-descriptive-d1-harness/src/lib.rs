@@ -13,6 +13,7 @@ compile_error!("exp1-descriptive-d1-harness supports only Linux on x86_64");
 #[allow(unsafe_code)]
 pub mod linux_capture;
 
+pub mod history_views;
 pub mod orchestration;
 pub mod target_preflight;
 

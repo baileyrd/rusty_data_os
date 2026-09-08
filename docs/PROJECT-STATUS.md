@@ -1,7 +1,7 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — R36 closes the merged R35 v2 target-preflight implementation and authorizes one minimal operator-only example PR followed by one controlled diagnostic invocation; all other execution and evidence remain blocked
+**Status:** Phase 1 planning/readiness — one owner-authorized bounded exploratory history-to-row/column run completed correctly; it is not confirmatory EXP-0001 evidence and does not lift other execution gates
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
@@ -58,7 +58,7 @@ These are constraints on research and correctness, not evidence that the archite
 
 ## 3. Active hypothesis
 
-[HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. No implementation or experimental result supports or refutes it yet.
+[HYP-0001](hypotheses/HYP-0001-event-log-as-canonical-state.md) asks whether one canonical information history can support multiple independently optimized representations with acceptable performance and complexity. It is active and unproven. The owner-authorized [exploratory history-to-views experiment](experiments/exploratory-history-views/README.md) independently rebuilt row and column final and midpoint states in its corrected run, while physical replay dominated the 10,000-event observation. The original dependent-column result set is retained but superseded for independent-view comparison. This is bounded exploratory feasibility/cost-direction evidence, not confirmatory EXP-0001 evidence or an architecture decision.
 
 ## 4. Active and next incomplete increments
 

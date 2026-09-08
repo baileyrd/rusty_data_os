@@ -1,0 +1,21 @@
+schema=EXPLORATORY-HV1/run-metadata-v1
+unix_timestamp=1788879477
+repository_revision=dc9e5ddaf137e3166a25835d1926b9bd0b387cae
+repository_dirty=true
+toolchain=rustc 1.89.0 (29483883e 2025-08-04) | binary: rustc | commit-hash: 29483883eed69d5fb4db01964cdf2af4d86e9cb2 | commit-date: 2025-08-04 | host: x86_64-unknown-linux-gnu | release: 1.89.0 | LLVM version: 20.1.7
+target=rustc 1.89.0 (29483883e 2025-08-04) | binary: rustc | commit-hash: 29483883eed69d5fb4db01964cdf2af4d86e9cb2 | commit-date: 2025-08-04 | host: x86_64-unknown-linux-gnu | release: 1.89.0 | LLVM version: 20.1.7
+build_profile=release; overflow-checks=true; locked=true; offline=true
+workload=deterministic single-thread; sizes=100,1000,10000; entities=17; warmups=1; measured_trials=5; batching=none; queue_depth=1
+payload_label=EXPLORATORY-HV1/entity-time-value-v1 (separate from SOP1/SOP2)
+durability=D1 ordinary writes only; no fsync; no crash-survival or durable-canonical-commit claim
+cache_state=uncontrolled; warm-up and prior trials may affect page cache
+os_kernel=Linux localhost 6.18.35 #1 SMP Mon Aug 31 18:10:37 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+cpu=model name	: Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
+memory=MemTotal:       18440516 kB
+filesystem=Filesystem     Type    1K-blocks   Used Available Use% Mounted on | overlay        overlay  32978704 134864  31149736   1% /
+storage_model_interface=unavailable (not reliably exposed to unprivileged container)
+mount_options=unavailable (output-path mount mapping not resolved)
+power_performance_mode=unavailable (not reliably exposed)
+virtualization_container=unavailable/undetected from /proc/1/cgroup
+ram_speed=unavailable (not exposed)
+perf_counters=not collected (optional)
