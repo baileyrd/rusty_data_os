@@ -37,3 +37,7 @@ From the repository root, choose a path that does not already exist:
 ```bash
 cargo +1.89.0 run --release --manifest-path experiments/exp-0001/Cargo.toml --locked --offline --package exp1-descriptive-d1-harness --example history_views -- "$HOME/rusty-data-os-history-views-$(date -u +%Y%m%dT%H%M%SZ)"
 ```
+
+## Incremental lifecycle-validation follow-up
+
+A separately authorized controlled before/after run replaced physical replay's repeated whole-prefix lifecycle validation with shared scan-local incremental transitions while retaining all lifecycle checks. All correctness gates passed and all corresponding RF1 artifacts were byte-identical. Replay medians changed from 0.119032 to 0.062490 ms at 100 events (1.90x), 5.584829 to 0.379115 ms at 1,000 (14.73x), and 542.289996 to 2.502494 ms at 10,000 (216.70x). Full provenance, component results, raw records, limitations, and the important remaining non-linear mixed-lifecycle searches are recorded in the [incremental lifecycle-validation comparison](INCREMENTAL-LIFECYCLE-VALIDATION-COMPARISON.md). This remains a local/container exploratory D1 ordinary-write observation, not confirmatory or architectural evidence.

@@ -199,65 +199,116 @@ pub fn checked_extent(offset: u64, total_length: u64) -> Result<u64, Error> {
 
 /// Scans concatenated records without seeking a new record boundary after failure.
 pub fn scan_with_limits(bytes: &[u8], limits: ScanLimits) -> ScanOutcome {
+    scan_with_limits_internal(bytes, limits).0
+}
+
+fn scan_with_limits_internal(bytes: &[u8], limits: ScanLimits) -> (ScanOutcome, usize) {
     let mut records = Vec::new();
+    let mut lifecycle = LifecycleState::default();
+    let mut lifecycle_transitions = 0;
     let mut offset = 0usize;
     let mut retained = 0usize;
     loop {
         if offset == bytes.len() {
-            return scan_outcome(records, offset, ScanTermination::CleanEof);
+            return (
+                scan_outcome(records, offset, ScanTermination::CleanEof),
+                lifecycle_transitions,
+            );
         }
         if records.len() >= limits.max_records {
-            return scan_failure(records, offset, Error::RecordLimit);
+            return (
+                scan_failure(records, offset, Error::RecordLimit),
+                lifecycle_transitions,
+            );
         }
         let remaining = &bytes[offset..];
         if remaining.len() < HEADER_LEN {
-            return scan_outcome(
-                records,
-                offset,
-                ScanTermination::TerminalTruncation {
-                    offset: offset as u64,
-                },
+            return (
+                scan_outcome(
+                    records,
+                    offset,
+                    ScanTermination::TerminalTruncation {
+                        offset: offset as u64,
+                    },
+                ),
+                lifecycle_transitions,
             );
         }
 
         // Header identity is checked before either declared length is trusted.
         if &remaining[..4] != MAGIC {
-            return scan_failure(records, offset, Error::BadMagic);
+            return (
+                scan_failure(records, offset, Error::BadMagic),
+                lifecycle_transitions,
+            );
         }
         if le_u16(remaining, 4) != 1 {
-            return scan_failure(records, offset, Error::UnsupportedVersion);
+            return (
+                scan_failure(records, offset, Error::UnsupportedVersion),
+                lifecycle_transitions,
+            );
         }
         if !(1..=6).contains(&remaining[6]) {
-            return scan_failure(records, offset, Error::UnknownKind);
+            return (
+                scan_failure(records, offset, Error::UnknownKind),
+                lifecycle_transitions,
+            );
         }
         if remaining[7] > 1 {
-            return scan_failure(records, offset, Error::UnsupportedIntegrity);
+            return (
+                scan_failure(records, offset, Error::UnsupportedIntegrity),
+                lifecycle_transitions,
+            );
         }
         let total = le_u32(remaining, 8) as usize;
         let body = le_u32(remaining, 12) as usize;
         if total < HEADER_LEN {
-            return scan_failure(records, offset, Error::InvalidLength);
+            return (
+                scan_failure(records, offset, Error::InvalidLength),
+                lifecycle_transitions,
+            );
         }
         if total > MAX_RECORD_LEN || total > limits.max_record_len {
-            return scan_failure(records, offset, Error::Oversize);
+            return (
+                scan_failure(records, offset, Error::Oversize),
+                lifecycle_transitions,
+            );
         }
         if body.checked_add(HEADER_LEN) != Some(total) {
-            return scan_failure(records, offset, Error::InvalidLength);
+            return (
+                scan_failure(records, offset, Error::InvalidLength),
+                lifecycle_transitions,
+            );
         }
         let Ok(offset64) = u64::try_from(offset) else {
-            return scan_failure(records, offset, Error::LengthOverflow);
+            return (
+                scan_failure(records, offset, Error::LengthOverflow),
+                lifecycle_transitions,
+            );
         };
         let Ok(total64) = u64::try_from(total) else {
-            return scan_failure(records, offset, Error::LengthOverflow);
+            return (
+                scan_failure(records, offset, Error::LengthOverflow),
+                lifecycle_transitions,
+            );
         };
         let Ok(end64) = checked_extent(offset64, total64) else {
-            return scan_failure(records, offset, Error::LengthOverflow);
+            return (
+                scan_failure(records, offset, Error::LengthOverflow),
+                lifecycle_transitions,
+            );
         };
         let Ok(end) = usize::try_from(end64) else {
-            return scan_failure(records, offset, Error::LengthOverflow);
+            return (
+                scan_failure(records, offset, Error::LengthOverflow),
+                lifecycle_transitions,
+            );
         };
         if end64 > limits.max_scan_bytes {
-            return scan_failure(records, offset, Error::ScanByteLimit);
+            return (
+                scan_failure(records, offset, Error::ScanByteLimit),
+                lifecycle_transitions,
+            );
         }
         if end > bytes.len() {
             let later_magic = remaining[HEADER_LEN..]
@@ -273,23 +324,32 @@ pub fn scan_with_limits(bytes: &[u8], limits: ScanLimits) -> ScanOutcome {
                     offset: offset as u64,
                 }
             };
-            return scan_outcome(records, offset, termination);
+            return (
+                scan_outcome(records, offset, termination),
+                lifecycle_transitions,
+            );
         }
         let record = match decode(&bytes[offset..end]) {
             Ok(record) => record,
-            Err(error) => return scan_failure(records, offset, error),
+            Err(error) => return (scan_failure(records, offset, error), lifecycle_transitions),
         };
         let Some(next_retained) = retained.checked_add(total) else {
-            return scan_failure(records, offset, Error::LengthOverflow);
+            return (
+                scan_failure(records, offset, Error::LengthOverflow),
+                lifecycle_transitions,
+            );
         };
         if next_retained > limits.max_diagnostic_bytes {
-            return scan_failure(records, offset, Error::DiagnosticLimit);
+            return (
+                scan_failure(records, offset, Error::DiagnosticLimit),
+                lifecycle_transitions,
+            );
+        }
+        lifecycle_transitions += 1;
+        if let Err(error) = lifecycle.accept(&record, records.last()) {
+            return (scan_failure(records, offset, error), lifecycle_transitions);
         }
         records.push(record);
-        if let Err(error) = validate_lifecycle(&records) {
-            records.pop();
-            return scan_failure(records, offset, error);
-        }
         retained = next_retained;
         offset = end;
     }
@@ -704,15 +764,27 @@ fn decode_body(kind: u8, b: &[u8]) -> Result<Body, Error> {
 
 /// Validates only relationships decidable from this complete supplied record slice.
 pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
-    let mut previous_ordinal = 0_u64;
-    let mut previous_commit_sequence = 0_u64;
-    let mut bindings = Vec::new();
-    let mut reservations = Vec::new();
-    let mut finals = Vec::new();
-    let mut commits = Vec::new();
-    for (i, record) in records.iter().enumerate() {
+    let mut lifecycle = LifecycleState::default();
+    for (index, record) in records.iter().enumerate() {
+        lifecycle.accept(record, index.checked_sub(1).and_then(|p| records.get(p)))?;
+    }
+    Ok(())
+}
+
+#[derive(Default)]
+struct LifecycleState {
+    previous_ordinal: Option<u64>,
+    previous_commit_sequence: u64,
+    bindings: Vec<(Uuid, Uuid)>,
+    reservations: Vec<(Uuid, Uuid, u64)>,
+    finals: Vec<Uuid>,
+    commits: Vec<Uuid>,
+}
+
+impl LifecycleState {
+    fn accept(&mut self, record: &Record, previous: Option<&Record>) -> Result<(), Error> {
         validate_record(record)?;
-        if i != 0
+        if let Some(previous_ordinal) = self.previous_ordinal
             && record.physical_ordinal
                 != previous_ordinal
                     .checked_add(1)
@@ -720,22 +792,21 @@ pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
         {
             return Err(Error::OrdinalOrder);
         }
-        previous_ordinal = record.physical_ordinal;
+
         match &record.body {
             Body::Binding {
                 request_id,
                 event_id,
-                normalized_request,
+                ..
             } => {
-                if bindings
+                if self
+                    .bindings
                     .iter()
-                    .any(|(request, event, _): &(Uuid, Uuid, Vec<u8>)| {
-                        request == request_id || event == event_id
-                    })
+                    .any(|(request, event)| request == request_id || event == event_id)
                 {
                     return Err(Error::DuplicateIdentity);
                 }
-                bindings.push((*request_id, *event_id, normalized_request.clone()));
+                self.bindings.push((*request_id, *event_id));
             }
             Body::Reservation {
                 request_id,
@@ -743,19 +814,21 @@ pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
                 sequence,
                 ..
             } => {
-                if !bindings
+                if !self
+                    .bindings
                     .iter()
-                    .any(|(request, event, _)| request == request_id && event == event_id)
+                    .any(|(request, event)| request == request_id && event == event_id)
                 {
                     return Err(Error::MissingBinding);
                 }
-                if reservations
+                if self
+                    .reservations
                     .iter()
-                    .any(|(_, _, used): &(Uuid, Uuid, u64)| used == sequence)
+                    .any(|(_, _, used)| used == sequence)
                 {
                     return Err(Error::DuplicateSequence);
                 }
-                reservations.push((*request_id, *event_id, *sequence));
+                self.reservations.push((*request_id, *event_id, *sequence));
             }
             Body::Final {
                 event_id,
@@ -763,24 +836,26 @@ pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
                 sequence,
                 ..
             } => {
-                if !bindings
+                if !self
+                    .bindings
                     .iter()
-                    .any(|(request, event, _)| request == request_id && event == event_id)
+                    .any(|(request, event)| request == request_id && event == event_id)
                 {
                     return Err(Error::MissingBinding);
                 }
-                if !reservations.iter().any(|(request, event, reserved)| {
+                if !self.reservations.iter().any(|(request, event, reserved)| {
                     request == request_id && event == event_id && reserved == sequence
                 }) {
                     return Err(Error::MissingReservation);
                 }
-                if finals.contains(event_id) {
+                if self.finals.contains(event_id) {
                     return Err(Error::DuplicateFinal);
                 }
-                finals.push(*event_id);
+                self.finals.push(*event_id);
             }
             _ => {}
         }
+
         if let Body::Commit {
             event_id,
             sequence,
@@ -789,7 +864,7 @@ pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
             ..
         } = &record.body
         {
-            let Some(final_record) = i.checked_sub(1).and_then(|p| records.get(p)) else {
+            let Some(final_record) = previous else {
                 return Err(Error::FinalNotAdjacent);
             };
             let Body::Final {
@@ -806,21 +881,22 @@ pub fn validate_lifecycle(records: &[Record]) -> Result<(), Error> {
             if final_id != event_id || final_sequence != sequence {
                 return Err(Error::FinalIdentityMismatch);
             }
-            if commits.contains(event_id) {
+            if self.commits.contains(event_id) {
                 return Err(Error::DuplicateCommit);
             }
             let encoded = encode(final_record)?;
             if le_u32(&encoded, 28) != *final_crc32c {
                 return Err(Error::FinalCrcMismatch);
             }
-            if *sequence <= previous_commit_sequence {
+            if *sequence <= self.previous_commit_sequence {
                 return Err(Error::SequenceOrder);
             }
-            previous_commit_sequence = *sequence;
-            commits.push(*event_id);
+            self.previous_commit_sequence = *sequence;
+            self.commits.push(*event_id);
         }
+        self.previous_ordinal = Some(record.physical_ordinal);
+        Ok(())
     }
-    Ok(())
 }
 
 fn put_len(out: &mut Vec<u8>, value: &[u8]) -> Result<(), Error> {
@@ -1189,5 +1265,109 @@ mod b0_tests {
         assert!(second_process.entries().is_empty());
         assert_eq!(second_process.next_sequence, 0);
         assert_eq!(second_process.classification(), B0_CLASSIFICATION);
+    }
+}
+
+#[cfg(test)]
+mod incremental_lifecycle_tests {
+    use super::*;
+
+    fn id(tag: u8) -> Uuid {
+        let mut bytes = [tag; 16];
+        bytes[6] = 0x40;
+        bytes[8] = 0x80;
+        Uuid(bytes)
+    }
+
+    fn provisional(ordinal: u64) -> Record {
+        Record {
+            physical_ordinal: ordinal,
+            integrity: IntegrityProfile::Structural,
+            body: Body::Provisional {
+                event_id: id(ordinal as u8),
+                sequence: ordinal,
+                group_id: 0,
+                member_index: 0,
+                member_count: 1,
+                stable_core: vec![ordinal as u8],
+            },
+        }
+    }
+
+    #[test]
+    fn scanner_performs_one_lifecycle_transition_per_candidate() {
+        let artifact: Vec<_> = (1..=32)
+            .flat_map(|ordinal| encode(&provisional(ordinal)).unwrap())
+            .collect();
+        let (outcome, transitions) = scan_with_limits_internal(&artifact, ScanLimits::default());
+
+        assert_eq!(outcome.termination, ScanTermination::CleanEof);
+        assert_eq!(outcome.records.len(), 32);
+        assert_eq!(transitions, 32);
+    }
+
+    #[test]
+    fn failing_candidate_is_not_added_to_the_accepted_prefix() {
+        let valid = provisional(1);
+        let mut duplicate_ordinal = provisional(2);
+        duplicate_ordinal.physical_ordinal = 1;
+        let artifact = [encode(&valid).unwrap(), encode(&duplicate_ordinal).unwrap()].concat();
+        let second_offset = encode(&valid).unwrap().len() as u64;
+
+        let (outcome, transitions) = scan_with_limits_internal(&artifact, ScanLimits::default());
+        assert_eq!(outcome.records, vec![valid]);
+        assert_eq!(outcome.scanned_bytes, second_offset);
+        assert_eq!(
+            outcome.termination,
+            ScanTermination::Failure {
+                offset: second_offset,
+                error: Error::OrdinalOrder,
+            }
+        );
+        assert_eq!(transitions, 2);
+    }
+
+    #[test]
+    fn incremental_transition_retains_duplicate_commit_precedence() {
+        let request = id(40);
+        let event = id(41);
+        let final_record = Record {
+            physical_ordinal: 3,
+            integrity: IntegrityProfile::Crc32c,
+            body: Body::Final {
+                event_id: event,
+                request_id: request,
+                sequence: 1,
+                durability_time: 2,
+                complete_envelope: vec![],
+            },
+        };
+        let final_bytes = encode(&final_record).unwrap();
+        let commit = Record {
+            physical_ordinal: 4,
+            integrity: IntegrityProfile::Crc32c,
+            body: Body::Commit {
+                event_id: event,
+                sequence: 1,
+                final_ordinal: 3,
+                final_crc32c: le_u32(&final_bytes, 28),
+                group_id: 0,
+                member_index: 0,
+                member_count: 1,
+            },
+        };
+        let mut lifecycle = LifecycleState {
+            previous_ordinal: Some(3),
+            bindings: vec![(request, event)],
+            reservations: vec![(request, event, 1)],
+            finals: vec![event],
+            commits: vec![event],
+            ..LifecycleState::default()
+        };
+
+        assert_eq!(
+            lifecycle.accept(&commit, Some(&final_record)),
+            Err(Error::DuplicateCommit)
+        );
     }
 }
