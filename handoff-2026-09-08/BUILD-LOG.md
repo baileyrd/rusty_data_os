@@ -388,3 +388,60 @@
 - Committed on `codex/merge-step4b-protocol-facade` (worktree `C:/dev/rusty_data_os-step4b`, not pushed): protocol-facade infrastructure (`uc-protocol`: codec, framing, types, dispatch, query, store, connection/Registry; 66-fixture literal-value+round-trip conformance test; the D7 interleaving test; governance amendment to `AGENTS.md` §3 and `RESEARCH-ROADMAP.md` Phase 7; EXP-0005/ADR-0005/HYP-0005; the four host proof logs as evidence), plus this BUILD-LOG entry.
 - Residuals carried: F1 relationship-lock acquired before the session-open guard (undocumented minor contention, not a spec violation); F2 validate-on-stage vs. staged-cap precedence unspecified and untested for the combined case.
 - Not started: 4b-ii (wiring Memory/Entity/Relation onto this `Store` trait via `uc-memory`/`uc-entity`/`uc-relation`, plus opening a real `TcpListener`, both explicitly deferred by D2/D4/Non-goals of this work order).
+
+## Step 4b-ii — Codex plan review (Data OS: Memory/Entity/Relation on the protocol facade, real listener)
+
+- Recon: direct host reads of the just-built `uc-protocol`/`uc-memory`/`uc-entity`/`uc-relation`
+  source (no agents needed — everything is local and already-known from Steps 3/4a/4b-i)
+  confirmed: 4b-i's session/connection layer needs zero changes to accept a real `Store` (overlay
+  logic operates only on `Fields`, never domain internals); every field-tag/`ValueKind` mapping
+  for all three domains matches legacy's real `describe()` bodies 1:1 (Memory's `cm_trace::Memory`
+  was deliberately built "Wire-equivalent," confirmed exactly); `Log::commit`/`XEngine::transact`
+  require `&mut self`, so every adapter needs a `Mutex`; `Change::Update`'s `equals` is exact-match
+  only, so `ReplaceIf`'s arbitrary-`CompareOp` guard must be evaluated by the adapter itself under
+  its own lock, not encoded into the log.
+- Work order drafted: `step4bii-domain-adapters-spec.md` — a new `uc-facade` crate wrapping
+  `MemoryEngine`/`EntityEngine`/`RelationEngine` behind `Mutex`-guarded `Store` impls, plus the
+  facade's first real `TcpListener`.
+- Review 1 (`runs/step4bii-review/claudex-f1nzu00z/`, session `01a087a0-fd50-7082-9a00-158e6d7c52f6`,
+  plan sha256 `d9484b8c…5506fd6a`): **REVISE**, 4 high + 4 medium. Two of the four high findings
+  (F2, F4) revealed the work order's own central ambition — a real cross-table Memory↔Entity
+  `mentions` link and a session spanning two domains — is not buildable on the frozen design at
+  all: `uc-memory`'s `Change::Link` requires both endpoints to exist in Memory's *own* `State` (it
+  has no foreign-edge concept and no detach operation), and `uc-protocol`'s connection loop is
+  single-table by construction. This is exactly the `MEMORY-ENTITY-CROSS-DOMAIN-ATOMICITY` problem
+  already named Deferred in `docs/roadmap/ROADMAP.md`. Put to the owner directly (asked
+  2026-09-09): **descope** — wire each domain standalone, open the real listener, verify each
+  domain's own same-table operations end-to-end; the cross-table relation stays exactly as
+  deferred as it already was. The other findings, also confirmed by direct source read: F1 `Log`'s
+  `Box<dyn Writer>`/`Box<dyn Fn(Point)>` have no `Send` bound, so no real engine can satisfy
+  `Store: Send + Sync` behind a `Mutex` for a multi-threaded listener; F3 (moot after the descope);
+  F5 cross-table batch plumbing unspecified (moot after the descope); F6 each engine caps one
+  transaction at 1024 changes but the wire protocol's staging/batch caps are both 4096; F7
+  `uc-memory` doesn't re-export `cm_trace::{Memory,Value}`, so `uc-facade` has no accessible named
+  types without its own dependency on the already-existing `cm-trace` workspace member; F8 a real,
+  pre-existing overflow-panic in already-closed 4b-i's `uc-protocol::query::reduce` (`Sum`/`Avg`
+  over `i64`, this workspace's `overflow-checks = true`), only now operationally reachable once a
+  real listener exposes `Aggregate` to arbitrary input. All eight accepted (`feedback-S4BII-review1.md`);
+  spec revised to hash `4a2096de…c35fe4` with narrow, disclosed exceptions authorizing: a `+ Send`
+  bound fix in `uc-core`, raising all three engines' operation cap to 4096, an `i128`-accumulating
+  overflow-safe `Aggregate` fix in `uc-protocol`, and a direct `cm-trace` dependency for `uc-facade`
+  — each a small, mechanical, citation-backed change to otherwise-frozen crates, not a design change.
+- Review 2 (`runs/step4bii-review/claudex-lixbowpc/`, same session, plan sha256 `4a2096de…c35fe4`):
+  **REVISE**, 3 medium. F5 (repeat, not fully resolved) the revised R6 still required a successful
+  atomic `WriteBatch` even though no adapter overrides `write_batch_checked`, so any nonempty
+  atomic batch is `Unsupported` by the accepted 4b-i default — R6 now requires only a successful
+  pipelined batch plus an explicit refusal test for atomic. F9 the D7 `Avg` fix as worded performed
+  integer division before the `f64` cast, losing the fractional part and breaking an existing
+  4b-i test that asserts `5.0/3.0` — fixed to cast both operands to `f64` before dividing. F10
+  `Store::neighbors`/`parent`/`children`/`neighbors_by_relation`/`list_relation_kinds` have no
+  default body at all (unlike `link_records`/`detach_record`), so omitting them fails to compile —
+  not unique to `RelationStore` as flagged; `MemoryStore`/`EntityStore` had the identical gap for
+  `parent`/`children`. All three fixed for all three adapters; spec revised to hash
+  `995f2d6e…5d53c5d29`.
+- Review 3 (`runs/step4bii-review/claudex-wb7wxoo7/`, same session): **APPROVED**, no findings.
+  Three review rounds total (8 → 3 → 0 findings), all host-accepted; eleven findings closed
+  overall, two of them (F2/F4) resolved by an owner scope decision rather than a spec patch.
+- Build launching against the approved spec (hash `995f2d6e…5d53c5d29`,
+  `runs/step4bii-review/claudex-wb7wxoo7/result.json` as `--approval`). Budgets: MAX_FIX_ROUNDS=2,
+  MAX_INSPECTION_ROUNDS=2.
