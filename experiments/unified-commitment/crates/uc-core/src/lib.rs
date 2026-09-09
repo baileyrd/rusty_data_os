@@ -197,7 +197,7 @@ pub type Apply<S> = fn(&mut S, &[u8]) -> Result<(), String>;
 pub type Decode<S> = fn(&[u8]) -> Result<S, String>;
 pub struct Log<S> {
     directory: Directory,
-    writer: Box<dyn Writer>,
+    writer: Box<dyn Writer + Send>,
     state: Arc<S>,
     apply: Apply<S>,
     bindings: BTreeMap<[u8; 16], Binding>,
@@ -206,7 +206,7 @@ pub struct Log<S> {
     ordinal: u64,
     position: Option<Position>,
     poisoned: bool,
-    hook: Box<dyn Fn(Point)>,
+    hook: Box<dyn Fn(Point) + Send>,
     pub append_time: Duration,
     pub payload_bytes: u64,
 }
@@ -313,11 +313,14 @@ impl<S: Clone + Default> Log<S> {
         identity(self.ordinal + 1, 0x41)
     }
     /// Test instrumentation observes exact call placements; never adds record metadata.
-    pub fn set_hook(&mut self, hook: impl Fn(Point) + 'static) {
+    pub fn set_hook(&mut self, hook: impl Fn(Point) + Send + 'static) {
         self.hook = Box::new(hook);
     }
     /// Wrap the actual writer for deterministic short-write/error/sync injection.
-    pub fn wrap_writer(&mut self, wrap: impl FnOnce(Box<dyn Writer>) -> Box<dyn Writer>) {
+    pub fn wrap_writer(
+        &mut self,
+        wrap: impl FnOnce(Box<dyn Writer + Send>) -> Box<dyn Writer + Send>,
+    ) {
         struct Unavailable;
         impl Write for Unavailable {
             fn write(&mut self, _: &[u8]) -> io::Result<usize> {

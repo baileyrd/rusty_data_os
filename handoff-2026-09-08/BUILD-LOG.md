@@ -152,3 +152,52 @@
 - Committed on `codex/merge-step1-batch-cross-table` (not pushed): `232b16e` = snapshot `b637002f…a8a7` (26 files, 2500 insertions, 410 deletions). Working tree clean.
 - Residuals carried forward (inspection 3, all documentation plus one message string): R-B1 SERVER-002 wire spec UpdateField responses and TransactionFailed wording (Err Journal/Storage reachable, downgrades, Journal no longer certifies nothing applied); R-B2 SERVER-001 FR-036 row text inline; R-B3 Dog check_read_set comment and journal.rs header sentence; R-B4 ADR-0061 status vs owner promotion convention; R-B5 poisoned mutation gate surfaced as Journal with an I/O message. Also open from Part A: the two Windows-only test portability fixes (reverted in K1, separate change).
 - Step 2 legacy pin stays `abda0a7` (pushed); bump to `232b16e` once the owner pushes Part B.
+
+## Step 4b-ii — local implementation, 2026-09-09
+
+Work order SHA-256 `995f2d6ea29af8547985673e71efd90cdf08f90e844db876f9a49f75d53c5d29`,
+implemented only in rusty_data_os-step4bii from `5af480971b006b3f04ac14fc30127a0361f371ae`.
+No commit, push or publication. Independent provider review remains pending.
+
+R0 exceptions are separately disclosed: core writer/hook Send bounds including callers;
+Memory's named 4096 operation cap; Entity/Relation's 4096 caps; protocol Sum/Avg wide
+accumulation. **4b-i residual closed here:** an overflowing i64 Sum/Avg previously panicked.
+Sum now returns Malformed when the i128 sum is outside i64; Avg casts sum/count before
+division and preserves empty 0.0. Explicit fractional, negative and both overflow-range
+regressions pass, including continued use of a real TCP connection after an overflow error.
+
+uc-facade adds all three independent Stores and a 127.0.0.1:0-only listener. Ten new
+correctness tests passed locally, five over real TCP. Entity open-label links are same-table;
+no cross-table mentions or cross-domain session was attempted. Atomic nonempty WriteBatch
+correctly refuses with TransactionFailed(0, Unsupported). Full proof and file accounting:
+[advisory report](../docs/experiments/EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md).
+
+Final source review found a work-order wording conflict: "any field" ReplaceIf guards
+cannot include StrList while reusing unchanged query::validate_predicate, which rejects
+StrList even for Eq/Ne. Proposed disposition: preserve the frozen shared admission rule;
+Memory tags/Entity aliases guards return Malformed without mutation. An eleventh facade
+test pins this boundary. Any expansion needs separate authorization; no second predicate
+evaluator or additional uc-protocol change was introduced.
+
+Final agreed eleven-command proof exited 0: 109 unified-commitment, 17 convergence-memory
+and 95 portable exp-0001 tests (221 total), all formatting and warnings-denied Clippy,
+Markdown links and git diff --check passed. The final source includes eleven facade tests.
+Both full proof runs and the R0 outputs are retained with the advisory report. Only result
+documentation changed after the final source proof; final links/whitespace were rechecked.
+
+## Step 4b-ii inspection 1 — accepted F1 correction
+
+Host accepted F1-DESCRIBE-RELATIONS-WILDCARD-DROPPED at inspection snapshot
+`78e7839e…8d3fdb6`. Both custom describe_relations overrides omitted Neighbors(None),
+silently causing an unlabeled same-table Join to return Malformed. Removed the Memory
+and Entity overrides; the unchanged trait default includes wildcard plus named descriptors,
+all target_table None. Two real-TCP regression tests reproduce the rejection before the
+fix (exit 101) and pass afterward (exit 0), checking exact symmetric Join rows and both
+Entity labels. Full corrective proof and changed files are recorded in the
+[advisory report](../docs/experiments/EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md#inspection-1-f1-correction).
+No other finding reopened, new deviation, denied action, commit, push or publication.
+
+F1 corrective eleven-command proof exited 0: 111 unified-commitment, 17 convergence-memory
+and 95 portable exp-0001 tests (223 total), formatting, warnings-denied locked/offline
+Clippy, Markdown links and git diff --check passed. All thirteen facade tests are included.
+Only result documentation changed afterward; final links/whitespace were rechecked.

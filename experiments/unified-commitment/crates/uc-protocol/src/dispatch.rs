@@ -111,15 +111,18 @@ pub fn dispatch<S: Store + ?Sized>(store: &S, req: Request) -> Response {
             let schema = store.describe();
             result(
                 validate_aggregate(&schema, &group_by, &filter, &aggregates),
-                |()| Response::Groups {
-                    groups: evaluate_aggregate(
-                        store.scan_all(),
-                        &group_by,
-                        &filter,
-                        &aggregates,
-                        limit,
-                        &schema,
-                    ),
+                |()| {
+                    result(
+                        evaluate_aggregate(
+                            store.scan_all(),
+                            &group_by,
+                            &filter,
+                            &aggregates,
+                            limit,
+                            &schema,
+                        ),
+                        |groups| Response::Groups { groups },
+                    )
                 },
             )
         }

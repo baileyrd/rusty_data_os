@@ -8,6 +8,8 @@ use std::{
 };
 use uc_core::{Durability, Log, LogError, OpenReport, Outcome, Rejection, Transaction, Uuid};
 
+pub const MAX_OPERATIONS: usize = 4096;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Slot {
     pub incarnation: u64,
@@ -152,7 +154,7 @@ pub fn decode_changes(bytes: &[u8]) -> Result<Vec<Change>, String> {
             _ => return Err("CMM2 operation".into()),
         };
         changes.push(change);
-        if changes.len() > 1024 {
+        if changes.len() > MAX_OPERATIONS {
             return Err("transaction operation limit".into());
         }
     }

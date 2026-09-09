@@ -1,0 +1,34 @@
+   Compiling uc-core v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-core)
+   Compiling uc-entity v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-entity)
+   Compiling uc-memory v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-memory)
+   Compiling uc-relation v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-relation)
+   Compiling uc-facade v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-facade)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.93s
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_facade-954c9fdc30639559.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\adapters.rs (experiments\unified-commitment\target\debug\deps\adapters-a8d2ceed760fd68a.exe)
+
+running 5 tests
+test exact_fields_capabilities_validation_and_soft_outcomes ... ok
+test concurrent_guarded_replacements_have_one_winner_per_table ... ok
+test whole_record_guards_reuse_shared_predicates_and_preserve_records_on_refusal ... ok
+test same_table_edges_incarnations_and_known_labels_survive_reopen ... ok
+test transactions_check_reads_first_reject_atomically_and_commit_4096_once_with_replay ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests\tcp.rs (experiments\unified-commitment\target\debug\deps\tcp-475b5e0365facea5.exe)
+
+running 5 tests
+test real_tcp_aggregate_overflow_is_a_response_and_connection_remains_usable ... ok
+test real_tcp_nonempty_atomic_batches_refuse_without_any_mutation_on_every_domain ... ok
+test real_tcp_concurrent_sessions_conflict_before_writes_on_every_domain ... ok
+test real_tcp_three_domains_crud_entity_links_batches_and_all_flags_sessions ... ok
+test real_tcp_4096_staged_updates_commit_once_per_domain_and_reopen ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+

@@ -38,6 +38,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "uc-facade"
+version = "0.1.0"
+dependencies = [
+ "cm-trace",
+ "uc-core",
+ "uc-entity",
+ "uc-memory",
+ "uc-protocol",
+ "uc-relation",
+]
+
+[[package]]
 name = "uc-harness"
 version = "0.1.0"
 dependencies = [

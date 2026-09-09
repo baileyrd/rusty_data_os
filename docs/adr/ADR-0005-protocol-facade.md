@@ -38,6 +38,27 @@ after the record and earlier detaches are already applied; no rollback is invent
 
 ## Deferred follow-on
 
-Step 4b-ii must separately authorize real Memory/Entity/Relation wiring and any socket
-wrapper. Authentication/authorization, older-client compatibility, cross-domain atomic
+Step 4b-ii was separately authorized by the owner's frozen work order identified in
+[EXP-0005 §19](../experiments/EXP-0005-protocol-facade.md#19-step-4b-ii-method-2026-09-09).
+It adds uc-facade's three independent table mutexes, raw-byte ID mapping, internal current/
+next incarnations, guarded whole-record replacement using the shared predicate evaluator,
+and one engine transact per session commit. The listener only binds 127.0.0.1:0 and passes
+accepted sockets through a buffered Read + Write wrapper to the unchanged connection loop.
+An explicit stop flag ends acceptance; callers close clients and all workers are joined.
+Nonempty atomic WriteBatch retains the Unsupported default. Memory's mentions descriptor
+has target_table None; all links here are same-table.
+
+Inspection 1 F1 corrects an implementation omission: Memory and Entity inherit Store's
+default describe_relations, preserving both the wildcard Neighbors(None) descriptor and
+named labels, all with target_table None. The former custom overrides rejected working
+unlabeled Joins as Malformed; two real-TCP regressions fail before this deletion and pass
+afterward. This restores the existing contract without changing uc-protocol.
+
+D7/R0's bounded exceptions add Send to core writer/hook trait objects, raise all three
+domain operation caps to 4096, and accumulate Sum/Avg in i128. Out-of-range Sum returns
+Malformed; Avg casts before division and keeps the empty 0.0 identity. This closes a
+4b-i residual, with no wire-shape or fixture change. The
+[Step 4b-ii report](../experiments/EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md) records local
+correctness evidence; this ADR remains Proposed and authorizes no production graduation.
+Authentication/authorization, actual legacy-client integration, cross-domain atomic
 commitment and performance evidence remain outside this increment.

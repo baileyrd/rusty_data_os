@@ -1,0 +1,208 @@
+=== fmt exp1 ===
+=== clippy exp1 ===
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+=== test exp1 ===
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src\lib.rs (experiments\exp-0001\target\debug\deps\exp1_raw_append_replay-af6a4d2801ade9e7.exe)
+
+running 14 tests
+test reference_context::completion_matrix::authority_unreachable_accumulation_and_identity_maxima_use_checked_helpers ... ok
+test reference_context::completion_matrix::every_inclusive_limit_one_over_and_checked_overflow_invariant ... ok
+test reference_context::completion_matrix::supplied_set_classifier_reaches_extra_and_preserves_exact_order ... ok
+test reference_context::completion_matrix::selected_missing_precedes_collision_and_collision_precedes_publication ... ok
+test reference_context::completion_matrix::request_event_information_typed_collisions_are_actual_insertions ... ok
+test tests::identical_scripted_read_failures_produce_identical_reports ... ok
+test tests::validation_precedes_writes_and_input_is_immutable ... ok
+test tests::read_io_failure_retains_only_the_validated_buffered_prefix ... ok
+test tests::write_machine_handles_short_interrupted_and_poison_paths ... ok
+test reference_context::completion_matrix::encoded_reference_bound_runs_through_mapper_prevalidation ... ok
+test reference_context::completion_matrix::mapping_precedence_adjacencies_and_failure_immutability_are_direct ... ok
+test reference_context::completion_matrix::duplicate_before_lookup_target_bootstrap_and_first_invalid_encoded_order ... ok
+test reference_context::completion_matrix::every_reference_error_and_cross_segment_direction_is_directly_asserted ... ok
+test reference_context::completion_matrix::descriptor_member_bound_runs_through_scope_descriptor ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\correctness.rs (experiments\exp-0001\target\debug\deps\correctness-b57835809aa0a272.exe)
+
+running 6 tests
+test create_append_close_reopen_is_ordered_and_byte_identical ... ok
+test profile_zero_and_crc_check_vector_are_accepted ... ok
+test empty_and_stable_vectors_replay_with_exact_physical_metadata ... ok
+test all_resource_limits_and_open_io_failure_are_reported ... ok
+test malformed_unknown_crc_garbage_order_and_ambiguous_damage_fail_closed ... ok
+test every_header_and_body_truncation_boundary_is_terminal ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\mapping.rs (experiments\exp-0001\target\debug\deps\mapping-e9e109b1a7e1f1d0.exe)
+
+running 7 tests
+test duplicate_reference_bytes_reject_but_membership_requires_unfrozen_context ... ok
+test authoritative_profiles_versions_and_kinds_reject_before_mapping ... ok
+test semantic_failures_return_no_value_and_cannot_advance_owned_state ... ok
+test failed_mapping_cannot_produce_or_advance_state ... ok
+test r20_documentation_vectors_are_exact ... ok
+test state_is_distinct_checked_and_gaps_are_legal ... ok
+test all_operation_cases_and_payload_boundaries_preserve_the_complete_core ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.04s
+
+     Running tests\reference_context.rs (experiments\exp-0001\target\debug\deps\reference_context-8ff1ea7291f4889b.exe)
+
+running 13 tests
+test construction_is_closed_and_digest_bound ... ok
+test construction_errors_are_distinct_at_their_precedence_boundaries ... ok
+test missing_selected_stream_is_checked_before_catalog_publication ... ok
+test r26_literals_construct_an_immutable_catalog_and_initial_state ... ok
+test both_segment_bootstraps_and_prior_references_map_transactionally ... ok
+test mapping_precedence_and_failures_are_transactional ... ok
+test construction_precedence_adjacency_table ... ok
+test literal_sop2_maps_appends_and_physically_replays_without_reordering ... ok
+test duplicate_supplied_member_precedes_typed_identity_collision ... ok
+test r7_metadata_rejects_invalid_supersession_provenance_identity_and_closed_fields ... ok
+test closed_scope_set_classification_rows_are_direct ... ok
+test every_external_binding_and_mixed_version_position_is_rejected ... ok
+test resource_limit_boundary_table ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running unittests src\lib.rs (experiments\exp-0001\target\debug\deps\exp1_record_format-4bddfa0c2f9c280b.exe)
+
+running 7 tests
+test b0_tests::accounts_construction_insertion_capacity_and_logical_bytes ... ok
+test b0_tests::new_store_is_a_new_noncanonical_process_lifetime ... ok
+test b0_tests::preserves_cardinality_identity_content_and_order ... ok
+test b0_tests::rejection_and_checked_overflow_do_not_publish_or_consume_sequence ... ok
+test incremental_lifecycle_tests::failing_candidate_is_not_added_to_the_accepted_prefix ... ok
+test incremental_lifecycle_tests::incremental_transition_retains_duplicate_commit_precedence ... ok
+test incremental_lifecycle_tests::scanner_performs_one_lifecycle_transition_per_candidate ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\artifact_scan.rs (experiments\exp-0001\target\debug\deps\artifact_scan-d034cc6fe992a137.exe)
+
+running 4 tests
+test authoritative_v1_through_v10_have_one_explicit_disposition ... ok
+test checked_length_and_all_resource_limits_are_explicit ... ok
+test corruption_order_conflicts_and_interior_damage_stop_without_resync ... ok
+test terminal_truncation_retains_only_the_valid_prefix_at_every_boundary ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\golden_vectors.rs (experiments\exp-0001\target\debug\deps\golden_vectors-761f12c985c6f474.exe)
+
+running 2 tests
+test r5_crc32c_check_value ... ok
+test r5_v1_through_v4_encode_decode_exact ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\rejection.rs (experiments\exp-0001\target\debug\deps\rejection-1dde8b0111e991a4.exe)
+
+running 6 tests
+test length_bounds_and_oversize_fail_before_body_access ... ok
+test r5_v5_every_truncation_boundary_fails_closed ... ok
+test structural_header_kind_profile_reserved_and_trailing_matrix ... ok
+test r5_v6_v7_and_v8_documented_mutations ... ok
+test wrong_crc_byte_order_and_crc_bytes_are_rejected ... ok
+test every_single_bit_position_in_short_crc_golden_records_is_rejected ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\round_trip.rs (experiments\exp-0001\target\debug\deps\round_trip-5cfb3eb060b79f48.exe)
+
+running 1 test
+test r5_reviewed_finite_corpus_round_trips_both_directions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\semantic_validation.rs (experiments\exp-0001\target\debug\deps\semantic_validation-085e96e48b4b541a.exe)
+
+running 6 tests
+test final_commit_adjacency_identity_crc_and_sequence_binding ... ok
+test ordinal_arithmetic_commit_order_and_competing_errors_are_stable ... ok
+test physical_ordinals_and_commit_order_must_strictly_advance ... ok
+test sequence_group_and_membership_constraints_are_table_driven ... ok
+test mixed_lifecycle_and_prefix_failures_preserve_rules_and_precedence ... ok
+test uuid_role_version_variant_and_nil_matrix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (experiments\exp-0001\target\debug\deps\exp1_workload_conformance-ad08136e5c7c6d80.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\determinism.rs (experiments\exp-0001\target\debug\deps\determinism-280e5a01092bf0f4.exe)
+
+running 1 test
+test repeatability ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\r12_vectors.rs (experiments\exp-0001\target\debug\deps\r12_vectors-955603da3d61a63e.exe)
+
+running 7 tests
+test logical_vectors ... ok
+test normalization_and_sha ... ok
+test uuid_valued_generator_inputs_fail_closed ... ok
+test env1_profile_compatibility ... ok
+test identity_anchors ... ok
+test prior_event_and_controlled_schedule_boundaries ... ok
+test payload_anchors ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\r14_vectors.rs (experiments\exp-0001\target\debug\deps\r14_vectors-1fd8d42266efa23c.exe)
+
+running 3 tests
+test operation_vectors ... ok
+test stream_vectors ... ok
+test reference_profiles_and_encoder_fail_closed ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\r16_manifest_vectors.rs (experiments\exp-0001\target\debug\deps\r16_manifest_vectors-5fd42ff4c7c9ad3c.exe)
+
+running 2 tests
+test m01_literal ... ok
+test r7_closed_record_and_reference_fail_closed ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\r26_v2.rs (experiments\exp-0001\target\debug\deps\r26_v2-18d12823f36167ee.exe)
+
+running 12 tests
+test v1_and_v2_are_strictly_incompatible ... ok
+test duplicate_target_bytes_precede_lookup ... ok
+test malformed_duplicate_and_ordered_precedence_fail_without_state_advance ... ok
+test v25_05_zero_targets_at_ordinal_one_is_cardinality ... ok
+test binary_v1_substitutions_are_rejected_at_each_versioned_layer ... ok
+test v25_06b_bootstrap_targeting_another_stream_is_cross_stream ... ok
+test v25_06a_measured_bootstrap_targeting_warm_up_is_cross_segment ... ok
+test literal_manifest_and_external_digest_oracles_validate ... ok
+test positive_literal_oracles_realize_v25_01_through_v25_04 ... ok
+test manifest_is_closed_and_number_free_at_every_depth ... ok
+test every_manifest_v2_profile_position_rejects_v1 ... ok
+test manifest_counts_stream_bindings_and_digests_are_exact ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\rejection.rs (experiments\exp-0001\target\debug\deps\rejection-870cfcd206d8bfd7.exe)
+
+running 4 tests
+test supersession_rules ... ok
+test manifest_noncanonical_fails ... ok
+test malformed_streams_fail_without_panics ... ok
+test manifest_closed_json_rejections ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests\vectors.rs (experiments\exp-0001\target\debug\deps\vectors-e97cefed07480979.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

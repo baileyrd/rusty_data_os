@@ -275,7 +275,7 @@ pub(crate) fn evaluate_aggregate(
     specs: &[AggregateSpec],
     limit: Option<usize>,
     schema: &DomainSchema,
-) -> Vec<AggregateGroup> {
+) -> Result<Vec<AggregateGroup>, ErrorCode> {
     let mut buckets: Vec<(Fields, Vec<Fields>)> = if group_by.is_empty() {
         vec![(Vec::new(), Vec::new())]
     } else {
@@ -298,34 +298,40 @@ pub(crate) fn evaluate_aggregate(
     buckets
         .into_iter()
         .take(limit.unwrap_or(usize::MAX))
-        .map(|(key, rows)| AggregateGroup {
-            key,
-            values: specs
-                .iter()
-                .map(|spec| reduce(spec, &rows, schema))
-                .collect(),
+        .map(|(key, rows)| {
+            Ok(AggregateGroup {
+                key,
+                values: specs
+                    .iter()
+                    .map(|spec| reduce(spec, &rows, schema))
+                    .collect::<Result<_, _>>()?,
+            })
         })
         .collect()
 }
-fn reduce(spec: &AggregateSpec, rows: &[Fields], schema: &DomainSchema) -> ScanValue {
+fn reduce(
+    spec: &AggregateSpec,
+    rows: &[Fields],
+    schema: &DomainSchema,
+) -> Result<ScanValue, ErrorCode> {
     if spec.func == AggregateFn::Count {
-        return ScanValue::I64(rows.len() as i64);
+        return Ok(ScanValue::I64(rows.len() as i64));
     }
     let tag = spec.field.unwrap_or_default();
     let values: Vec<&ScanValue> = rows
         .iter()
         .filter_map(|f| f.iter().find(|(t, _)| *t == tag).map(|(_, v)| v))
         .collect();
-    match spec.func {
+    Ok(match spec.func {
         AggregateFn::Count => ScanValue::I64(rows.len() as i64),
         AggregateFn::Sum | AggregateFn::Avg => {
-            // Protocol Sum/Avg use the legacy signed i64 accumulation.
+            // Wide accumulation preserves Avg fractions and makes Sum overflow a response.
             let sum = values
                 .iter()
-                .map(|v| page_key_value(v).unwrap_or(0) as i64)
-                .sum::<i64>();
+                .map(|v| page_key_value(v).unwrap_or(0))
+                .sum::<i128>();
             if spec.func == AggregateFn::Sum {
-                ScanValue::I64(sum)
+                ScanValue::I64(i64::try_from(sum).map_err(|_| ErrorCode::Malformed)?)
             } else {
                 ScanValue::F64(if values.is_empty() {
                     0.0
@@ -348,5 +354,5 @@ fn reduce(spec: &AggregateSpec, rows: &[Fields], schema: &DomainSchema) -> ScanV
                 }
             })
         }
-    }
+    })
 }

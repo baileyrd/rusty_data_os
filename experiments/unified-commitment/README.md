@@ -7,8 +7,10 @@ shared CMT1 runner. [Experiment/method](../../docs/experiments/EXP-0003-unified-
 
 [EXP-0005](../../docs/experiments/EXP-0005-protocol-facade.md) adds the independent
 [uc-protocol](crates/uc-protocol/README.md) facade library to this workspace. It uses only
-std and wires no real domain. Its generic stream tests do not bind sockets or establish
-core integration, durability or performance.
+std; its Step 4b-i tests use generic streams. The separately authorized Step 4b-ii
+[uc-facade](crates/uc-facade/README.md) supplies three real, independent same-table Stores
+and a listener bound only to 127.0.0.1:0. Socket tests establish bounded correctness;
+cross-table mentions, cross-domain sessions, durability and performance are not established.
 
 `Log::create(directory, apply, state_decoder)` exclusively creates a new directory and
 history; the parent must exist, and an existing directory (even empty) or history is refused.
@@ -29,7 +31,7 @@ with a partial binding can be reused. Retry-sensitive callers must supply stable
 
 Event IDs use a distinct deterministic local namespace with physical ordinal, not random generation.
 
-Limits: 4 MiB payload, 1,024 CMM2 operations per transaction, 1,000,000 RF1 records,
+Limits: 4 MiB payload, 4,096 operations per domain transaction (Step 4b-ii D7/R0), 1,000,000 RF1 records,
 1 GiB history. Recovery buffers the whole scan; diagnostics are bounded by file length.
 Memory rows contain shared immutable records but clone the slot map to stage a transaction.
 This deliberate cost is experimental; no streaming or performance conclusion is implied.

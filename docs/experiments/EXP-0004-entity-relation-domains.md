@@ -103,7 +103,8 @@ implementation/correctness on these fixtures, without architecture promotion.
 Two lib crates depend only on uc-core. Each State retains incarnation tombstones and immutable
 Arc records. Entity additionally retains canonical undirected labeled edges and known_labels.
 CME1/CMR1 use one operation per line, lowercase hex for strings/UUID bytes and canonical decimal
-numbers, with 1–1024 operations and uc-core's MAX_PAYLOAD byte limit. CES1/CRS1 checkpoint blobs
+numbers, with 1–1024 operations at Step 4a (raised to 4096 by Step 4b-ii D7/R0 in
+[EXP-0005](EXP-0005-protocol-facade.md)) and uc-core's MAX_PAYLOAD byte limit. CES1/CRS1 checkpoint blobs
 encode sorted slots and, for Entity, labels and edges; decoding verifies exact re-encoding.
 Plain apply/decode function pointers reconstruct all semantics without a recovery validator.
 The core's RF1-magic rejection and framing apply automatically. Checkpoint plus full history

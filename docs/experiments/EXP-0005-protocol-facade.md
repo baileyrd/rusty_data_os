@@ -79,3 +79,56 @@ Hypothesis Open, experiment Ready, Phase 1 unchanged. No architectural graduatio
 ## 18. Follow-on questions
 
 Step 4b-ii domain integration and eventual socket binding require a separate work order. Authentication, older-version content rewriting and cross-domain atomic commitment remain excluded.
+
+## 19. Step 4b-ii method (2026-09-09)
+
+The owner's frozen `handoff-2026-09-08/step4bii-domain-adapters-spec.md`, SHA-256
+`995f2d6ea29af8547985673e71efd90cdf08f90e844db876f9a49f75d53c5d29`, separately
+authorizes uc-facade's three Mutex-protected domain Stores and a listener bound only to
+127.0.0.1:0. The four D7/R0 exceptions are Send trait-object bounds, Memory's named 4096
+operation cap, Entity/Relation's 4096 caps, and wide protocol Sum/Avg accumulation.
+Sum outside i64 returns Malformed; Avg divides after casting both wide sum and count to f64.
+
+Before implementation, the measurement method is exact response/state assertions using
+the existing codec/framing over real TCP, plus direct adapter validation, atomic read-set
+conflict/refusal, 4096-operation commit and reopen checks. Each domain gets a separate
+all-flags session; Entity's open-label links stay same-table. Nonempty atomic WriteBatch
+must refuse with TransactionFailed(0, Unsupported) without changes. Existing R0 suites
+run before integration, followed by the owner's eleven-command locked/offline proof.
+Any response mismatch, partial precondition apply, incorrect replay or lost session update
+falsifies the affected behavior. These are D1 correctness tests, not measurements or a
+crash-survival claim. Memory declares target_table None: no cross-table mentions and no
+cross-domain session are attempted. Authentication and all other research gates remain
+unchanged. Local results are advisory pending independent review.
+
+## 20. Step 4b-ii local result
+
+All eleven new facade tests pass, exercising real engine Stores over TCP plus direct
+correctness and reopen assertions. The final eleven-command proof exited 0: 109 unified,
+17 convergence-memory and 95 portable exp-0001 tests, all formatting/Clippy checks,
+Markdown links and whitespace. See the [Step 4b-ii report](EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md)
+for proof output and the proposed interpretation of ReplaceIf's "any field" wording:
+the frozen shared validator rejects StrList predicates, including Eq/Ne guards on Memory
+tags and Entity aliases. That boundary is preserved and explicitly tested; expanding it
+requires separate authorization. No cross-table mentions, cross-domain session, legacy
+client, performance or production claim follows. Hypothesis Open, experiment Ready,
+independent review pending.
+
+## 21. Inspection 1 F1 correction
+
+The host accepted F1-DESCRIBE-RELATIONS-WILDCARD-DROPPED against inspection snapshot
+`78e7839e…8d3fdb6`. Memory and Entity's custom descriptors omitted Neighbors(None), so
+unlabeled same-table Join returned Malformed despite supported neighbors traversal.
+The correction deletes both overrides and inherits the unchanged Store default, which
+includes the wildcard and named descriptors with target_table None throughout.
+
+The predeclared regression compares complete JoinedRows over real TCP: four inserted
+records, two symmetric links, exact four directed result rows, and no unlinked record.
+Entity uses two distinct labels to verify wildcard traversal across labels. One test per
+domain fails before deletion and passes afterward. Proof and file accounting are in the
+[Step 4b-ii report](EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md#inspection-1-f1-correction).
+The corrective eleven-command proof exited 0 with 111 unified-commitment, 17
+convergence-memory and 95 portable exp-0001 tests passing (223 total), plus formatting,
+warnings-denied Clippy, Markdown links and whitespace checks.
+No other finding is reopened and no cross-table scenario is attempted. Re-review remains
+pending; this adds no architecture or production promotion.

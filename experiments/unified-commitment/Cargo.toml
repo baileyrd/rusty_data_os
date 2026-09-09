@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/uc-core", "crates/uc-memory", "crates/uc-harness", "crates/uc-entity", "crates/uc-relation", "crates/uc-protocol"]
+members = ["crates/uc-core", "crates/uc-memory", "crates/uc-harness", "crates/uc-entity", "crates/uc-relation", "crates/uc-protocol", "crates/uc-facade"]
 resolver = "3"
 
 [workspace.package]

@@ -3,6 +3,53 @@ use support::*;
 use uc_protocol::*;
 
 #[test]
+fn aggregate_wide_sum_and_fractional_negative_average() {
+    for (values, sum, avg) in [
+        (vec![3, -1, 3], Some(5), 5.0 / 3.0),
+        (vec![-3, -2], Some(-5), -2.5),
+        (vec![i64::MAX, i64::MAX], None, i64::MAX as f64),
+        (vec![i64::MIN, i64::MIN], None, i64::MIN as f64),
+    ] {
+        let rows: Vec<_> = values
+            .iter()
+            .enumerate()
+            .map(|(i, v)| (i as u128 + 1, *v))
+            .collect();
+        let store = TestStore::new("table", None, &rows);
+        for (func, expected) in [
+            (AggregateFn::Sum, sum.map(ScanValue::I64)),
+            (AggregateFn::Avg, Some(ScanValue::F64(avg))),
+        ] {
+            let response = dispatch(
+                store.as_ref(),
+                Request::Aggregate {
+                    group_by: vec![],
+                    filter: vec![],
+                    aggregates: vec![AggregateSpec {
+                        func,
+                        field: Some(1),
+                    }],
+                    limit: None,
+                },
+            );
+            if let Some(value) = expected {
+                assert_eq!(
+                    response,
+                    Response::Groups {
+                        groups: vec![AggregateGroup {
+                            key: vec![],
+                            values: vec![value]
+                        }]
+                    }
+                );
+            } else {
+                assert_error(response, ErrorCode::Malformed);
+            }
+        }
+    }
+}
+
+#[test]
 fn defaults_refuse_atomic_batches_before_any_single_shot_write_or_callback() {
     let table = TestStore::new("table", None, &[]);
     let store = InsertOnly(table.clone());

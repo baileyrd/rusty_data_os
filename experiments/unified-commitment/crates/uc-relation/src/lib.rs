@@ -4,7 +4,7 @@ pub use uc_core::Uuid;
 use uc_core::{Durability, Log, LogError, OpenReport, Outcome, Rejection, Transaction};
 
 pub type Id = [u8; 16];
-pub const MAX_OPERATIONS: usize = 1024;
+pub const MAX_OPERATIONS: usize = 4096;
 
 /// Standalone legacy ADR-0058 record: "nothing checks that an endpoint names an entity".
 /// Subject/object strings assert no cross-table existence; only non-emptiness is checked.

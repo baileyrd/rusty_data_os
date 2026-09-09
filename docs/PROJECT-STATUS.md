@@ -47,9 +47,17 @@ values and byte round trips pass; controlled two-connection tests include a nega
 control reproducing a dangling edge when the mutex is removed. [HYP-0005](hypotheses/HYP-0005-protocol-facade.md)
 remains Open; [ADR-0005](adr/ADR-0005-protocol-facade.md) is Proposed. The
 [implementation report](experiments/EXP-0005/IMPLEMENTATION-REPORT.md) records proof and
-limitations. No real domain is wired in; existing crates and evidence are unchanged.
-No sockets, authentication enforcement, protocol content downgrading, measurements or
-production graduation. Phase 1 remains unchanged; independent review is pending.
+limitations for Step 4b-i. The separately owner-authorized frozen Step 4b-ii work order
+identified in EXP-0005 adds uc-facade: Memory, Entity and Relation each own a Mutex-protected
+engine, with same-table operations over a listener bound only to 127.0.0.1:0. Its
+[implementation report](experiments/EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md) records local
+proof and the four D7/R0 mechanical exceptions. Memory declares no foreign target;
+cross-table mentions and cross-domain sessions remain deferred. No authentication
+enforcement, protocol content downgrading, measurements or production graduation.
+Inspection 1's accepted F1 correction removes Memory/Entity's custom relation descriptors,
+restoring the trait default's unlabeled neighbor Join. Both domain regressions reproduce
+the prior Malformed response and pass after the fix over real TCP; corrective proof is
+recorded in the Step 4b-ii report. Phase 1 remains unchanged; independent re-review is pending.
 
 The historical status and authorization ledger below remain intact.
 

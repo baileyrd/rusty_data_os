@@ -190,7 +190,7 @@ enum Fault {
     Sync,
 }
 struct Script {
-    inner: Box<dyn Writer>,
+    inner: Box<dyn Writer + Send>,
     fault: Fault,
     at: usize,
     writes: usize,
@@ -447,7 +447,7 @@ fn valid_but_different_envelope_durability_is_not_an_upgrade() {
 fn successful_writer_records_exact_r5_sync_placements_and_three_payload_copies() {
     use std::sync::Mutex;
     struct Observe {
-        inner: Box<dyn Writer>,
+        inner: Box<dyn Writer + Send>,
         calls: Arc<Mutex<Vec<u8>>>,
     }
     impl Write for Observe {

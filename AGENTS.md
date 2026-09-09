@@ -96,12 +96,15 @@ When Rust code begins:
 
 ## 10. Current constraint
 
-The owner-approved frozen Step 4b-i work order identified in
+The owner-approved frozen Step 4b-i and Step 4b-ii work orders identified in
 [EXP-0005](docs/experiments/EXP-0005-protocol-facade.md), under merge-plan step 4 paragraph 2,
-authorizes the bounded protocol-22 codec, Store/dispatch and in-memory-stream connection
-facade. R0's named exception above and the Research Roadmap Phase 7 exception apply only
-within EXP-0005. Existing core/domain crates, live sockets, authentication, later integration
-and all unrelated research gates remain unchanged. Local correctness proof is advisory;
+authorize the bounded protocol-22 codec, Store/dispatch, generic stream connection facade,
+three independent same-table domain Stores and a listener bound only to 127.0.0.1:0.
+Step 4b-ii D7/R0 permits only Send trait-object bounds, 4096-operation domain caps and
+wide Sum/Avg overflow handling in the existing crates. R0's named exception above and
+the Research Roadmap Phase 7 exception apply only within EXP-0005. Cross-table mentions,
+cross-domain sessions, authentication, later integration and all unrelated research gates
+remain unchanged. Local correctness proof is advisory;
 independent review remains pending.
 
 The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 4 (first sentence), and approved Step 4a work order identified in [EXP-0004](docs/experiments/EXP-0004-entity-relation-domains.md) separately authorize EXP-0004's independent Entity and Relation adapters and bounded correctness tests on the unchanged unified core, preserving the existing evidence requirements and deferring cross-domain atomicity.

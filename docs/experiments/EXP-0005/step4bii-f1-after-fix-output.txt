@@ -1,0 +1,11 @@
+   Compiling uc-facade v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-facade)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.85s
+     Running tests\tcp.rs (experiments\unified-commitment\target\debug\deps\tcp-475b5e0365facea5.exe)
+
+running 2 tests
+test real_tcp_unlabeled_memory_join ... ok
+test real_tcp_unlabeled_entity_join ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.03s
+
+Post-fix regression exit code: 0

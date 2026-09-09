@@ -1,0 +1,71 @@
+   Compiling uc-protocol v0.1.0 (C:\dev\rusty_data_os-step4bii\experiments\unified-commitment\crates\uc-protocol)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.68s
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_protocol-bd8cb7b944584d59.exe)
+
+running 2 tests
+test connection::interleaving::reads_other_writes_sessions_and_compact_do_not_acquire_relationship_mutex ... ok
+test connection::interleaving::shared_registry_two_connection_interleaving_prevents_dangling_edge ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\conformance.rs (experiments\unified-commitment\target\debug\deps\conformance-08140670a668bb24.exe)
+
+running 6 tests
+test primitive_widths_option_and_float_bits_are_literal ... ok
+test malformed_tags_lengths_and_utf8_are_errors ... ok
+test all_supporting_enum_tags_and_write_variants ... ok
+test all_66_host_literal_values_and_byte_exact_round_trips ... ok
+test every_fixture_rejects_truncation_and_trailing_bytes ... ok
+test framing_limits_truncation_and_exact_prefix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\dispatch.rs (experiments\unified-commitment\target\debug\deps\dispatch-921713dc88b89b70.exe)
+
+running 9 tests
+test only_connection_state_variants_have_unsupported_fallbacks ... ok
+test optional_methods_and_conservative_relation_defaults_match_legacy ... ok
+test defaults_refuse_atomic_batches_before_any_single_shot_write_or_callback ... ok
+test dispatch_single_shot_read_write_schema_and_relation_outcomes ... ok
+test apply_write_op_maps_every_outcome_and_pipelined_failures_continue ... ok
+test numeric_pages_use_uuid_tie_break_exclusive_cursor_and_validate_before_scan ... ok
+test query_validation_projection_filter_order_and_limit ... ok
+test aggregate_count_sum_avg_extremes_groups_and_empty_identity ... ok
+test aggregate_wide_sum_and_fractional_negative_average ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\relationships.rs (experiments\unified-commitment\target\debug\deps\relationships-9fb719ad25a2126d.exe)
+
+running 10 tests
+test delete_detaches_foreign_adjacency_and_count_only_after_success ... ok
+test atomic_self_target_existence_tracks_prior_insert_and_delete_without_reentrant_lock ... ok
+test registry_validates_names_primary_and_foreign_lock_opt_out ... ok
+test batch_detach_failure_reports_affected_op_after_local_apply ... ok
+test pipelined_and_atomic_batches_check_links_and_cascade_deletes ... ok
+test foreign_link_checks_missing_endpoint_and_registration_before_apply ... ok
+test joins_preserve_all_precise_cross_table_error_distinctions ... ok
+test detach_registration_order_skips_unsupported_malformed_and_surfaces_storage_partial_state ... ok
+test batch_preconditions_preserve_operation_order_and_atomic_refusal_applies_nothing ... ok
+test batch_4096_accepted_and_4097_refused_without_effect_in_both_modes ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\sessions.rs (experiments\unified-commitment\target\debug\deps\sessions-cfe6ffbc6cf89fcc.exe)
+
+running 12 tests
+test one_shot_transaction_validates_all_updates_before_apply_and_uses_empty_read_set ... ok
+test malformed_payload_preserves_frame_boundary_and_consumes_first_frame ... ok
+test session_without_stage_validation_fails_at_commit_and_closes ... ok
+test truncated_frame_errors_and_clean_disconnect_discards_session ... ok
+test all_eleven_session_guards_have_zero_effect_and_use_keeps_active_table ... ok
+test read_your_writes_ignores_bad_kind_unknown_field_read_only_and_missing_record ... ok
+test snapshot_repeatable_after_concurrent_commit_or_deletion_and_conflict_applies_nothing ... ok
+test hello_negotiation_errors_keep_connection_open_and_authentication_is_unconditional ... ok
+test each_flag_and_combination_controls_its_own_behavior ... ok
+test begin_with_flag_versions_unknown_bits_and_session_survival ... ok
+test staging_4096_then_session_full_preserves_exact_successful_batch ... ok
+test snapshot_does_not_freeze_absent_records_scans_or_untracked_keys_at_cap ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
