@@ -465,3 +465,81 @@
 - Committed on `codex/merge-step4bii-memory-domain` (worktree `C:/dev/rusty_data_os-step4bii`, not pushed): the `uc-facade` crate (three real `Store` adapters, the first real `TcpListener`, eleven new tests including five real-socket scenarios), the four D7/R0 exceptions to `uc-core`/`uc-memory`/`uc-entity`/`uc-relation`/`uc-protocol`, the `describe_relations` fix, and the host proof logs as evidence.
 - Residuals carried: F1 mutex-poison asymmetry between `Store`'s Result and non-Result methods (frozen-trait-forced, disclosed); F2 Entity's same-table self-loop rejection is untested at the wire-code level (documented behavior, no direct test).
 - Not started: real Memory↔Entity cross-table `mentions` edge and cross-domain session (deferred per D6 to a dedicated follow-on that must first design the durable foreign-edge mechanism `ROADMAP.md` already names); binding the listener to anything beyond loopback; TLS; real authentication.
+
+## Step 4c — Codex plan review (Data OS: a real, durable Memory→Entity `mentions` edge)
+
+- Owner decision (asked 2026-09-09, after Step 4b-ii closed): of the three named gaps
+  (deferred cross-table edge design; opening the listener beyond loopback; real
+  authentication), the owner chose to design the real Memory→Entity edge next.
+- Host design, before drafting: re-read legacy's own `delete_across`/`detach_across` doc comment
+  (`serve.rs:3040-3050`) and found legacy does **not** promise atomic cross-table cleanup — a
+  crash between an Entity delete and Memory's detach leaves a real, disclosed, temporarily
+  dangling edge ("adjacency and CountEdges can still report those edges until they are detached").
+  This meant a faithful design did not require inventing a distributed transaction across
+  `uc-memory`'s and `uc-entity`'s independent logs — only two new same-log operations in
+  `uc-memory` (`LinkForeign`, `DetachForeign`) that reproduce that same accepted tolerance,
+  wired into the registry's already-built (4b-i) cross-table check/detach machinery, which had
+  only ever been exercised by a synthetic test double until now.
+- Work order drafted: `step4c-foreign-edges-spec.md`. Worktree `C:/dev/rusty_data_os-step4c` on
+  `codex/merge-step4c-foreign-edges` from `3d794a5` (Step 4b-ii's close). New `CMM3`/`CMS3`
+  physical format version in `uc-memory` (D2: a new concept, not a new value in `CMM2`/`CMS2`,
+  matching this project's magic-byte-bump convention); `MemoryStore::describe_relations()`
+  reverts to `target_table: Some("entity")`; no change to `uc-entity`/`uc-relation`/`uc-core`/
+  `uc-harness`/`uc-protocol`/`EntityStore`/`RelationStore` (D7).
+- Review 1 (`runs/step4c-review/claudex-nclrdn4q/`): **REVISE**, 2 high + 3 medium. **P4C-001
+  (high)**: D3's decision not to track the far endpoint's incarnation on a foreign edge directly
+  contradicts the spec's own stated promise that a dangling edge never resurrects as something
+  else — if Entity E is deleted, Memory's detach hasn't yet run, and a client (which mints its own
+  insert ids on the wire) reinserts a *new* Entity record at the same id before any retry/repair,
+  `evaluate_join` would resolve the stale edge to the unrelated replacement record, not to a miss.
+  Confirmed real and serious: this project's own established incarnation-tombstone philosophy
+  (Steps 3/4a) already treats "delete then reinsert the same id" as a normal, tested, defended
+  scenario for every domain's own table, not a rare freak collision — the foreign-edge case must
+  hold to the same bar, and D3 does not. Closing it completely needs either a small `Store`-trait
+  extension (contradicting D7) or narrowing the window (fix the retried-Delete-after-NotFound gap
+  that currently skips the detach retry) plus an explicit, disclosed residual for the remaining
+  narrow case (a deliberate same-id reinsert racing an in-flight, uncompleted crash recovery).
+  **Put to the owner (2026-09-09); a clarifying follow-up was in progress when the session paused
+  for a handoff. Unresolved — see "Open decision" below.**
+  **P4C-002 (high)**: the `AlreadyLinked` duplicate-check and the D5 bidirectional
+  `neighbors`/`neighbors_by_relation` lookup both treat a foreign edge's two sides as
+  interchangeable (mirroring the *old*, genuinely-symmetric same-table `Link` pattern), but a
+  foreign edge is directional (`from` is always a Memory id, `to` is always an Entity id) — with
+  colliding raw id bytes across the two independently-numbered tables (adversarially constructed
+  in the review's reproduction, not naturally occurring given random UUIDs), this produces a false
+  `AlreadyLinked` on a never-committed pair and lets `Join` fabricate an unrelated pair. The
+  `AlreadyLinked` half is a deterministic logic bug (checking both directions when only one is
+  ever valid) — clear, zero-cost fix: check only `(from=left, to=right)`, never the swap. The
+  `Join`/reverse-lookup half depends on an actual cross-table id collision, which is
+  negligible-probability with random UUIDs (unlike P4C-001, which needs no collision at all — a
+  client fully controls insert ids on the wire and can deliberately reuse one). Host planned to
+  fix the deterministic half unconditionally and disclose the collision half as an accepted,
+  negligible-probability limitation, pending confirmation alongside P4C-001's resolution.
+  **P4C-003 (medium)**: Proof item 7 (a single pipelined `WriteBatch` containing both a Memory
+  `Link` and an Entity `Delete`) is not expressible on protocol 22 at all — `WriteOp` carries no
+  table selector; one `WriteBatch` always targets whichever table the connection last `Use`d.
+  Confirmed by re-reading `uc-protocol`'s types/connection code; the fix is mechanical: two
+  separate non-atomic `WriteBatch` requests (one per table, `Use`-switched between them over the
+  same socket), not one spanning both. **P4C-004 (medium)**: R3 never specified rejecting
+  `left == right` for the new foreign-edge path; legacy explicitly rejects a self-loop even
+  across a foreign relation (`generic/store.rs:1353`, `server/memory.rs:780` → `Malformed`).
+  Confirmed; mechanical fix, add the same check before submitting `LinkForeign`. **P4C-005
+  (medium)**: Step 4b-ii's own F1 fix (restoring the `Neighbors(None)` wildcard relation
+  descriptor for Memory via the trait default) is incompatible with restoring
+  `target_table: Some("entity")` here — legacy's real Memory descriptor omits the wildcard
+  entirely (`server/memory.rs:747`); once "mentions" is a real foreign relation, a bare/unlabeled
+  `Join` against Memory must not silently route through the wrong (same-table) evaluation path.
+  Confirmed; fix is to give Memory a custom `describe_relations()` again (listing only the named
+  "mentions" descriptor), explicitly superseding 4b-ii's F1 correction for Memory specifically
+  (Entity's own wildcard, which legitimately wants it, is untouched) and updating that regression
+  test's Memory assertion.
+
+## Open decision — Step 4c paused for a handoff (2026-09-09)
+
+Session paused at the owner's request before P4C-001/002's disposition was confirmed. **Nothing
+has been built yet** — this is still the plan-review phase; no code changes exist anywhere for
+Step 4c. The spec (`step4c-foreign-edges-spec.md`, unrevised, hash `14521486…60c6`) and review 1's
+full findings are committed for continuity (see below). Next action on resume: get the owner's
+answer on P4C-001 (narrow-the-window-and-disclose vs. a small `Store`-trait extension vs.
+reconsider), fold in the unconditional P4C-002 `AlreadyLinked` fix plus a disclosure decision for
+its collision half, apply the mechanical P4C-003/004/005 fixes, and resubmit for review round 2.
