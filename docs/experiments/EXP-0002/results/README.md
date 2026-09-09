@@ -102,7 +102,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-08-850eb388-candidate-1k/
 Summary SHA-256 (hash of summary.txt bytes): bcfec6f86f9e144770fc298a21be4b2c5163ea8539b21e75bee846064ee6bf21
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot 850eb388 (before the N1 stage split, so the `replay` stage there includes CMM1 payload decoding; before the N5 trace change). Peak RSS is `unavailable: powershell: program not found` on every trial (probe fixed in snapshot bd99987b; see the re-run entries).
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot 850eb388 (before the N1 stage split, so the `replay` stage there includes CMM1 payload decoding; before the N5 trace change). Peak RSS is `unavailable: powershell: program not found` on every trial (probe fixed in snapshot bd99987b; see the re-run entries).
 100K executed/not-executed (when applicable): not executed
 Input: 1K trace, 13,025 operations, input_sha256 4335b5c902e859aa26c29a680b1a4cf2141f15534f530dad7e16b1e11c12dc0c
 ```
@@ -119,7 +119,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-08-850eb388-legacy-1k-single/
 Summary SHA-256 (hash of summary.txt bytes): 8093cd99c60450ffbb92f184e54c8f62bdcb01cb5270355d3abd576dd827c25b
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot 850eb388 (before the N5 trace change). Peak RSS unavailable on every trial (see above).
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot 850eb388 (before the N5 trace change). Peak RSS unavailable on every trial (see above).
 100K executed/not-executed (when applicable): not executed
 Input: 1K trace, 13,025 operations, input_sha256 4335b5c902e859aa26c29a680b1a4cf2141f15534f530dad7e16b1e11c12dc0c
 ```
@@ -136,7 +136,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-08-850eb388-candidate-10k/
 Summary SHA-256 (hash of summary.txt bytes): ceb21198224bd5a113f8ac404a4ebaa6818efe4fc8a860b269ac2698c54db7dc
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot 850eb388 (pre-N1 stage attribution, pre-N5 trace). Peak RSS unavailable on every trial. Wall time for the six trials: 422 s.
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot 850eb388 (pre-N1 stage attribution, pre-N5 trace). Peak RSS unavailable on every trial. Wall time for the six trials: 422 s.
 100K executed/not-executed (when applicable): not executed
 Input: 10K trace, 130,115 operations, input_sha256 781b356b60a5365c39fafff708bd663c48ddafb02743d0e43171136cc59a5469
 ```
@@ -153,7 +153,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-08-850eb388-legacy-10k-single/
 Summary SHA-256 (hash of summary.txt bytes): f4298a2aa8ea0589d4113e96c3838501c117cb971f9d9f5f76915dad1c70b4fa
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot 850eb388 (pre-N5 trace). Peak RSS unavailable on every trial. Wall time for the six trials: 10,883 s (3 h 1 m); each measured trial about 29 minutes.
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot 850eb388 (pre-N5 trace). Peak RSS unavailable on every trial. Wall time for the six trials: 10,883 s (3 h 1 m); each measured trial about 29 minutes.
 100K executed/not-executed (when applicable): not executed
 Input: 10K trace, 130,115 operations, input_sha256 781b356b60a5365c39fafff708bd663c48ddafb02743d0e43171136cc59a5469
 ```
@@ -170,7 +170,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-09-bd99987b-candidate-1k/
 Summary SHA-256 (hash of summary.txt bytes): 4c7da459ec5ab6ca3f3dfa08dda6f289172813fffd882dc237e04453e0987bbe
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot bd99987b (the revision committed with this change): `replay` and `decode` are separate stages and peak RSS is captured (baseline after load 130,764,800 bytes; trial high water 192-194 MB). Re-run of the 1K cell only.
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot bd99987b (the revision committed with this change): `replay` and `decode` are separate stages and peak RSS is captured (baseline after load 130,764,800 bytes; trial high water 192-194 MB). Re-run of the 1K cell only.
 100K executed/not-executed (when applicable): not executed
 Input: 1K trace, 15,025 operations, input_sha256 53201589e30fd48d4aeab077a6435bddc86902c25bd35bf70d1f39044cd070d0
 ```
@@ -187,7 +187,7 @@ Validity: all six trials valid
 Committed subset directory: 2026-09-09-bd99987b-legacy-1k-single/
 Summary SHA-256 (hash of summary.txt bytes): a2aabfacb77b2552b9e4bee33df228d0150a977ae2b764dbb25d89f65ba39907
 Raw references: paths and SHA-256s in each trial's throughput.txt
-Raw relocation / missing files (if any): results.cmt and observations.cmt remain at the operator scratch path above, which is session-local and not durable; the owner must copy them to durable storage or accept that only their SHA-256s survive (open follow-up). Binaries from snapshot bd99987b; peak RSS captured (baseline after load 131,624,960 bytes; trial high water 131.6 MB). Re-run of the 1K cell only; 10K was not re-run on these binaries.
+Raw relocation / missing files (if any): results.cmt and observations.cmt were copied verbatim on 2026-09-09 to C:\dev\rusty_data_os-evidence\EXP-0002\<exp0002-final2|exp0002-final3>\<cell>\<trial>\ (same relative layout, plus the input traces); the SHA-256s in throughput.txt were verified after the copy. The scratch path above is the original identity and may no longer exist. Binaries from snapshot bd99987b; peak RSS captured (baseline after load 131,624,960 bytes; trial high water 131.6 MB). Re-run of the 1K cell only; 10K was not re-run on these binaries.
 100K executed/not-executed (when applicable): not executed
 Input: 1K trace, 15,025 operations, input_sha256 53201589e30fd48d4aeab077a6435bddc86902c25bd35bf70d1f39044cd070d0
 ```
