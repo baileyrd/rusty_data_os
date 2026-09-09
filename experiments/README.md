@@ -8,6 +8,13 @@ transaction core, Memory incarnation, retry, checkpoints and injected-fault reco
 Platform durability evidence and manual descriptive measurements remain pending;
 no OS-crash/power-loss claim or production graduation.
 
+[EXP-0004](../docs/experiments/EXP-0004-entity-relation-domains.md), Ready, adds
+[uc-entity](unified-commitment/crates/uc-entity/src/lib.rs) and
+[uc-relation](unified-commitment/crates/uc-relation/src/lib.rs) to the same workspace.
+Each domain has its own Log/directory, canonical payloads, incarnation and checkpoint/replay
+scenario tests with independent models. Memory-to-Entity atomicity is
+[Deferred](../docs/roadmap/ROADMAP.md); no measurement series or production graduation.
+
 Experimental code is allowed to be narrow, disposable, duplicated, or deliberately non-general when doing so improves measurement clarity.
 
 Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.

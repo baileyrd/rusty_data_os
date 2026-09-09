@@ -31,6 +31,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "uc-entity"
+version = "0.1.0"
+dependencies = [
+ "uc-core",
+]
+
+[[package]]
 name = "uc-harness"
 version = "0.1.0"
 dependencies = [
@@ -44,5 +51,12 @@ name = "uc-memory"
 version = "0.1.0"
 dependencies = [
  "cm-trace",
+ "uc-core",
+]
+
+[[package]]
+name = "uc-relation"
+version = "0.1.0"
+dependencies = [
  "uc-core",
 ]

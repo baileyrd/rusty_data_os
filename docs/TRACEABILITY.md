@@ -152,3 +152,11 @@ and unchanged exact-head CI gate. R17 grants no later-slice authority.
 | Authority / evidence | Inputs | Establishes / authorizes | Does not establish / remains excluded |
 |---|---|---|---|
 | [R36](experiments/EXP-0001/R36-R35-IMPLEMENTATION-CLOSURE-AND-OPERATOR-PREFLIGHT-AUTHORIZATION.md) | R33–R35 contracts; PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`; merge `dd9f8ae6c81681ea5943058b63f5e74117b234c8`; both exact-head workflows successful | Closes R35 as bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention, and synthetic correctness evidence; authorizes exactly one PR adding only `examples/target_preflight.rs`, synthetic argument/dispatch/exit tests, and—after merge—one controlled operator invocation | Live host or Fedora validation; R7 environment record; workload, record, tracefs, capture, benchmark or performance evidence; durability/recovery, `fsync`, D2/D3, faults, manifests/dependencies/workflows/toolchain, production and later work |
+
+## EXP-0004 Entity and Relation domains
+
+| Source | Traces to | Status |
+|---|---|---|
+| [HYP-0004](hypotheses/HYP-0004-entity-relation-domains.md) | RQ-006; REQ-001, REQ-009, REQ-012–014; [EXP-0004](experiments/EXP-0004-entity-relation-domains.md); merge plan step 4 and approved Step 4a work order | Open; experiment Ready; bounded correctness only |
+| [EXP-0004](experiments/EXP-0004-entity-relation-domains.md) | [ADR-0004](adr/ADR-0004-entity-relation-domains.md); independent Entity/Relation operation models; canonical payloads, incarnation, label retention, checkpoint/replay scenarios | Ready; ADR Proposed; no architecture or performance conclusion |
+| MEMORY-ENTITY-CROSS-DOMAIN-ATOMICITY | [EXP-0004 §18](experiments/EXP-0004-entity-relation-domains.md#18-follow-on-questions); [roadmap](roadmap/ROADMAP.md) | Deferred; requires shared-state or cross-log design; no Entity-to-Relation mechanism is invented |

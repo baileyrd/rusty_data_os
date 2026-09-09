@@ -69,3 +69,13 @@ These terms describe approved meanings or current research vocabulary; they do n
 
 - **B0** — the bounded single-owner in-memory vector baseline for EXP-0001; D0 only,
   with no persistence or crash-survival claim. It is separate from B1 raw OS append.
+
+- **Entity** — the [EXP-0004](experiments/EXP-0004-entity-relation-domains.md) record domain
+  with immutable label/kind/aliases, mutable mention_count and same-table symmetric open-label links.
+- **known relation label** — Entity's seeded or successfully introduced label, retained even
+  when deletion removes its last edge; a known empty label differs from an unknown label.
+- **Relation** — the independent [EXP-0004](experiments/EXP-0004-entity-relation-domains.md)
+  record domain whose subject/object are plain non-empty strings asserting no endpoint existence;
+  only updated_at_unix_ms has a field-update verb. It supplies no linking mechanism.
+- **cross-domain atomicity** — commitment of changes spanning domains as one transaction;
+  the Memory-to-Entity case is [Deferred](roadmap/ROADMAP.md) beyond EXP-0004's separate logs.

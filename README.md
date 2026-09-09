@@ -84,4 +84,10 @@ Memory@2 traces, an independent model, candidate/legacy runners and manual
 measurements. Candidate: D1 ordinary writes, no fsync, no crash-survival claim.
 Native legacy durability differs; operator measurement evidence is pending.
 
+The merge plan step 4 first sentence and approved Step 4a work order authorize
+[EXP-0004](docs/experiments/EXP-0004-entity-relation-domains.md), Ready: independent
+Entity and Relation domains on the unchanged unified core, canonical payloads,
+incarnation, retained Entity labels and checkpoint/replay correctness tests with independent
+models. Memory-to-Entity cross-domain atomicity is [Deferred](docs/roadmap/ROADMAP.md).
+
 See [Project Status](docs/PROJECT-STATUS.md) for the authoritative current state.

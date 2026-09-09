@@ -1,0 +1,125 @@
+=== fmt uc ===
+=== clippy uc ===
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+=== test uc ===
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_core-c03bbba192a9b53b.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\recovery.rs (experiments\unified-commitment\target\debug\deps\recovery-82303d14a65f991b.exe)
+
+running 19 tests
+test replay_io_failure_is_distinct_from_byte_corruption ... ok
+test sha256_known_vector_and_oversize_transaction_rejected_before_mutation ... ok
+test open_never_creates_missing_directory_or_history_and_create_is_exclusive ... ok
+test publication_is_one_immutable_snapshot_and_timestamp_is_persisted ... ok
+test rejected_conflict_has_no_bytes_and_never_recovers ... ok
+test valid_but_different_envelope_durability_is_not_an_upgrade ... ok
+test injected_torn_binding_with_magic_in_valid_uuid_remains_corrupt_undecidable ... ok
+test rf1_magic_payload_is_rejected_before_write_and_old_binding_is_corrupt ... ok
+test lost_response_retry_and_changed_request_or_durability_are_resolved_without_append ... ok
+test reservation_high_water_gap_survives_reopen_and_binding_never_expires ... ok
+test injected_lost_committed_suffix_below_valid_checkpoint_fails_closed ... ok
+test checkpoint_is_create_new_and_newest_valid_checkpoint_falls_back_after_injected_partial_write ... ok
+test checkpoint_replays_only_later_commits_and_full_replays_have_identical_digests ... ok
+test successful_writer_records_exact_r5_sync_placements_and_three_payload_copies ... ok
+test injected_interior_final_and_provisional_damage_fail_closed_at_exact_offset ... ok
+test injected_checkpoint_corruption_hash_mismatch_and_cache_disagreement_have_distinct_results ... ok
+test every_final_envelope_mismatch_with_valid_rf1_crcs_fails_closed ... ok
+test injected_byte_tails_at_every_boundary_and_inside_commit_only_replay_selected_events ... ok
+test injected_short_zero_write_and_sync_errors_at_every_step_poison_until_reopen ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_entity-aa24f29c6c018b70.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\scenarios.rs (experiments\unified-commitment\target\debug\deps\scenarios-5d45ee8e6d9fa439.exe)
+
+running 13 tests
+test checkpoint_decoder_rejects_noncanonical_and_invalid_slots ... ok
+test checkpoint_labels_and_edges_must_be_canonical_and_valid ... ok
+test canonical_payload_roundtrip_and_malformed_limits ... ok
+test injected_truncated_batch_final_exposes_no_partial_transaction ... ok
+test open_labels_are_symmetric_idempotent_and_survive_reopen ... ok
+test invalid_batch_never_publishes_prefix_and_snapshot_stays_immutable ... ok
+test response_loss_retry_preserves_original_outcome_and_history ... ok
+test invalid_labels_self_loop_and_missing_endpoints_reject_before_write ... ok
+test seeded_labels_are_known_before_any_links_and_empty_checkpoint ... ok
+test delete_cascades_edges_but_retains_labels_through_checkpoint_and_full_replay ... ok
+test deleted_recreated_id_rejects_predecessor_update_after_checkpoint ... ok
+test incarnation_admission_and_replacement_checkpoint_equal_full_replay ... ok
+test handwritten_sequence_matches_independent_adjacency_model ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running unittests src\main.rs (experiments\unified-commitment\target\debug\deps\uc_harness-5548d6769586db7c.exe)
+
+running 1 test
+test tests::series_keeps_one_revision_bound_identity_in_every_evidence_file ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.35s
+
+     Running tests\faults.rs (experiments\unified-commitment\target\debug\deps\faults-58af25035d725127.exe)
+
+running 2 tests
+test injected_owner_abort_releases_os_lock_without_stale_file_deletion ... ok
+test injected_process_termination_matrix_both_levels_not_os_crash_or_power_loss ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.91s
+
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_memory-7be32fec55d9e2ed.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\scenarios.rs (experiments\unified-commitment\target\debug\deps\scenarios-bfc9f1a7b21fdd08.exe)
+
+running 8 tests
+test conflict_rejects_entire_field_transaction_before_append_and_reopen ... ok
+test response_loss_resolves_to_same_transaction_and_stable_state ... ok
+test injected_truncated_batch_final_never_exposes_partial_transaction ... ok
+test automatic_requests_use_a_separate_domain_from_explicit_requests ... ok
+test committed_field_update_then_delete_stays_absent_after_reopen ... ok
+test replacement_supersedes_older_field_transaction_with_checkpoint_and_full_replay ... ok
+test deleted_recreated_uuid_rejects_predecessor_updates_and_edges_including_after_checkpoint ... ok
+test small_and_1k_cmt1_traces_match_independent_oracle_in_both_durability_settings has been running for over 60 seconds
+test small_and_1k_cmt1_traces_match_independent_oracle_in_both_durability_settings ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 164.86s
+
+     Running unittests src\lib.rs (experiments\unified-commitment\target\debug\deps\uc_relation-3272efc1dcdbae7d.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\scenarios.rs (experiments\unified-commitment\target\debug\deps\scenarios-d595729793aa8586.exe)
+
+running 16 tests
+test checkpoint_decoder_rejects_noncanonical_and_invalid_slots ... ok
+test invalid_record_in_checkpoint_is_rejected ... ok
+test canonical_payload_roundtrip_and_malformed_limits ... ok
+test empty_relation_insert_rejects_before_append ... ok
+test negative_deleted_timestamp_insert_rejects_before_append ... ok
+test arbitrary_endpoints_and_labels_assert_no_entity_existence ... ok
+test negative_deleted_timestamp_replace_rejects_before_append ... ok
+test empty_relation_replace_rejects_before_append ... ok
+test injected_truncated_batch_final_exposes_no_partial_transaction ... ok
+test invalid_batch_never_publishes_prefix_and_snapshot_stays_immutable ... ok
+test response_loss_retry_preserves_original_outcome_and_history ... ok
+test deleted_recreated_id_rejects_predecessor_update_after_checkpoint ... ok
+test incarnation_admission_and_replacement_checkpoint_equal_full_replay ... ok
+test signed_timestamps_and_live_or_positive_deleted_values_are_accepted ... ok
+test empty_subject_or_object_rejects_in_both_put_modes ... ok
+test handwritten_sequence_matches_independent_row_model ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+

@@ -21,6 +21,22 @@ only clean-revision or patch-reconstructable source manifests. The only Step 2 s
 change is backward-compatible runner metadata/source retention; EXP-0001 and prior
 EXP-0002 evidence are unchanged. No production, D3, compaction or step 4 integration.
 
+## EXP-0004 — owner-authorized Entity and Relation domains
+
+The [merge plan step 4](plans/data-os-multimodal-merge-plan-2026-09-08.md), first sentence,
+and approved Step 4a work order authorize [EXP-0004](experiments/EXP-0004-entity-relation-domains.md),
+Ready, with [HYP-0004](hypotheses/HYP-0004-entity-relation-domains.md), Open, and
+[ADR-0004](adr/ADR-0004-entity-relation-domains.md), Proposed. uc-entity and uc-relation
+are independent lib crates in the existing unified-commitment workspace, each with its own
+Log/directory, canonical payloads, incarnation and validated checkpoint/full replay.
+Entity retains same-table symmetric links and seeded/known labels; Relation endpoints are
+plain strings with no cross-table existence assertion. Independent deterministic models and
+scenario tests establish bounded correctness only. Memory-to-Entity cross-domain atomicity is
+[Deferred](roadmap/ROADMAP.md); Entity-to-Relation linking does not exist in the source system.
+The [local proof](experiments/EXP-0004/IMPLEMENTATION-REPORT.md) passed 59 unified,
+17 convergence-memory and 95 portable exp-0001 tests, formatting, Clippy, links and whitespace.
+No measurement series, performance conclusion or production graduation follows.
+
 The historical status and authorization ledger below remain intact.
 
 ## 1. Current facts
