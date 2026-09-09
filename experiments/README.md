@@ -2,6 +2,12 @@
 
 This directory contains bounded experimental implementations that test hypotheses.
 
+[Unified commitment](unified-commitment/README.md) implements owner-authorized
+[EXP-0003](../docs/experiments/EXP-0003-unified-commitment.md): a bounded RF1 D1/D2
+transaction core, Memory incarnation, retry, checkpoints and injected-fault recovery.
+Platform durability evidence and manual descriptive measurements remain pending;
+no OS-crash/power-loss claim or production graduation.
+
 Experimental code is allowed to be narrow, disposable, duplicated, or deliberately non-general when doing so improves measurement clarity.
 
 Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.

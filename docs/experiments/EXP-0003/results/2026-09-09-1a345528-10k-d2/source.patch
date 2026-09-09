@@ -1,0 +1,4250 @@
+diff --git a/.github/workflows/convergence-memory.yml b/.github/workflows/convergence-memory.yml
+index cc57c95..c49db7e 100644
+--- a/.github/workflows/convergence-memory.yml
++++ b/.github/workflows/convergence-memory.yml
+@@ -1,4 +1,4 @@
+-name: EXP-0002 Memory convergence
++name: EXP-0002 and EXP-0003 Memory and commitment
+ on:
+   pull_request:
+   push:
+@@ -10,12 +10,14 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        workspace: [convergence-memory, convergence-memory-legacy]
++        workspace: [convergence-memory, convergence-memory-legacy, unified-commitment]
+     env:
+       CARGO_INCREMENTAL: 0
+       RUST_BACKTRACE: 1
+       RUSTFLAGS: -Dwarnings
+     steps:
++      # Reconstruction needs only HEAD and its tree/blobs, available in this shallow checkout;
++      # fixture worktrees use read-only object alternates, not parent history or a fetch.
+       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+       - name: Install frozen toolchain
+         run: |
+diff --git a/AGENTS.md b/AGENTS.md
+index 96bffe7..9e564ef 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -90,6 +90,8 @@ When Rust code begins:
+ 
+ ## 10. Current constraint
+ 
++The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 3, separately authorizes EXP-0003's bounded D1/D2 transaction core, injected-fault recovery tests, and manual descriptive measurements while preserving the existing evidence requirements and OS-crash/power-loss exclusions; the host's 2026-09-09 acceptance of disposition P1 in [docs/experiments/EXP-0003/HOST-DISPOSITIONS.md](docs/experiments/EXP-0003/HOST-DISPOSITIONS.md), under the owner's merge-plan step 3 authority and approved work order, additionally authorizes rejection of payload bytes containing RF1 magic, and its disposition Q3 authorizes the explicit create/open split with the runner's `creates_store_directory` opt-in.
++
+ The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 2, separately authorizes EXP-0002 shared Memory trace generation, candidate and pinned legacy adapters, correctness tests, CI, and manual descriptive measurements while preserving the existing evidence and correctness requirements.
+ 
+ The project remains planning/readiness-first; no engine architecture is final. Slice A/A1 and Slice
+diff --git a/README.md b/README.md
+index d7e5797..d86c13d 100644
+--- a/README.md
++++ b/README.md
+@@ -67,6 +67,13 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
+ 
+ ## Current phase
+ 
++The owner’s merge plan step 3 now also authorizes
++[EXP-0003 unified commitment](docs/experiments/EXP-0003-unified-commitment.md):
++a bounded D1/D2 RF1 transaction core with Memory incarnation, retry resolution,
++checkpoints and injected process-termination/torn-tail tests. Platform durability
++evidence and manual descriptive measurements remain pending. No OS-crash or
++power-loss claim, production graduation, or later feature integration follows.
++
+ The project has completed measurement-readiness documentation and contains bounded
+ experimental Rust implementations and CI. No production architecture is proven.
+ The existing EXP-0001 correctness and exploratory evidence remains intact.
+diff --git a/docs/GLOSSARY.md b/docs/GLOSSARY.md
+index c368c8b..e09a1d3 100644
+--- a/docs/GLOSSARY.md
++++ b/docs/GLOSSARY.md
+@@ -31,6 +31,8 @@ These terms describe approved meanings or current research vocabulary; they do n
+ - **digest domain** — the exact, purpose-labeled byte sequence covered by a digest; semantic-stream, exact-artifact, and canonical-manifest domains are distinct and a digest alone supplies no authenticity.
+ - **canonical manifest serialization** — a future versioned serialization having exactly one platform-independent byte representation per logical workload manifest; no concrete serialization is selected.
+ - **workload manifest** — the serialization-neutral declaration needed to regenerate and verify the frozen aspects of an operation stream and its execution settings; until all byte-generation rules are frozen, complete byte identity requires a referenced immutable stream and digest.
++- **incarnation** — a monotonically increasing generation for one record UUID; deletion and recreation start a new generation, so predecessor updates and edges are rejected.
++- **indeterminate outcome** — a transaction whose commit-boundary I/O did not return conclusive success; resolve its stable request identity through validated history before retrying.
+ - **integrity metadata** — conditional semantic metadata binding an event to the checks required by its declared integrity mode without preselecting a physical algorithm or framing; every claimed capability must remain explicit and measurable.
+ - **structural-only integrity mode** — an algorithm-neutral physical-profile capability that validates framing/structure but makes no content-corruption, canonical-recovery, D2, or D3 claim; eligible only for explicitly provisional or diagnostic D0/D1 measurements.
+ - **error-detecting integrity mode** — an algorithm-neutral physical-profile capability required for EXP-0001 D2/D3 canonical-history, recovery-correctness, or corruption-detection claims; it detects accidental corruption only within its declared capability and supplies no authenticity or malicious-tampering guarantee.
+diff --git a/docs/PROJECT-STATUS.md b/docs/PROJECT-STATUS.md
+index bea4456..c4be2c5 100644
+--- a/docs/PROJECT-STATUS.md
++++ b/docs/PROJECT-STATUS.md
+@@ -5,6 +5,24 @@
+ **North star:** Represent once. Materialize many. Optimize always.
+ **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
+ 
++## EXP-0003 — owner-authorized unified commitment
++
++The [merge plan, step 3](plans/data-os-multimodal-merge-plan-2026-09-08.md) authorizes
++[EXP-0003](experiments/EXP-0003-unified-commitment.md), Ready, and
++[HYP-0003](hypotheses/HYP-0003-unified-commitment.md), Open. The standalone
++[unified-commitment workspace](../experiments/unified-commitment/README.md) implements
++bounded one-writer RF1 transactions, D1/D2 placements, retry retention, incarnation,
++validated checkpoints and injected process-termination/torn-tail correctness tests.
++The platform durability contract remains evidence-pending; no OS-crash/power-loss claim.
++Manual 1K/10K descriptive series and independent review remain pending. The
++[implementation report](experiments/EXP-0003/IMPLEMENTATION-REPORT.md) records proof
++and deviations; the [results index](experiments/EXP-0003/results/README.md) accepts
++only clean-revision or patch-reconstructable source manifests. The only Step 2 source
++change is backward-compatible runner metadata/source retention; EXP-0001 and prior
++EXP-0002 evidence are unchanged. No production, D3, compaction or step 4 integration.
++
++The historical status and authorization ledger below remain intact.
++
+ ## 1. Current facts
+ 
+ The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. Experimental codec, D1 append/replay, exploratory harnesses and standalone EXP-0002 workspaces exist; no production engine baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Confirmatory EXP-0001 generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.
+diff --git a/docs/RESEARCH-QUESTIONS.md b/docs/RESEARCH-QUESTIONS.md
+index 7e81b80..98519ef 100644
+--- a/docs/RESEARCH-QUESTIONS.md
++++ b/docs/RESEARCH-QUESTIONS.md
+@@ -6,6 +6,7 @@
+ | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
+ | RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R25 records the R12/R16/R21–R24 bootstrap contradiction and supersedes R24 implementation authorization; separate v2 conformance and later reference-context authorizations are required; descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+ | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Active; bounded correctness validated, cost conclusion open | [HYP-0002](hypotheses/HYP-0002-memory-convergence.md), [EXP-0002](experiments/EXP-0002-convergence-memory.md); later replay/checkpoint experiments |
++| RQ-005 | Can one RF1 transaction history recover the merge-plan scenarios and serve Memory with per-transaction sync? | Owner-authorized bounded implementation/correctness; manual performance and platform durability evidence pending | [HYP-0003](hypotheses/HYP-0003-unified-commitment.md), [EXP-0003](experiments/EXP-0003-unified-commitment.md) |
+ 
+ “Acceptable” remains workload- and requirement-specific. Six EXP-0002 host
+ series are committed as evidence subsets, with raw per-operation samples retained
+diff --git a/docs/TRACEABILITY.md b/docs/TRACEABILITY.md
+index 45e54b1..2d63d34 100644
+--- a/docs/TRACEABILITY.md
++++ b/docs/TRACEABILITY.md
+@@ -4,6 +4,8 @@ This registry links intent to planned validation without inventing evidence.
+ 
+ | Source | Traces to | Status |
+ |---|---|---|
++| [HYP-0003](hypotheses/HYP-0003-unified-commitment.md) | REQ-001, REQ-009, REQ-011–014; RQ-005; [EXP-0003](experiments/EXP-0003-unified-commitment.md); [merge plan step 3](plans/data-os-multimodal-merge-plan-2026-09-08.md) | Open; experiment Ready, bounded implementation/correctness only, manual series pending |
++| [EXP-0003](experiments/EXP-0003-unified-commitment.md) | HYP-0003; [ADR-0003](adr/ADR-0003-unified-commitment.md); [results index](experiments/EXP-0003/results/README.md) | Injected process termination/torn-tail model only; platform durability evidence pending |
+ | Vision: represent once, materialize many | P-001, P-002, P-003, P-006, P-010; REQ-001; RQ-001 | Research direction |
+ | Vision: evidence-driven success | P-011, P-014, P-015; ADR-0001 | Accepted governance |
+ | REQ-001 through REQ-014 | ADR-0002; HYP-0001 where empirical feasibility is involved | Approved constraints; feasibility unproven |
+diff --git a/docs/adr/README.md b/docs/adr/README.md
+index 17016a4..151683d 100644
+--- a/docs/adr/README.md
++++ b/docs/adr/README.md
+@@ -45,5 +45,6 @@ An ADR records why a choice was made under known evidence and constraints. It is
+ 
+ | ADR | Status | Scope |
+ |---|---|---|
++| [ADR-0003](ADR-0003-unified-commitment.md) | Proposed | Owner-frozen experiment-local transaction, retry, incarnation and checkpoint choices; no production graduation. |
+ | [ADR-0001](ADR-0001-evidence-driven-architecture.md) | Accepted | Evidence-driven governance process. |
+ | [ADR-0002](ADR-0002-foundational-canonical-history-constraints.md) | Accepted | Approved semantic research constraints; not empirical validation. |
+diff --git a/docs/experiments/README.md b/docs/experiments/README.md
+index 0570c48..ce00589 100644
+--- a/docs/experiments/README.md
++++ b/docs/experiments/README.md
+@@ -42,6 +42,7 @@ Do not rewrite an experiment's original hypothesis after observing results. Add
+ 
+ | Experiment | Status | Purpose |
+ |---|---|---|
++| [EXP-0003](EXP-0003-unified-commitment.md) | Ready | Bounded RF1 D1/D2 transactions, incarnation, retry, checkpoints and injected-fault recovery; platform durability evidence pending. |
+ | [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Complete as readiness documentation; no evidence | Define semantics and measurement prerequisites without implementation. All seven contracted outputs are complete. |
+ | [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; planning/readiness only | Measure single-event ingestion after the [execution-readiness plan](EXP-0001/EXECUTION-READINESS-PLAN.md) authorizes one earned implementation slice and the applicable execution gate passes. |
+ | [EXP-0002](EXP-0002-convergence-memory.md) | Ready | Shared Memory@2 traces, independent oracle, D1 candidate and pinned legacy diagnostic baseline; manual measurements pending. |
+diff --git a/experiments/README.md b/experiments/README.md
+index 2210ea1..6a2a54e 100644
+--- a/experiments/README.md
++++ b/experiments/README.md
+@@ -2,6 +2,12 @@
+ 
+ This directory contains bounded experimental implementations that test hypotheses.
+ 
++[Unified commitment](unified-commitment/README.md) implements owner-authorized
++[EXP-0003](../docs/experiments/EXP-0003-unified-commitment.md): a bounded RF1 D1/D2
++transaction core, Memory incarnation, retry, checkpoints and injected-fault recovery.
++Platform durability evidence and manual descriptive measurements remain pending;
++no OS-crash/power-loss claim or production graduation.
++
+ Experimental code is allowed to be narrow, disposable, duplicated, or deliberately non-general when doing so improves measurement clarity.
+ 
+ Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.
+diff --git a/experiments/convergence-memory/crates/cm-trace/src/run.rs b/experiments/convergence-memory/crates/cm-trace/src/run.rs
+index 37e6ed6..663f948 100644
+--- a/experiments/convergence-memory/crates/cm-trace/src/run.rs
++++ b/experiments/convergence-memory/crates/cm-trace/src/run.rs
+@@ -11,7 +11,38 @@ use std::{
+     process::Command,
+     time::{Instant, SystemTime, UNIX_EPOCH},
+ };
++/// Metadata selection is independent of the shared CMT1 operation/results contract.
++#[derive(Clone, Copy)]
++pub struct SeriesMeta<'a> {
++    pub experiment: &'a str,
++    pub hypothesis: &'a str,
++    pub source_prefixes: &'a [&'a str],
++}
++pub const EXP0002_META: SeriesMeta<'static> = SeriesMeta {
++    experiment: "EXP-0002",
++    hypothesis: "HYP-0002",
++    source_prefixes: &[
++        "experiments/convergence-memory/",
++        "experiments/convergence-memory-legacy/",
++    ],
++};
++impl SeriesMeta<'_> {
++    fn header(self) -> String {
++        format!(
++            "CMT1-results\t1\nexperiment={}\nhypothesis={}\n",
++            self.experiment, self.hypothesis
++        )
++    }
++}
++
+ pub trait Engine {
++    /// True when the factory exclusively creates its store; existing engines receive a directory.
++    fn creates_store_directory() -> bool
++    where
++        Self: Sized,
++    {
++        false
++    }
+     fn label(&self) -> String;
+     fn durability(&self) -> String;
+     fn execute(&mut self, op: &Op) -> Result<Answer, String>;
+@@ -136,6 +167,7 @@ fn metadata(
+     durability: &str,
+     trace: &LoadedTrace,
+     retain_store: bool,
++    meta: SeriesMeta<'_>,
+ ) -> String {
+     let os = if cfg!(windows) {
+         powershell_command(&[
+@@ -155,7 +187,8 @@ fn metadata(
+         )
+     };
+     let mut environment = format!(
+-        "CMT1-results\t1\nexperiment=EXP-0002\nhypothesis=HYP-0002\nengine={label}\ncandidate_durability={D1}\nengine_durability={durability}\nequivalence=non-equivalent native durability; no winner claim\ncreated_unix_ns={}\nrevision={}\nporcelain={:?}\ncommand={:?}\nrustc={}\ncargo={}\nos={}\narch={}\ndebug_assertions={}\nRUSTFLAGS={:?}\nCARGO_ENCODED_RUSTFLAGS={:?}\ncache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured\nconcurrency=1; queue_depth=1; batch_width=1\nclock=std::time::Instant, nanoseconds; probe overhead uncalibrated\nrss_method=bytes; Linux VmHWM converted from KiB or Windows PeakWorkingSet64 via pwsh then powershell, process-lifetime high water including harness/oracle\nfile_size_method=sum logical lengths of store files, not allocated extents\nhardware_and_filesystem={}\nuncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable\n",
++        "{}engine={label}\ncandidate_durability={D1}\nengine_durability={durability}\nequivalence=non-equivalent native durability; no winner claim\ncreated_unix_ns={}\nrevision={}\nporcelain={:?}\ncommand={:?}\nrustc={}\ncargo={}\nos={}\narch={}\ndebug_assertions={}\nRUSTFLAGS={:?}\nCARGO_ENCODED_RUSTFLAGS={:?}\ncache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured\nconcurrency=1; queue_depth=1; batch_width=1\nclock=std::time::Instant, nanoseconds; probe overhead uncalibrated\nrss_method=bytes; Linux VmHWM converted from KiB or Windows PeakWorkingSet64 via pwsh then powershell, process-lifetime high water including harness/oracle\nfile_size_method=sum logical lengths of store files, not allocated extents\nhardware_and_filesystem={}\nuncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable\n",
++        meta.header(),
+         SystemTime::now()
+             .duration_since(UNIX_EPOCH)
+             .unwrap_or_default()
+@@ -201,56 +234,141 @@ fn metadata(
+     ));
+     environment
+ }
+-fn snapshot(output: &Path) -> Result<(), String> {
++fn git_bytes(root: &Path, args: &[&str], allow_difference: bool) -> Result<Vec<u8>, String> {
++    let output = Command::new("git")
++        .current_dir(root)
++        .args(args)
++        .output()
++        .map_err(|e| e.to_string())?;
++    if !(output.status.success() || allow_difference && output.status.code() == Some(1)) {
++        return Err(format!(
++            "git {args:?}: {}",
++            String::from_utf8_lossy(&output.stderr)
++        ));
++    }
++    Ok(output.stdout)
++}
++fn source_paths(root: &Path, others: bool) -> Result<Vec<String>, String> {
++    let mut args = vec![
++        "ls-files",
++        "--full-name",
++        "-z",
++        "--others",
++        "--exclude-standard",
++    ];
++    if !others {
++        args.push("--cached");
++    }
++    let bytes = git_bytes(root, &args, false)?;
++    bytes
++        .split(|b| *b == 0)
++        .filter(|p| !p.is_empty())
++        .map(|p| {
++            let name = std::str::from_utf8(p).map_err(|e| e.to_string())?;
++            if name.contains(['\n', '\r']) {
++                return Err("source manifest does not support newline filenames".into());
++            }
++            Ok(name.to_owned())
++        })
++        .collect()
++}
++fn snapshot_at(output: &Path, source_root: &Path, meta: SeriesMeta<'_>) -> Result<(), String> {
+     let output_absolute = output.canonicalize().map_err(|e| e.to_string())?;
+-    let source_root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
+-    write(
+-        &output.join("source.patch"),
+-        &command("git", &["diff", "HEAD", "--binary"]),
+-    )?;
+-    let paths = command(
+-        "git",
+-        &[
+-            "-C",
+-            source_root.to_str().ok_or("source root is not UTF-8")?,
+-            "ls-files",
+-            "--full-name",
+-            "--cached",
+-            "--others",
+-            "--exclude-standard",
+-        ],
+-    );
+-    let mut manifest = String::new();
+-    for name in paths.lines() {
++    let source_absolute = source_root.canonicalize().map_err(|e| e.to_string())?;
++    if meta
++        .source_prefixes
++        .iter()
++        .any(|prefix| output_absolute.starts_with(source_absolute.join(prefix)))
++    {
++        return Err("series output must be outside source prefixes to avoid a self-referential source manifest".into());
++    }
++    let eligible = |name: &str| -> Result<bool, String> {
+         let relative = Path::new(name);
+         if relative.is_absolute()
+             || relative
+                 .components()
+                 .any(|c| matches!(c, std::path::Component::ParentDir))
+         {
+-            continue;
++            return Err("unsafe source path".into());
+         }
+         let p = source_root.join(relative);
+-        if !(name.starts_with("experiments/convergence-memory/")
+-            || name.starts_with("experiments/convergence-memory-legacy/"))
+-            || name.contains("/target/")
+-        {
+-            continue;
+-        }
+-        if !p.is_file() {
+-            continue;
++        Ok(meta
++            .source_prefixes
++            .iter()
++            .any(|prefix| name.starts_with(prefix))
++            && p.is_file()
++            && !p
++                .canonicalize()
++                .map_err(|e| e.to_string())?
++                .starts_with(&output_absolute))
++    };
++    // Preserve binary bytes and final newlines: command() trims and is unsuitable for patches.
++    let mut patch = git_bytes(
++        source_root,
++        &[
++            "-c",
++            "core.autocrlf=false",
++            "-c",
++            "core.safecrlf=false",
++            "-c",
++            "diff.noprefix=false",
++            "-c",
++            "diff.mnemonicPrefix=false",
++            "diff",
++            "HEAD",
++            "--binary",
++            "--no-ext-diff",
++            "--no-textconv",
++        ],
++        false,
++    )?;
++    for name in source_paths(source_root, true)? {
++        if eligible(&name)? {
++            let null = if cfg!(windows) { "NUL" } else { "/dev/null" };
++            patch.extend(git_bytes(
++                source_root,
++                &[
++                    "-c",
++                    "core.autocrlf=false",
++                    "-c",
++                    "core.safecrlf=false",
++                    "-c",
++                    "diff.noprefix=false",
++                    "-c",
++                    "diff.mnemonicPrefix=false",
++                    "diff",
++                    "--no-index",
++                    "--binary",
++                    "--no-ext-diff",
++                    "--no-textconv",
++                    "--",
++                    null,
++                    &name,
++                ],
++                true,
++            )?);
+         }
+-        if p.canonicalize()
+-            .map_err(|e| e.to_string())?
+-            .starts_with(&output_absolute)
+-        {
+-            continue;
++    }
++    file(&output.join("source.patch"))?
++        .write_all(&patch)
++        .map_err(|e| e.to_string())?;
++    let mut paths = source_paths(source_root, false)?;
++    // git ls-files can list both an index entry and an untracked replacement. Hash each path once.
++    paths.sort();
++    paths.dedup();
++    let mut manifest = String::new();
++    for name in paths {
++        if eligible(&name)? {
++            let bytes = fs::read(source_root.join(&name)).map_err(|e| e.to_string())?;
++            manifest.push_str(&format!("{}  {name}\n", hex(&sha256(&bytes))));
+         }
+-        let bytes = fs::read(&p).map_err(|e| e.to_string())?;
+-        manifest.push_str(&format!("{}  {name}\n", hex(&sha256(&bytes))));
+     }
+     write(&output.join("source.sha256"), &manifest)
+ }
++fn snapshot(output: &Path, meta: SeriesMeta<'_>) -> Result<(), String> {
++    let root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
++    snapshot_at(output, &root, meta)
++}
+ pub struct TrialReport {
+     pub mismatches: usize,
+     pub samples: Vec<(String, u128)>,
+@@ -357,11 +475,32 @@ pub fn series_with_retention<E: Engine>(
+     durability: &str,
+     retain_store: bool,
+     create: impl Fn(&Path) -> Result<E, String>,
++) -> Result<(), String> {
++    series_with_meta(
++        trace,
++        output,
++        label,
++        durability,
++        retain_store,
++        EXP0002_META,
++        create,
++    )
++}
++
++/// Explicit experiment identity and recoverable source selection; legacy entry points use EXP0002_META.
++pub fn series_with_meta<E: Engine>(
++    trace: &LoadedTrace,
++    output: &Path,
++    label: &str,
++    durability: &str,
++    retain_store: bool,
++    meta: SeriesMeta<'_>,
++    create: impl Fn(&Path) -> Result<E, String>,
+ ) -> Result<(), String> {
+     fs::create_dir(output).map_err(|e| format!("exclusive output {}: {e}", output.display()))?;
+-    let env = metadata(output, label, durability, trace, retain_store);
++    let env = metadata(output, label, durability, trace, retain_store, meta);
+     write(&output.join("environment.txt"), &env)?;
+-    snapshot(output)?;
++    snapshot(output, meta)?;
+     if retain_store {
+         write(&output.join("trace.cmt"), &format::encode(trace))?;
+     }
+@@ -379,7 +518,9 @@ pub fn series_with_retention<E: Engine>(
+         fs::create_dir(&dir).map_err(|e| e.to_string())?;
+         write(&dir.join("environment.txt"), &env)?;
+         let store = dir.join("store");
+-        fs::create_dir(&store).map_err(|e| e.to_string())?;
++        if !E::creates_store_directory() {
++            fs::create_dir(&store).map_err(|e| e.to_string())?;
++        }
+         let start = Instant::now();
+         let mut engine = match create(&store) {
+             Ok(e) => e,
+@@ -504,6 +645,9 @@ fn raw_references(trial: &Path) -> Result<String, String> {
+ fn remove_trial_store(trial: &Path) -> Result<(), String> {
+     let trial = trial.canonicalize().map_err(|e| e.to_string())?;
+     let store = trial.join("store");
++    if !store.try_exists().map_err(|e| e.to_string())? {
++        return Ok(());
++    }
+     if fs::symlink_metadata(&store)
+         .map_err(|e| e.to_string())?
+         .file_type()
+@@ -568,6 +712,203 @@ pub fn test_directory(label: &str) -> std::path::PathBuf {
+ mod tests {
+     use super::*;
+     #[test]
++    fn default_metadata_header_is_byte_identical_to_exp0002() {
++        assert_eq!(
++            EXP0002_META.header().as_bytes(),
++            b"CMT1-results\t1\nexperiment=EXP-0002\nhypothesis=HYP-0002\n"
++        );
++        assert_eq!(
++            EXP0002_META.source_prefixes,
++            &[
++                "experiments/convergence-memory/",
++                "experiments/convergence-memory-legacy/"
++            ]
++        );
++    }
++    #[test]
++    fn retained_binary_patch_reconstructs_every_manifest_hash_in_fresh_worktree() {
++        // A local clone owns all test Git metadata. Never add a worktree to the source repository.
++        let root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
++        let temp = test_directory("patch-reconstruct");
++        fs::create_dir(&temp).unwrap();
++        let clone = temp.join("clone");
++        let common = String::from_utf8(
++            git_bytes(
++                &root,
++                &["rev-parse", "--path-format=absolute", "--git-common-dir"],
++                false,
++            )
++            .unwrap(),
++        )
++        .unwrap();
++        // Object-sharing local fixture, avoiding a transport process or writes to source Git metadata.
++        git_bytes(&temp, &["init", clone.to_str().unwrap()], false).unwrap();
++        git_bytes(&clone, &["config", "core.autocrlf", "false"], false).unwrap();
++        fs::write(
++            clone.join(".git/objects/info/alternates"),
++            format!("{}/objects\n", common.trim()),
++        )
++        .unwrap();
++        let revision = command("git", &["rev-parse", "HEAD"]);
++        git_bytes(
++            &clone,
++            &["update-ref", "refs/heads/source", &revision],
++            false,
++        )
++        .unwrap();
++        let worktree = temp.join("replayed");
++        git_bytes(
++            &clone,
++            &[
++                "worktree",
++                "add",
++                "--detach",
++                worktree.to_str().unwrap(),
++                &revision,
++            ],
++            false,
++        )
++        .unwrap();
++        let output = temp.join("snapshot");
++        fs::create_dir(&output).unwrap();
++        let meta = SeriesMeta {
++            experiment: "EXP-0003",
++            hypothesis: "HYP-0003",
++            source_prefixes: &[
++                "experiments/unified-commitment/",
++                "experiments/convergence-memory/crates/cm-trace/",
++                "experiments/exp-0001/crates/exp1-record-format/",
++                "experiments/exp-0001/crates/exp1-raw-append-replay/",
++            ],
++        };
++        let verify = |manifest: &Path, restored: &Path| {
++            let entries = fs::read_to_string(manifest).unwrap();
++            assert!(!entries.is_empty());
++            for line in entries.lines() {
++                let (expected, name) = line.split_once("  ").unwrap();
++                assert_eq!(
++                    hex(&sha256(&fs::read(restored.join(name)).unwrap())),
++                    expected,
++                    "{name}"
++                );
++            }
++        };
++        let mut status_args = vec!["status", "--porcelain", "--untracked-files=all", "--"];
++        status_args.extend_from_slice(meta.source_prefixes);
++        let dirty = !git_bytes(&root, &status_args, false).unwrap().is_empty();
++        if dirty {
++            eprintln!(
++                "skip real-checkout reconstruction: uncommitted changes under source prefixes; fixture reconstruction still required"
++            );
++        } else {
++            snapshot_at(&output, &root, meta).unwrap();
++            let patch = output.join("source.patch");
++            if fs::metadata(&patch).unwrap().len() > 0 {
++                git_bytes(
++                    &worktree,
++                    &["apply", "--binary", patch.to_str().unwrap()],
++                    false,
++                )
++                .unwrap();
++            }
++            verify(&output.join("source.sha256"), &worktree);
++        }
++        // Exercise tracked edits and untracked binary data even when CI's real checkout is clean.
++        let binary =
++            worktree.join("experiments/convergence-memory/crates/cm-trace/untracked sample.bin");
++        fs::write(&binary, [0, 255, 0, 13, 10, 1]).unwrap();
++        let tracked = worktree.join("experiments/convergence-memory/crates/cm-trace/src/sha.rs");
++        let mut bytes = fs::read(&tracked).unwrap();
++        bytes.extend(b"\n// reconstruction fixture\n");
++        fs::write(tracked, bytes).unwrap();
++        let output2 = temp.join("snapshot2");
++        fs::create_dir(&output2).unwrap();
++        snapshot_at(&output2, &worktree, meta).unwrap();
++        let restored = temp.join("restored");
++        git_bytes(
++            &clone,
++            &[
++                "worktree",
++                "add",
++                "--detach",
++                restored.to_str().unwrap(),
++                &revision,
++            ],
++            false,
++        )
++        .unwrap();
++        git_bytes(
++            &restored,
++            &[
++                "apply",
++                "--binary",
++                output2.join("source.patch").to_str().unwrap(),
++            ],
++            false,
++        )
++        .unwrap();
++        verify(&output2.join("source.sha256"), &restored);
++        // Both source and restore use hostile host configuration during snapshot/apply.
++        // Materialize the restore's revision bytes before enabling checkout conversion.
++        let crlf_restore = temp.join("crlf-restored");
++        git_bytes(
++            &clone,
++            &[
++                "worktree",
++                "add",
++                "--detach",
++                crlf_restore.to_str().unwrap(),
++                &revision,
++            ],
++            false,
++        )
++        .unwrap();
++        for (key, value) in [
++            ("core.autocrlf", "true"),
++            ("core.safecrlf", "true"),
++            ("diff.noprefix", "true"),
++            ("diff.mnemonicPrefix", "true"),
++        ] {
++            git_bytes(&clone, &["config", key, value], false).unwrap();
++        }
++        let tracked = worktree.join("experiments/convergence-memory/crates/cm-trace/src/sha.rs");
++        let text = fs::read_to_string(&tracked).unwrap();
++        fs::write(&tracked, text.replace("\r\n", "\n").replace('\n', "\r\n")).unwrap();
++        let crlf_output = temp.join("crlf-snapshot");
++        fs::create_dir(&crlf_output).unwrap();
++        snapshot_at(&crlf_output, &worktree, meta).unwrap();
++        for directory in [&worktree, &crlf_restore] {
++            assert_eq!(
++                git_bytes(directory, &["config", "core.autocrlf"], false).unwrap(),
++                b"true\n"
++            );
++        }
++        git_bytes(
++            &crlf_restore,
++            &[
++                "apply",
++                "--binary",
++                crlf_output.join("source.patch").to_str().unwrap(),
++            ],
++            false,
++        )
++        .unwrap();
++        verify(&crlf_output.join("source.sha256"), &crlf_restore);
++        let temp = temp.canonicalize().unwrap();
++        assert_eq!(
++            temp.parent().unwrap(),
++            std::env::temp_dir().canonicalize().unwrap()
++        );
++        assert!(
++            temp.file_name()
++                .unwrap()
++                .to_str()
++                .unwrap()
++                .starts_with("cm-patch-reconstruct-")
++        );
++        fs::remove_dir_all(temp).unwrap();
++    }
++    #[test]
+     fn rss_probe_is_positive_bytes_or_explicitly_unavailable() {
+         let value = peak_rss();
+         assert!(
+diff --git a/experiments/unified-commitment/.gitignore b/experiments/unified-commitment/.gitignore
+new file mode 100644
+index 0000000..b83d222
+--- /dev/null
++++ b/experiments/unified-commitment/.gitignore
+@@ -0,0 +1 @@
++/target/
+diff --git a/experiments/unified-commitment/Cargo.lock b/experiments/unified-commitment/Cargo.lock
+new file mode 100644
+index 0000000..da9151f
+--- /dev/null
++++ b/experiments/unified-commitment/Cargo.lock
+@@ -0,0 +1,48 @@
++# This file is automatically @generated by Cargo.
++# It is not intended for manual editing.
++version = 4
++
++[[package]]
++name = "cm-trace"
++version = "0.1.0"
++
++[[package]]
++name = "exp1-raw-append-replay"
++version = "0.0.0"
++dependencies = [
++ "exp1-record-format",
++ "exp1-workload-conformance",
++]
++
++[[package]]
++name = "exp1-record-format"
++version = "0.0.0"
++
++[[package]]
++name = "exp1-workload-conformance"
++version = "0.0.0"
++
++[[package]]
++name = "uc-core"
++version = "0.1.0"
++dependencies = [
++ "exp1-raw-append-replay",
++ "exp1-record-format",
++]
++
++[[package]]
++name = "uc-harness"
++version = "0.1.0"
++dependencies = [
++ "cm-trace",
++ "uc-core",
++ "uc-memory",
++]
++
++[[package]]
++name = "uc-memory"
++version = "0.1.0"
++dependencies = [
++ "cm-trace",
++ "uc-core",
++]
+diff --git a/experiments/unified-commitment/Cargo.toml b/experiments/unified-commitment/Cargo.toml
+new file mode 100644
+index 0000000..70fab05
+--- /dev/null
++++ b/experiments/unified-commitment/Cargo.toml
+@@ -0,0 +1,20 @@
++[workspace]
++members = ["crates/uc-core", "crates/uc-memory", "crates/uc-harness"]
++resolver = "3"
++
++[workspace.package]
++edition = "2024"
++rust-version = "1.89"
++publish = false
++
++[workspace.lints.rust]
++unsafe_code = "forbid"
++unexpected_cfgs = "deny"
++
++[profile.dev]
++overflow-checks = true
++[profile.test]
++overflow-checks = true
++debug-assertions = true
++[profile.release]
++overflow-checks = true
+diff --git a/experiments/unified-commitment/README.md b/experiments/unified-commitment/README.md
+new file mode 100644
+index 0000000..980775a
+--- /dev/null
++++ b/experiments/unified-commitment/README.md
+@@ -0,0 +1,151 @@
++# Unified commitment — EXP-0003
++
++Bounded single-writer transaction history, frozen RF1 codec, CMM2 Memory adapter and
++shared CMT1 runner. [Experiment/method](../../docs/experiments/EXP-0003-unified-commitment.md),
++[hypothesis](../../docs/hypotheses/HYP-0003-unified-commitment.md),
++[implementation report](../../docs/experiments/EXP-0003/IMPLEMENTATION-REPORT.md).
++
++`Log::create(directory, apply, state_decoder)` exclusively creates a new directory and
++history; the parent must exist, and an existing directory (even empty) or history is refused.
++`Log::open(directory, apply, state_decoder)` requires both directory and history.rf1;
++absence returns `LogError::NotFound` without creating either or an owner file. Both operations
++hold the OS-released owner.lock advisory lock. MemoryEngine likewise exposes separate create
++and open operations; series and fault setup explicitly create, while recovery explicitly opens.
++
++`commit(Transaction, validator)` resolves retry before validation, stages the complete
++payload against an immutable current state, appends Binding/Reservation/Provisional/
++Final/Commit, and publishes a single Arc after the requested boundary. Readers keep
++old immutable snapshots. The payload-agnostic apply/decoder functions must be deterministic.
++The caller supplies explicit stable request IDs.
++Auto request IDs use domain byte `0x41`, separate from the explicit test/caller convention
++`0x52` and event domain `0x45`; callers must reserve `0x41` for the adapter. They are local
++conveniences, not stable request identities across a torn-tail reopen: an ordinal removed
++with a partial binding can be reused. Retry-sensitive callers must supply stable IDs.
++
++Event IDs use a distinct deterministic local namespace with physical ordinal, not random generation.
++
++Limits: 4 MiB payload, 1,024 CMM2 operations per transaction, 1,000,000 RF1 records,
++1 GiB history. Recovery buffers the whole scan; diagnostics are bounded by file length.
++Memory rows contain shared immutable records but clone the slot map to stage a transaction.
++This deliberate cost is experimental; no streaming or performance conclusion is implied.
++
++The accepted history prefix remains resident for the Log's lifetime, bounded by `MAX_HISTORY`
++(1 GiB); every binding's complete normalized request is also retained. The adapter validator
++clones the slot map once and the core clones it again per transaction: O(records) per commit,
++inside `complete_operations`. Shared record values do not eliminate these map copies.
++The frozen `MAX_RECORDS = 1_000_000` scan cap bounds a history to about 200,000 transactions
++(five frames each), fewer with uncommitted residue; the byte limit may be reached earlier.
++
++
++- `unified D1 ordinary writes, no sync, no crash-survival claim`
++- `unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim`
++
++D1's no-sync label describes transaction appends. Namespace setup, tail repair and explicitly
++requested checkpoints synchronize at both levels. D1 `Committed` denotes the completed
++ordinary-write protocol, not a durable canonical claim. D2 synchronizes after Binding,
++Reservation, Provisional, then the adjacent Final/Commit pair. The one persisted realtime
++sample (Unix nanoseconds, i64) is taken after pre-finalization sync; no observation timestamp
++is written into history. `File::sync_all` is used for files and directories; on Windows,
++the directory handle requests GENERIC_WRITE and FILE_FLAG_BACKUP_SEMANTICS. These calls
++are not evidence of OS-crash/power-loss survival.
++
++The core restricts payload bytes as follows.
++
++New payloads containing the literal byte sequence `RDE1` are rejected before append with
++`Invalid("payload contains the RF1 magic")`; old normalized requests containing it fail
++recovery as corrupt. The frozen scanner searches the incomplete frame body for this magic
++and otherwise can misclassify a torn payload as interior damage. Literal payload magic is
++unreachable for CMM2's hex-encoded values and fixed operation syntax.
++This restriction does not guarantee recovery of every possible torn RF1 frame: a valid
++caller request UUID can contain `RDE1` at frame offset 32 (body offset zero) (tested with a legitimately encoded
++Binding truncated one byte before its end). That tail remains corrupt or undecidable.
++Binary envelope fields can also contain the sequence. The scanner searches after its
++32-byte header, so the header CRC alone does not trigger this heuristic. No additional
++identity restrictions or frozen-codec changes are silently imposed.
++
++UCR1 bytes: magic including NUL, durability u8, payload length u64 LE, complete payload.
++UCE1 bytes: magic including NUL, request UUID, event UUID, sequence u64, time i64,
++durability u8, source count u16 = 0, reference count u16 = 0, complete UCR1. Both counts
++explicitly mean empty: provenance/causal references are outside this bounded increment.
++Every Final is checked against its binding even if unselected. A missing/truncated Commit
++leaves Final residue. Three payload copies plus RF1/envelope framing are a measured cost.
++
++After any write/sync failure the writer is poisoned until reopen. Before Final submission,
++failure rejects; Final submission onward is conservatively indeterminate. Open resolves
++all retained bindings from byte zero; no binding expiry or stronger-durability retry upgrade.
++Same ID/different payload or durability rejects without append. A stronger request needs a new ID.
++High-water gaps are retained; complete valid pairs alone produce replay effects. A lost
++committed suffix is detectable only when independent valid checkpoint evidence extends beyond it.
++
++uc1 checkpoint body: `UC1\0`, sequence/Commit ordinal/end offset (u64 LE each), 32-byte
++SHA-256 of that exact history prefix, state blob (u64 length + bytes), resolved cache blob,
++then CRC-32C of all preceding bytes. Cache entries are sorted by request UUID, with count
++u64, UUID, event UUID, normalized SHA-256, normalized blob and outcome (0 uncommitted;
++1 plus sequence/ordinal u64, time i64, achieved u8). The cache covers bindings before the
++checkpoint position; open always rebuilds every binding, including later residue, from history.
++Checkpoints first synchronize the history writer at either level, then create/sync the
++checkpoint and synchronize its parent. `HistoryShorterThanCheckpoint` still fails closed.
++For a remaining OS-crash case outside this tested model, the manual remedy is to preserve
++the evidence and remove the newer checkpoint file (and any other checkpoint beyond the
++surviving history) before reopening from history; this explicitly accepts the older state
++and does not recover missing committed bytes.
++Files use create_new, file sync then parent sync. Repeating a checkpoint at the same position
++returns AlreadyExists. Newest valid matching checkpoint accelerates state replay; the complete
++history scan and cache comparison remain mandatory. There is no history deletion/compaction.
++
++CMM2 is UTF-8, `CMM2\n` then newline-terminated put/update/delete/link operations. Put and
++delete retain record incarnation; updates and both edge endpoints name their incarnation.
++Insert increments the retained tombstone generation; deletion detaches both incident edge directions.
++The adapter validates all operations in order, including effects of earlier operations in one payload.
++CMS2 checkpoints retain tombstones and edges as well as live Memory values.
++
++Run from this checkout's root, using a new output parent:
++
++```powershell
++$ucOutput = Join-Path $env:TEMP 'exp0003-host-series'
++New-Item -ItemType Directory -Path $ucOutput -ErrorAction Stop | Out-Null
++cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --locked --offline -- generate 1k "$ucOutput/1k.cmt"
++cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --locked --offline -- run "$ucOutput/1k.cmt" "$ucOutput/1k-d1" d1
++cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --locked --offline -- run "$ucOutput/1k.cmt" "$ucOutput/1k-d2" d2
++cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --locked --offline -- generate 10k "$ucOutput/10k.cmt"
++cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --locked --offline -- run "$ucOutput/10k.cmt" "$ucOutput/10k-d2" d2
++cargo +1.89.0-x86_64-pc-windows-gnu test --manifest-path experiments/unified-commitment/Cargo.toml -p uc-harness --test faults --locked --offline -- --nocapture
++```
++
++On Linux use `+1.89.0` and equivalent shell paths. The host performs these manual series;
++CI/proof executes small/1K correctness, not benchmark series. Append `--retain-store` for
++forensic retention. Default retains metadata/results, removes validated stores, and does not
++copy source trees. Each trial also retains `store.amplification.txt` with input payload/physical
++history byte counts; timings retain append/replay/decode/rows/columns/checkpoint/open_from_checkpoint.
++
++`fault d1|d2 DIR binding|reservation|provisional|final|commit|synced|checkpoint` aborts the
++workspace's own binary at the selected point; the parent verifies its captured placement marker.
++For Binding, Reservation and Provisional the named D2 hook fires after that record's
++successful file sync; the corresponding D1 hook fires immediately after append. Final fires
++after Final append and before Commit append; Commit fires after Commit append and before
++D2's post-finalization sync. Synced fires after that sync (after Commit append at D1), before
++publication. Checkpoint fires after checkpoint file sync and before its directory sync.
++
++Both fault modes require a missing DIR beneath an existing parent.
++`fault lock DIR hold` creates a history and holds owner.lock until stdin triggers abort. Process tests live in
++uc-harness integration tests because Cargo supplies `CARGO_BIN_EXE_uc-harness` to that package.
++Core byte/I/O tests and Memory scenarios remain in their respective required integration files.
++
++`source.sha256` hashes exact working-tree file bytes, including line endings. Both tracked
++and untracked patch diffs explicitly use `-c core.autocrlf=false -c core.safecrlf=false` and
++`-c diff.noprefix=false -c diff.mnemonicPrefix=false` before `diff`, with `--binary --no-ext-diff --no-textconv`. Host Git conversion or prefix settings must not alter retained
++patch bytes. The always-run fixture checks CRLF-modified tracked text and untracked binary
++reconstruction with both source and restore configured `core.autocrlf=true`.
++
++Source retention uses SeriesMeta EXP-0003/HYP-0003 and the four frozen prefixes. It includes
++tracked and untracked non-ignored files and a reconstructable binary patch. R8b necessarily
++corrects the old patch bytes for untracked changes while preserving APIs/EXP-0002 defaults.
++The reconstruction test uses a temporary object-sharing repository and fresh Git worktrees,
++never writes to the source repository's Git metadata and never commits. The real-checkout
++pass skips dirty source prefixes with a reason; the fixture repository starts with
++`core.autocrlf=false` and additionally tests reconstruction with host conversion enabled.
++Put series output outside the selected source prefixes: self-referential manifests cannot
++be reconstructed, so the runner rejects those destinations explicitly before trials.
++
++Follow-ons: check-only validator, incremental prefix hash, persistent state structure,
++and a codec-level contract change supporting arbitrary payloads and unambiguous torn tails.
+diff --git a/experiments/unified-commitment/crates/uc-core/Cargo.toml b/experiments/unified-commitment/crates/uc-core/Cargo.toml
+new file mode 100644
+index 0000000..3227fe0
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/Cargo.toml
+@@ -0,0 +1,11 @@
++[package]
++name = "uc-core"
++version = "0.1.0"
++edition.workspace = true
++rust-version.workspace = true
++publish.workspace = true
++[lints]
++workspace = true
++[dependencies]
++exp1-record-format = { path = "../../../exp-0001/crates/exp1-record-format" }
++exp1-raw-append-replay = { path = "../../../exp-0001/crates/exp1-raw-append-replay" }
+diff --git a/experiments/unified-commitment/crates/uc-core/src/checkpoint.rs b/experiments/unified-commitment/crates/uc-core/src/checkpoint.rs
+new file mode 100644
+index 0000000..5a84569
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/src/checkpoint.rs
+@@ -0,0 +1,177 @@
++use crate::{
++    Binding, CheckpointRef, Decode, History, Log, LogError, Outcome, Point, Position, crc32c,
++    envelope::{Cursor, blob},
++    sha256, sync_directory,
++};
++use std::{
++    collections::BTreeMap,
++    fs::{self, OpenOptions},
++    io::Write,
++    path::Path,
++};
++
++fn cache(bindings: &BTreeMap<[u8; 16], Binding>, offset: u64) -> Vec<u8> {
++    let mut out = Vec::new();
++    let entries: Vec<_> = bindings.iter().filter(|(_, b)| b.offset < offset).collect();
++    out.extend((entries.len() as u64).to_le_bytes());
++    for (id, b) in entries {
++        out.extend(id);
++        out.extend(b.event.0);
++        out.extend(b.hash);
++        blob(&mut out, &b.normalized);
++        match b.outcome {
++            Outcome::Committed {
++                sequence,
++                physical_ordinal,
++                durability_time,
++                achieved,
++            } => {
++                out.push(1);
++                out.extend(sequence.to_le_bytes());
++                out.extend(physical_ordinal.to_le_bytes());
++                out.extend(durability_time.to_le_bytes());
++                out.push(achieved as u8);
++            }
++            _ => out.push(0),
++        }
++    }
++    out
++}
++pub(crate) fn write<S>(
++    log: &Log<S>,
++    encoder: impl FnOnce(&S) -> Result<Vec<u8>, String>,
++) -> Result<CheckpointRef, LogError> {
++    let position = log
++        .position
++        .ok_or_else(|| LogError::Invalid("checkpoint requires a commit".into()))?;
++    let state = encoder(&log.state).map_err(LogError::Invalid)?;
++    let mut bytes = b"UC1\0".to_vec();
++    bytes.extend(position.sequence.to_le_bytes());
++    bytes.extend(position.physical_ordinal.to_le_bytes());
++    bytes.extend(position.offset.to_le_bytes());
++    bytes.extend(sha256(&log.prefix[..position.offset as usize]));
++    blob(&mut bytes, &state);
++    blob(&mut bytes, &cache(&log.bindings, position.offset));
++    bytes.extend(crc32c(&bytes).to_le_bytes());
++    let path = log.directory.path.join(format!(
++        "checkpoint-{}-{}.uc1",
++        position.sequence, position.physical_ordinal
++    ));
++    log.writer.synchronize()?;
++    let mut file = OpenOptions::new()
++        .create_new(true)
++        .write(true)
++        .open(&path)?;
++    file.write_all(&bytes)?;
++    file.sync_all()?;
++    (log.hook)(Point::Checkpoint);
++    sync_directory(&log.directory.path)?;
++    Ok(CheckpointRef { path, position })
++}
++struct Parsed<'a> {
++    position: Position,
++    hash: &'a [u8],
++    state: &'a [u8],
++    cache: &'a [u8],
++}
++fn parse(bytes: &[u8]) -> Result<Parsed<'_>, String> {
++    let n = bytes.len().checked_sub(4).ok_or("short checkpoint")?;
++    if crc32c(&bytes[..n]) != u32::from_le_bytes(bytes[n..].try_into().unwrap()) {
++        return Err("checkpoint CRC".into());
++    }
++    let mut c = Cursor(&bytes[..n]);
++    if c.take(4)? != b"UC1\0" {
++        return Err("checkpoint magic".into());
++    }
++    let position = Position {
++        sequence: c.u64()?,
++        physical_ordinal: c.u64()?,
++        offset: c.u64()?,
++    };
++    let parsed = Parsed {
++        position,
++        hash: c.take(32)?,
++        state: c.blob()?,
++        cache: c.blob()?,
++    };
++    c.end()?;
++    Ok(parsed)
++}
++pub(crate) fn restore<S: Default>(
++    path: &Path,
++    history: &mut History,
++    decode: Decode<S>,
++) -> Result<(S, Option<Position>), LogError> {
++    let mut candidates = Vec::new();
++    for entry in fs::read_dir(path)? {
++        let p = entry?.path();
++        let name = p.file_name().and_then(|s| s.to_str()).unwrap_or("");
++        if !name.starts_with("checkpoint-") || !name.ends_with(".uc1") {
++            continue;
++        }
++        if fs::metadata(&p)?.len() > crate::MAX_HISTORY {
++            history
++                .report
++                .rejected_checkpoints
++                .push((p, "checkpoint limit".into()));
++            continue;
++        }
++        let bytes = fs::read(&p)?;
++        match parse(&bytes) {
++            Ok(parsed) => {
++                if name
++                    != format!(
++                        "checkpoint-{}-{}.uc1",
++                        parsed.position.sequence, parsed.position.physical_ordinal
++                    )
++                {
++                    history
++                        .report
++                        .rejected_checkpoints
++                        .push((p, "checkpoint filename/position mismatch".into()));
++                    continue;
++                }
++                candidates.push((
++                    parsed.position.sequence,
++                    parsed.position.physical_ordinal,
++                    p,
++                    bytes,
++                ));
++            }
++            Err(e) => history.report.rejected_checkpoints.push((p, e)),
++        }
++    }
++    candidates.sort_by(|a, b| (b.0, b.1).cmp(&(a.0, a.1)));
++    for (_, _, path, bytes) in candidates {
++        let cp = parse(&bytes).map_err(LogError::Invalid)?;
++        if cp.position.offset > history.prefix.len() as u64 {
++            return Err(LogError::HistoryShorterThanCheckpoint {
++                offset: cp.position.offset,
++            });
++        }
++        if !history.events.iter().any(|e| e.position == cp.position)
++            || sha256(&history.prefix[..cp.position.offset as usize]) != cp.hash
++        {
++            history
++                .report
++                .rejected_checkpoints
++                .push((path, "history position/prefix hash mismatch".into()));
++            continue;
++        }
++        // Full scan remains authoritative. Compare only the cache's exact history prefix.
++        if cache(&history.bindings, cp.position.offset) != cp.cache {
++            return Err(LogError::CheckpointCacheMismatch);
++        }
++        match decode(cp.state) {
++            Ok(state) => {
++                history.report.checkpoint = Some(cp.position);
++                return Ok((state, Some(cp.position)));
++            }
++            Err(e) => history
++                .report
++                .rejected_checkpoints
++                .push((path, format!("state decode: {e}"))),
++        }
++    }
++    Ok((S::default(), None))
++}
+diff --git a/experiments/unified-commitment/crates/uc-core/src/envelope.rs b/experiments/unified-commitment/crates/uc-core/src/envelope.rs
+new file mode 100644
+index 0000000..150ef7c
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/src/envelope.rs
+@@ -0,0 +1,118 @@
++use crate::{Durability, LogError, MAX_PAYLOAD, Transaction, Uuid};
++
++pub(crate) fn normalize(txn: &Transaction) -> Result<Vec<u8>, LogError> {
++    if txn.payload.len() > MAX_PAYLOAD {
++        return Err(LogError::Limit);
++    }
++    if txn.payload.windows(4).any(|w| w == b"RDE1") {
++        return Err(LogError::Invalid("payload contains the RF1 magic".into()));
++    }
++    let mut out = b"UCR1\0".to_vec();
++    out.push(txn.durability as u8);
++    out.extend((txn.payload.len() as u64).to_le_bytes());
++    out.extend(&txn.payload);
++    Ok(out)
++}
++pub(crate) fn request(bytes: &[u8]) -> Result<(Durability, &[u8]), String> {
++    let mut c = Cursor(bytes);
++    if c.take(5)? != b"UCR1\0" {
++        return Err("normalized magic".into());
++    }
++    let durability = durability(c.byte()?)?;
++    let length = usize::try_from(c.u64()?).map_err(|_| "request length")?;
++    if length > MAX_PAYLOAD {
++        return Err("request limit".into());
++    }
++    let payload = c.take(length)?;
++    c.end()?;
++    if payload.windows(4).any(|w| w == b"RDE1") {
++        return Err("payload contains the RF1 magic".into());
++    }
++    Ok((durability, payload))
++}
++pub(crate) fn durability(b: u8) -> Result<Durability, String> {
++    match b {
++        1 => Ok(Durability::D1),
++        2 => Ok(Durability::D2),
++        _ => Err("invalid durability".into()),
++    }
++}
++pub(crate) fn complete(
++    txn: &Transaction,
++    normalized: &[u8],
++    event: Uuid,
++    sequence: u64,
++    time: i64,
++) -> Vec<u8> {
++    let mut out = b"UCE1\0".to_vec();
++    out.extend(txn.request_id.0);
++    out.extend(event.0);
++    out.extend(sequence.to_le_bytes());
++    out.extend(time.to_le_bytes());
++    out.push(txn.durability as u8);
++    out.extend(0u16.to_le_bytes());
++    out.extend(0u16.to_le_bytes());
++    out.extend(normalized);
++    out
++}
++pub(crate) fn validate(
++    bytes: &[u8],
++    request_id: Uuid,
++    event: Uuid,
++    sequence: u64,
++    time: i64,
++    normalized: &[u8],
++) -> Result<(), String> {
++    let mut c = Cursor(bytes);
++    if c.take(5)? != b"UCE1\0"
++        || c.take(16)? != request_id.0
++        || c.take(16)? != event.0
++        || c.u64()? != sequence
++        || c.i64()? != time
++    {
++        return Err("envelope identity".into());
++    }
++    let d = durability(c.byte()?)?;
++    if c.u16()? != 0 || c.u16()? != 0 {
++        return Err("provenance/references outside bounded contract".into());
++    }
++    if c.0 != normalized || request(c.0)?.0 != d {
++        return Err("envelope normalized request".into());
++    }
++    Ok(())
++}
++pub(crate) struct Cursor<'a>(pub &'a [u8]);
++impl<'a> Cursor<'a> {
++    pub fn take(&mut self, n: usize) -> Result<&'a [u8], String> {
++        let (value, rest) = self.0.split_at_checked(n).ok_or("truncated encoding")?;
++        self.0 = rest;
++        Ok(value)
++    }
++    pub fn byte(&mut self) -> Result<u8, String> {
++        Ok(self.take(1)?[0])
++    }
++    pub fn u16(&mut self) -> Result<u16, String> {
++        Ok(u16::from_le_bytes(self.take(2)?.try_into().unwrap()))
++    }
++    pub fn u64(&mut self) -> Result<u64, String> {
++        Ok(u64::from_le_bytes(self.take(8)?.try_into().unwrap()))
++    }
++    pub fn i64(&mut self) -> Result<i64, String> {
++        Ok(i64::from_le_bytes(self.take(8)?.try_into().unwrap()))
++    }
++    pub fn blob(&mut self) -> Result<&'a [u8], String> {
++        let n = usize::try_from(self.u64()?).map_err(|_| "length overflow")?;
++        self.take(n)
++    }
++    pub fn end(&self) -> Result<(), String> {
++        if self.0.is_empty() {
++            Ok(())
++        } else {
++            Err("trailing bytes".into())
++        }
++    }
++}
++pub(crate) fn blob(out: &mut Vec<u8>, bytes: &[u8]) {
++    out.extend((bytes.len() as u64).to_le_bytes());
++    out.extend(bytes);
++}
+diff --git a/experiments/unified-commitment/crates/uc-core/src/lib.rs b/experiments/unified-commitment/crates/uc-core/src/lib.rs
+new file mode 100644
+index 0000000..f95b16e
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/src/lib.rs
+@@ -0,0 +1,558 @@
++//! Bounded EXP-0003 single-writer RF1 history. No production compatibility promise.
++mod checkpoint;
++mod envelope;
++mod recovery;
++mod sha;
++use exp1_record_format::{Body, IntegrityProfile, Record, encode};
++pub use exp1_record_format::{Uuid, crc32c};
++pub use recovery::{CommittedEvent, History, OpenReport, read_history};
++pub use sha::sha256;
++use std::{
++    collections::BTreeMap,
++    fs::{self, File, OpenOptions},
++    io::{self, Write},
++    path::{Path, PathBuf},
++    sync::Arc,
++    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
++};
++
++pub const MAX_PAYLOAD: usize = 4 * 1024 * 1024;
++pub const MAX_HISTORY: u64 = 1_073_741_824;
++pub const MAX_RECORDS: u64 = 1_000_000;
++pub const HISTORY_FILE: &str = "history.rf1";
++
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++#[repr(u8)]
++pub enum Durability {
++    D1 = 1,
++    D2 = 2,
++}
++impl Durability {
++    pub fn parse(value: &str) -> Result<Self, String> {
++        match value {
++            "d1" => Ok(Self::D1),
++            "d2" => Ok(Self::D2),
++            _ => Err("expected d1 or d2".into()),
++        }
++    }
++    pub fn label(self) -> &'static str {
++        match self {
++            Self::D1 => "unified D1 ordinary writes, no sync, no crash-survival claim",
++            Self::D2 => {
++                "unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim"
++            }
++        }
++    }
++}
++#[derive(Clone, Debug)]
++pub struct Transaction {
++    pub request_id: Uuid,
++    pub payload: Vec<u8>,
++    pub durability: Durability,
++}
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub enum Rejection {
++    RequestIdReuse,
++    Uncommitted,
++    Validation(String),
++    Io(String),
++}
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub enum Outcome {
++    Committed {
++        sequence: u64,
++        physical_ordinal: u64,
++        durability_time: i64,
++        achieved: Durability,
++    },
++    Rejected {
++        reason: Rejection,
++    },
++    Indeterminate {
++        request_id: Uuid,
++    },
++}
++#[derive(Debug)]
++pub enum LogError {
++    Io { offset: u64, kind: io::ErrorKind },
++    NotFound,
++    Owned,
++    Poisoned,
++    Limit,
++    Invalid(String),
++    Corrupt { offset: u64, error: String },
++    EnvelopeMismatch { physical_ordinal: u64 },
++    HistoryShorterThanCheckpoint { offset: u64 },
++    CheckpointCacheMismatch,
++}
++impl std::fmt::Display for LogError {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        if let Self::HistoryShorterThanCheckpoint { offset } = self {
++            write!(f, "history shorter than checkpoint at {offset}")
++        } else {
++            write!(f, "{self:?}")
++        }
++    }
++}
++impl std::error::Error for LogError {}
++impl From<io::Error> for LogError {
++    fn from(e: io::Error) -> Self {
++        if e.kind() == io::ErrorKind::NotFound {
++            Self::NotFound
++        } else {
++            Self::Io {
++                offset: 0,
++                kind: e.kind(),
++            }
++        }
++    }
++}
++
++/// The file's existence is irrelevant. Drop/OS process exit releases ownership.
++pub struct Directory {
++    path: PathBuf,
++    _owner: File,
++}
++impl Directory {
++    pub fn acquire(path: &Path) -> Result<Self, LogError> {
++        if !fs::metadata(path)?.is_dir() {
++            return Err(LogError::Invalid("storage path is not a directory".into()));
++        }
++        let owner = OpenOptions::new()
++            .create(true)
++            .truncate(false)
++            .read(true)
++            .write(true)
++            .open(path.join("owner.lock"))?;
++        match owner.try_lock() {
++            Ok(()) => Ok(Self {
++                path: path.to_owned(),
++                _owner: owner,
++            }),
++            Err(std::fs::TryLockError::WouldBlock) => Err(LogError::Owned),
++            Err(std::fs::TryLockError::Error(e)) => Err(e.into()),
++        }
++    }
++}
++/// Platform call boundary, not a claim about device or namespace survival.
++pub fn sync_directory(path: &Path) -> io::Result<()> {
++    #[cfg(windows)]
++    {
++        use std::os::windows::fs::OpenOptionsExt;
++        // GENERIC_WRITE is required by FlushFileBuffers; BACKUP_SEMANTICS opens directories.
++        OpenOptions::new()
++            .access_mode(0x4000_0000)
++            .custom_flags(0x0200_0000)
++            .open(path)?
++            .sync_all()
++    }
++    #[cfg(not(windows))]
++    {
++        File::open(path)?.sync_all()
++    }
++}
++
++/// Injectable only at the real writer boundary. A short write is fail-stop, not retried.
++pub trait Writer: Write {
++    fn synchronize(&self) -> io::Result<()>;
++}
++impl Writer for File {
++    fn synchronize(&self) -> io::Result<()> {
++        self.sync_all()
++    }
++}
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub enum Point {
++    Binding,
++    Reservation,
++    Provisional,
++    Final,
++    Commit,
++    Synced,
++    Checkpoint,
++}
++impl Point {
++    pub fn parse(value: &str) -> Result<Self, String> {
++        match value {
++            "binding" => Ok(Self::Binding),
++            "reservation" => Ok(Self::Reservation),
++            "provisional" => Ok(Self::Provisional),
++            "final" => Ok(Self::Final),
++            "commit" => Ok(Self::Commit),
++            "synced" => Ok(Self::Synced),
++            "checkpoint" => Ok(Self::Checkpoint),
++            _ => Err("unknown injection point".into()),
++        }
++    }
++}
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub(crate) struct Binding {
++    event: Uuid,
++    normalized: Vec<u8>,
++    hash: [u8; 32],
++    outcome: Outcome,
++    offset: u64,
++}
++pub type Apply<S> = fn(&mut S, &[u8]) -> Result<(), String>;
++pub type Decode<S> = fn(&[u8]) -> Result<S, String>;
++pub struct Log<S> {
++    directory: Directory,
++    writer: Box<dyn Writer>,
++    state: Arc<S>,
++    apply: Apply<S>,
++    bindings: BTreeMap<[u8; 16], Binding>,
++    prefix: Vec<u8>,
++    next_sequence: u64,
++    ordinal: u64,
++    position: Option<Position>,
++    poisoned: bool,
++    hook: Box<dyn Fn(Point)>,
++    pub append_time: Duration,
++    pub payload_bytes: u64,
++}
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub struct Position {
++    pub sequence: u64,
++    pub physical_ordinal: u64,
++    pub offset: u64,
++}
++#[derive(Clone, Debug)]
++pub struct CheckpointRef {
++    pub path: PathBuf,
++    pub position: Position,
++}
++
++impl<S: Clone + Default> Log<S> {
++    /// Exclusively create a storage directory and history; never adopt an existing directory.
++    pub fn create(
++        path: &Path,
++        apply: Apply<S>,
++        decode: Decode<S>,
++    ) -> Result<(Self, OpenReport), LogError> {
++        fs::create_dir(path)?;
++        let directory = Directory::acquire(path)?;
++        let file = OpenOptions::new()
++            .create_new(true)
++            .read(true)
++            .write(true)
++            .open(path.join(HISTORY_FILE))?;
++        Self::recover(directory, file, apply, decode)
++    }
++    pub fn open(
++        path: &Path,
++        apply: Apply<S>,
++        decode: Decode<S>,
++    ) -> Result<(Self, OpenReport), LogError> {
++        let history_path = path.join(HISTORY_FILE);
++        // Check before acquiring ownership so a missing history creates no owner file.
++        fs::metadata(&history_path)?;
++        let directory = Directory::acquire(path)?;
++        // Synchronize namespace on every open, including a file left by an interrupted creator.
++        let file = OpenOptions::new()
++            .read(true)
++            .write(true)
++            .open(&history_path)?;
++        Self::recover(directory, file, apply, decode)
++    }
++    fn recover(
++        directory: Directory,
++        file: File,
++        apply: Apply<S>,
++        decode: Decode<S>,
++    ) -> Result<(Self, OpenReport), LogError> {
++        let path = &directory.path;
++        let history_path = path.join(HISTORY_FILE);
++        file.sync_all()?;
++        sync_directory(path)?;
++        let mut history = read_history(&history_path)?;
++        let (mut state, checkpoint_position) = checkpoint::restore(path, &mut history, decode)?;
++        for event in &history.events {
++            if checkpoint_position.is_none_or(|p| event.position.offset > p.offset) {
++                apply(&mut state, &event.payload).map_err(LogError::Invalid)?;
++            }
++        }
++        if let Some(offset) = history.report.dropped_tail {
++            file.set_len(offset)?;
++            file.sync_all()?;
++            history.report.tail_truncated_and_synced = true;
++        }
++        drop(file);
++        let file = OpenOptions::new().append(true).open(&history_path)?;
++        let position = history.events.last().map(|e| e.position);
++        let next_sequence = history.high_water.checked_add(1).ok_or(LogError::Limit)?;
++        let log = Self {
++            directory,
++            writer: Box::new(file),
++            state: Arc::new(state),
++            apply,
++            bindings: history.bindings,
++            prefix: history.prefix,
++            next_sequence,
++            ordinal: history.ordinal,
++            position,
++            poisoned: false,
++            hook: Box::new(|_| {}),
++            append_time: Duration::ZERO,
++            payload_bytes: 0,
++        };
++        Ok((log, history.report))
++    }
++    pub fn snapshot(&self) -> Arc<S> {
++        Arc::clone(&self.state)
++    }
++    pub fn is_poisoned(&self) -> bool {
++        self.poisoned
++    }
++    pub fn position(&self) -> Option<Position> {
++        self.position
++    }
++    pub fn history_bytes(&self) -> u64 {
++        self.prefix.len() as u64
++    }
++    pub fn next_request_id(&self) -> Uuid {
++        identity(self.ordinal + 1, 0x41)
++    }
++    /// Test instrumentation observes exact call placements; never adds record metadata.
++    pub fn set_hook(&mut self, hook: impl Fn(Point) + 'static) {
++        self.hook = Box::new(hook);
++    }
++    /// Wrap the actual writer for deterministic short-write/error/sync injection.
++    pub fn wrap_writer(&mut self, wrap: impl FnOnce(Box<dyn Writer>) -> Box<dyn Writer>) {
++        struct Unavailable;
++        impl Write for Unavailable {
++            fn write(&mut self, _: &[u8]) -> io::Result<usize> {
++                Err(io::Error::other("unavailable"))
++            }
++            fn flush(&mut self) -> io::Result<()> {
++                Err(io::Error::other("unavailable"))
++            }
++        }
++        impl Writer for Unavailable {
++            fn synchronize(&self) -> io::Result<()> {
++                Err(io::Error::other("unavailable"))
++            }
++        }
++        self.writer = wrap(std::mem::replace(&mut self.writer, Box::new(Unavailable)));
++    }
++    pub fn commit(
++        &mut self,
++        txn: Transaction,
++        validate: impl FnOnce(&S) -> Result<(), Rejection>,
++    ) -> Result<Outcome, LogError> {
++        if self.poisoned {
++            return Err(LogError::Poisoned);
++        }
++        let normalized = envelope::normalize(&txn);
++        if let Some(binding) = self.bindings.get(&txn.request_id.0) {
++            // A previously bound request has precedence even when the changed request
++            // exceeds the new-transaction limit. The retained bytes are necessarily bounded.
++            return Ok(
++                if normalized.as_ref().is_ok_and(|bytes| {
++                    binding.hash == sha256(bytes) && binding.normalized == *bytes
++                }) {
++                    binding.outcome.clone()
++                } else {
++                    Outcome::Rejected {
++                        reason: Rejection::RequestIdReuse,
++                    }
++                },
++            );
++        }
++        let normalized = normalized?;
++        txn.request_id
++            .validate_v4()
++            .map_err(|e| LogError::Invalid(format!("request: {e:?}")))?;
++        if let Err(reason) = validate(&self.state) {
++            return Ok(Outcome::Rejected { reason });
++        }
++        // Stage all payload effects before touching the history. Readers hold immutable Arcs.
++        let mut next = self.state.as_ref().clone();
++        if let Err(e) = (self.apply)(&mut next, &txn.payload) {
++            return Ok(Outcome::Rejected {
++                reason: Rejection::Validation(e),
++            });
++        }
++        let sequence = self.next_sequence;
++        let next_sequence = sequence.checked_add(1).ok_or(LogError::Limit)?;
++        let last_ordinal = self.ordinal.checked_add(5).ok_or(LogError::Limit)?;
++        if last_ordinal > MAX_RECORDS {
++            return Err(LogError::Limit);
++        }
++        let event_id = identity(self.ordinal + 1, 0x45);
++        let record = |i, body| Record {
++            physical_ordinal: self.ordinal + i,
++            integrity: IntegrityProfile::Crc32c,
++            body,
++        };
++        let bodies = [
++            Body::Binding {
++                request_id: txn.request_id,
++                event_id,
++                normalized_request: normalized.clone(),
++            },
++            Body::Reservation {
++                request_id: txn.request_id,
++                event_id,
++                sequence,
++                high_water: sequence,
++            },
++            Body::Provisional {
++                event_id,
++                sequence,
++                group_id: 0,
++                member_index: 0,
++                member_count: 1,
++                stable_core: txn.payload.clone(),
++            },
++        ];
++        let mut frames = Vec::new();
++        for (i, body) in bodies.into_iter().enumerate() {
++            frames.push(
++                encode(&record(i as u64 + 1, body))
++                    .map_err(|e| LogError::Invalid(format!("encode {e:?}")))?,
++            );
++        }
++        // Exact final/commit sizes are independent of the later clock sample.
++        let required = frames.iter().map(Vec::len).sum::<usize>() + 84 + 58 + normalized.len() + 80;
++        if self.prefix.len() as u64 + required as u64 > MAX_HISTORY {
++            return Err(LogError::Limit);
++        }
++        let binding_offset = self.prefix.len() as u64;
++        let start = Instant::now();
++        let written = self.write_transaction(&txn, &normalized, event_id, sequence, &frames);
++        self.append_time += start.elapsed();
++        let time = match written {
++            Ok(time) => time,
++            Err((boundary, e)) => {
++                self.poisoned = true;
++                return Ok(if boundary {
++                    Outcome::Indeterminate {
++                        request_id: txn.request_id,
++                    }
++                } else {
++                    Outcome::Rejected {
++                        reason: Rejection::Io(e.to_string()),
++                    }
++                });
++            }
++        };
++        let outcome = Outcome::Committed {
++            sequence,
++            physical_ordinal: last_ordinal,
++            durability_time: time,
++            achieved: txn.durability,
++        };
++        self.bindings.insert(
++            txn.request_id.0,
++            Binding {
++                event: event_id,
++                hash: sha256(&normalized),
++                normalized,
++                outcome: outcome.clone(),
++                offset: binding_offset,
++            },
++        );
++        self.next_sequence = next_sequence;
++        self.ordinal = last_ordinal;
++        self.position = Some(Position {
++            sequence,
++            physical_ordinal: last_ordinal,
++            offset: self.prefix.len() as u64,
++        });
++        self.payload_bytes += txn.payload.len() as u64;
++        self.state = Arc::new(next);
++        Ok(outcome)
++    }
++    fn submit(&mut self, bytes: &[u8]) -> io::Result<()> {
++        let n = self.writer.write(bytes)?;
++        if n != bytes.len() {
++            return Err(io::Error::new(
++                io::ErrorKind::WriteZero,
++                format!("short write {n}/{}", bytes.len()),
++            ));
++        }
++        self.prefix.extend_from_slice(bytes);
++        Ok(())
++    }
++    fn write_transaction(
++        &mut self,
++        txn: &Transaction,
++        normalized: &[u8],
++        event: Uuid,
++        sequence: u64,
++        frames: &[Vec<u8>],
++    ) -> Result<i64, (bool, io::Error)> {
++        for (frame, point) in
++            frames
++                .iter()
++                .zip([Point::Binding, Point::Reservation, Point::Provisional])
++        {
++            self.submit(frame).map_err(|e| (false, e))?;
++            if txn.durability == Durability::D2 {
++                self.writer.synchronize().map_err(|e| (false, e))?;
++            }
++            (self.hook)(point);
++        }
++        let time = SystemTime::now()
++            .duration_since(UNIX_EPOCH)
++            .map_err(|e| (false, io::Error::other(e)))?
++            .as_nanos();
++        let time = i64::try_from(time).map_err(|e| (false, io::Error::other(e)))?;
++        let final_record = Record {
++            physical_ordinal: self.ordinal + 4,
++            integrity: IntegrityProfile::Crc32c,
++            body: Body::Final {
++                event_id: event,
++                request_id: txn.request_id,
++                sequence,
++                durability_time: time,
++                complete_envelope: envelope::complete(txn, normalized, event, sequence, time),
++            },
++        };
++        let final_bytes = encode(&final_record)
++            .map_err(|e| (false, io::Error::other(format!("final encode {e:?}"))))?;
++        let crc = u32::from_le_bytes(final_bytes[28..32].try_into().expect("encoded RF1 header"));
++        let commit = encode(&Record {
++            physical_ordinal: self.ordinal + 5,
++            integrity: IntegrityProfile::Crc32c,
++            body: Body::Commit {
++                event_id: event,
++                sequence,
++                final_ordinal: self.ordinal + 4,
++                final_crc32c: crc,
++                group_id: 0,
++                member_index: 0,
++                member_count: 1,
++            },
++        })
++        .map_err(|e| (false, io::Error::other(format!("commit encode {e:?}"))))?;
++        self.submit(&final_bytes).map_err(|e| (true, e))?;
++        (self.hook)(Point::Final);
++        self.submit(&commit).map_err(|e| (true, e))?;
++        (self.hook)(Point::Commit);
++        if txn.durability == Durability::D2 {
++            self.writer.synchronize().map_err(|e| (true, e))?;
++        }
++        (self.hook)(Point::Synced);
++        Ok(time)
++    }
++    pub fn checkpoint(
++        &self,
++        encoder: impl FnOnce(&S) -> Result<Vec<u8>, String>,
++    ) -> Result<CheckpointRef, LogError> {
++        if self.poisoned {
++            return Err(LogError::Poisoned);
++        }
++        checkpoint::write(self, encoder)
++    }
++}
++/// Local event/request namespaces; monotone physical ordinal gives unique v4-shaped IDs.
++/// Experimental deterministic assignment, not a random UUID generator.
++pub fn identity(n: u64, domain: u8) -> Uuid {
++    let mut id = [0u8; 16];
++    id[0] = domain;
++    id[6] = 0x40;
++    id[8] = 0x80;
++    id[9..16].copy_from_slice(&n.to_le_bytes()[..7]);
++    Uuid(id)
++}
+diff --git a/experiments/unified-commitment/crates/uc-core/src/recovery.rs b/experiments/unified-commitment/crates/uc-core/src/recovery.rs
+new file mode 100644
+index 0000000..2787958
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/src/recovery.rs
+@@ -0,0 +1,241 @@
++use crate::{Binding, LogError, MAX_HISTORY, Outcome, Position, Rejection, Uuid, envelope, sha256};
++use exp1_raw_append_replay::{ReplayTermination, reopen_and_replay};
++use exp1_record_format::{Body, IntegrityProfile, ScanLimits};
++use std::{
++    collections::BTreeMap,
++    path::{Path, PathBuf},
++    time::{Duration, Instant},
++};
++
++#[derive(Clone, Debug, Default)]
++pub struct OpenReport {
++    pub dropped_tail: Option<u64>,
++    pub tail_truncated_and_synced: bool,
++    pub accepted_bytes: u64,
++    pub gaps: Vec<u64>,
++    pub unresolved_bindings: Vec<Uuid>,
++    pub uncommitted_finals: Vec<u64>,
++    pub rejected_checkpoints: Vec<(PathBuf, String)>,
++    pub checkpoint: Option<Position>,
++    pub replay_time: Duration,
++}
++#[derive(Clone, Debug)]
++pub struct CommittedEvent {
++    pub request_id: Uuid,
++    pub event_id: Uuid,
++    pub position: Position,
++    pub outcome: Outcome,
++    pub payload: Vec<u8>,
++}
++pub struct History {
++    pub events: Vec<CommittedEvent>,
++    pub report: OpenReport,
++    pub(crate) prefix: Vec<u8>,
++    pub(crate) bindings: BTreeMap<[u8; 16], Binding>,
++    pub(crate) ordinal: u64,
++    pub(crate) high_water: u64,
++}
++/// Read-only scan used by open and independent Memory reconstruction.
++pub fn read_history(path: &Path) -> Result<History, LogError> {
++    let size = std::fs::metadata(path)?.len();
++    if size > MAX_HISTORY {
++        return Err(LogError::Limit);
++    }
++    let limits = ScanLimits {
++        max_scan_bytes: MAX_HISTORY,
++        max_diagnostic_bytes: usize::try_from(size).map_err(|_| LogError::Limit)?,
++        ..ScanLimits::default()
++    };
++    let start = Instant::now();
++    let scan = reopen_and_replay(path, limits);
++    let replay_time = start.elapsed();
++    let mut report = OpenReport {
++        replay_time,
++        accepted_bytes: scan.accepted_prefix.len() as u64,
++        ..OpenReport::default()
++    };
++    match scan.termination {
++        ReplayTermination::CleanEof => {}
++        ReplayTermination::TerminalTruncation { offset } => report.dropped_tail = Some(offset),
++        ReplayTermination::Failure { offset, error } => {
++            return Err(LogError::Corrupt {
++                offset,
++                error: format!("{error:?}"),
++            });
++        }
++        ReplayTermination::IoFailure { offset, error } => {
++            return Err(LogError::Io {
++                offset,
++                kind: error,
++            });
++        }
++    }
++    // reopen_and_replay already validates the accepted prefix lifecycle.
++    let mut bindings = BTreeMap::<[u8; 16], Binding>::new();
++    let mut events = Vec::new();
++    let mut reservations = BTreeMap::new();
++    let mut provisionals = BTreeMap::<[u8; 16], (u64, Vec<u8>)>::new();
++    let mut finals = BTreeMap::<[u8; 16], u64>::new();
++    let mut high_water = 0;
++    for physical in &scan.records {
++        let r = &physical.record;
++        let corrupt = |error: &str| LogError::Corrupt {
++            offset: physical.offset,
++            error: error.into(),
++        };
++        if r.integrity != IntegrityProfile::Crc32c
++            || (physical.offset == 0 && r.physical_ordinal != 1)
++        {
++            return Err(corrupt(
++                "unified history requires CRC32C and first ordinal 1",
++            ));
++        }
++        match &r.body {
++            Body::Binding {
++                request_id,
++                event_id,
++                normalized_request,
++            } => {
++                envelope::request(normalized_request).map_err(|e| corrupt(&e))?;
++                bindings.insert(
++                    request_id.0,
++                    Binding {
++                        event: *event_id,
++                        normalized: normalized_request.clone(),
++                        hash: sha256(normalized_request),
++                        outcome: Outcome::Rejected {
++                            reason: Rejection::Uncommitted,
++                        },
++                        offset: physical.offset,
++                    },
++                );
++            }
++            Body::Reservation {
++                request_id,
++                event_id,
++                sequence,
++                high_water: water,
++            } => {
++                if *water < high_water || *sequence <= high_water {
++                    return Err(corrupt("reservation high-water/order"));
++                }
++                high_water = *water;
++                reservations.insert(event_id.0, (*sequence, *request_id));
++            }
++            Body::Provisional {
++                event_id,
++                sequence,
++                group_id,
++                member_index,
++                member_count,
++                stable_core,
++            } => {
++                let Some((reserved, request_id)) = reservations.get(&event_id.0) else {
++                    return Err(corrupt("provisional without reservation"));
++                };
++                if reserved != sequence
++                    || (*group_id, *member_index, *member_count) != (0, 0, 1)
++                    || envelope::request(&bindings[&request_id.0].normalized)
++                        .map_err(|e| corrupt(&e))?
++                        .1
++                        != stable_core
++                    || provisionals
++                        .insert(event_id.0, (*sequence, stable_core.clone()))
++                        .is_some()
++                {
++                    return Err(corrupt("provisional mismatch"));
++                }
++            }
++            Body::Final {
++                event_id,
++                request_id,
++                sequence,
++                durability_time,
++                complete_envelope,
++            } => {
++                let mismatch = || LogError::EnvelopeMismatch {
++                    physical_ordinal: r.physical_ordinal,
++                };
++                let binding = bindings.get(&request_id.0).ok_or_else(mismatch)?;
++                envelope::validate(
++                    complete_envelope,
++                    *request_id,
++                    *event_id,
++                    *sequence,
++                    *durability_time,
++                    &binding.normalized,
++                )
++                .map_err(|_| mismatch())?;
++                if !provisionals.contains_key(&event_id.0) {
++                    return Err(corrupt("Final without Provisional"));
++                }
++                finals.insert(event_id.0, r.physical_ordinal);
++            }
++            Body::Commit {
++                event_id,
++                sequence,
++                group_id,
++                member_index,
++                member_count,
++                ..
++            } => {
++                if (*group_id, *member_index, *member_count) != (0, 0, 1) {
++                    return Err(corrupt("group outside bounded core"));
++                }
++                let (_, request_id) = reservations[&event_id.0];
++                let binding = bindings.get_mut(&request_id.0).expect("validated binding");
++                let previous = &scan.records[(r.physical_ordinal - 2) as usize].record;
++                let Body::Final {
++                    durability_time, ..
++                } = previous.body
++                else {
++                    unreachable!("frozen adjacent Commit validation")
++                };
++                let (achieved, payload) =
++                    envelope::request(&binding.normalized).map_err(|e| corrupt(&e))?;
++                let outcome = Outcome::Committed {
++                    sequence: *sequence,
++                    physical_ordinal: r.physical_ordinal,
++                    durability_time,
++                    achieved,
++                };
++                let position = Position {
++                    sequence: *sequence,
++                    physical_ordinal: r.physical_ordinal,
++                    offset: physical.offset + physical.extent as u64,
++                };
++                events.push(CommittedEvent {
++                    request_id,
++                    event_id: *event_id,
++                    position,
++                    outcome: outcome.clone(),
++                    payload: payload.to_vec(),
++                });
++                binding.outcome = outcome;
++                finals.remove(&event_id.0);
++            }
++            Body::Membership { .. } => return Err(corrupt("D3 outside bounded core")),
++        }
++    }
++    for (sequence, request) in reservations.values() {
++        if !matches!(bindings[&request.0].outcome, Outcome::Committed { .. }) {
++            report.gaps.push(*sequence);
++        }
++    }
++    report.gaps.sort();
++    report.unresolved_bindings = bindings
++        .iter()
++        .filter(|(_, b)| !matches!(b.outcome, Outcome::Committed { .. }))
++        .map(|(id, _)| Uuid(*id))
++        .collect();
++    report.uncommitted_finals = finals.into_values().collect();
++    report.uncommitted_finals.sort();
++    Ok(History {
++        events,
++        report,
++        prefix: scan.accepted_prefix,
++        bindings,
++        ordinal: scan.records.last().map_or(0, |r| r.record.physical_ordinal),
++        high_water,
++    })
++}
+diff --git a/experiments/unified-commitment/crates/uc-core/src/sha.rs b/experiments/unified-commitment/crates/uc-core/src/sha.rs
+new file mode 100644
+index 0000000..7871a80
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/src/sha.rs
+@@ -0,0 +1,76 @@
++// Copied from exp1-workload-conformance at the work-order base; keeps this crate dependency-free.
++pub fn sha256(data: &[u8]) -> [u8; 32] {
++    const K: [u32; 64] = [
++        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
++        0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
++        0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
++        0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
++        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
++        0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
++        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116,
++        0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
++        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
++        0xc67178f2,
++    ];
++    let mut m = data.to_vec();
++    let bits = (m.len() as u64).wrapping_mul(8);
++    m.push(0x80);
++    while m.len() % 64 != 56 {
++        m.push(0)
++    }
++    m.extend(bits.to_be_bytes());
++    let mut h = [
++        0x6a09e667u32,
++        0xbb67ae85,
++        0x3c6ef372,
++        0xa54ff53a,
++        0x510e527f,
++        0x9b05688c,
++        0x1f83d9ab,
++        0x5be0cd19,
++    ];
++    for c in m.chunks_exact(64) {
++        let mut w = [0u32; 64];
++        for (i, x) in c.chunks_exact(4).enumerate() {
++            w[i] = u32::from_be_bytes(x.try_into().unwrap())
++        }
++        for i in 16..64 {
++            let a = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
++            let b = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
++            w[i] = w[i - 16]
++                .wrapping_add(a)
++                .wrapping_add(w[i - 7])
++                .wrapping_add(b)
++        }
++        let (mut a, mut b, mut c0, mut d, mut e, mut f, mut g, mut hh) =
++            (h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]);
++        for i in 0..64 {
++            let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
++            let ch = (e & f) ^ (!e & g);
++            let t1 = hh
++                .wrapping_add(s1)
++                .wrapping_add(ch)
++                .wrapping_add(K[i])
++                .wrapping_add(w[i]);
++            let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
++            let maj = (a & b) ^ (a & c0) ^ (b & c0);
++            let t2 = s0.wrapping_add(maj);
++            hh = g;
++            g = f;
++            f = e;
++            e = d.wrapping_add(t1);
++            d = c0;
++            c0 = b;
++            b = a;
++            a = t1.wrapping_add(t2)
++        }
++        for (i, x) in [a, b, c0, d, e, f, g, hh].iter().enumerate() {
++            h[i] = h[i].wrapping_add(*x)
++        }
++    }
++    let mut out = [0; 32];
++    for (i, x) in h.iter().enumerate() {
++        out[i * 4..i * 4 + 4].copy_from_slice(&x.to_be_bytes())
++    }
++    out
++}
+diff --git a/experiments/unified-commitment/crates/uc-core/tests/recovery.rs b/experiments/unified-commitment/crates/uc-core/tests/recovery.rs
+new file mode 100644
+index 0000000..aafe534
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-core/tests/recovery.rs
+@@ -0,0 +1,799 @@
++//! Injected I/O and byte-level faults only: not OS-crash or power-loss evidence.
++use exp1_record_format::{Body, ScanLimits, encode, scan_with_limits};
++use std::{
++    cell::Cell,
++    fs,
++    io::{self, Write},
++    path::{Path, PathBuf},
++    sync::{
++        Arc,
++        atomic::{AtomicU64, Ordering},
++    },
++};
++use uc_core::{
++    Durability, HISTORY_FILE, Log, LogError, Outcome, Rejection, Transaction, Writer, identity,
++    sha256,
++};
++
++struct Temp(PathBuf);
++impl Temp {
++    fn new() -> Self {
++        static NEXT: AtomicU64 = AtomicU64::new(0);
++        let p = std::env::temp_dir().join(format!(
++            "uc-recovery-{}-{}-{}",
++            std::process::id(),
++            NEXT.fetch_add(1, Ordering::Relaxed),
++            std::time::SystemTime::now()
++                .duration_since(std::time::UNIX_EPOCH)
++                .unwrap()
++                .as_nanos()
++        ));
++        Log::<State>::create(&p, apply, decode).unwrap();
++        Self(p)
++    }
++    fn history(&self) -> PathBuf {
++        self.0.join(HISTORY_FILE)
++    }
++}
++impl Drop for Temp {
++    fn drop(&mut self) {
++        let p = self.0.canonicalize().unwrap();
++        assert_eq!(
++            p.parent().unwrap(),
++            std::env::temp_dir().canonicalize().unwrap()
++        );
++        assert!(
++            p.file_name()
++                .unwrap()
++                .to_str()
++                .unwrap()
++                .starts_with("uc-recovery-")
++        );
++        fs::remove_dir_all(p).unwrap();
++    }
++}
++type State = Vec<u8>;
++fn apply(s: &mut State, payload: &[u8]) -> Result<(), String> {
++    s.extend(payload);
++    Ok(())
++}
++fn decode(s: &[u8]) -> Result<State, String> {
++    Ok(s.to_vec())
++}
++fn open(p: &Path) -> Result<(Log<State>, uc_core::OpenReport), LogError> {
++    Log::open(p, apply, decode)
++}
++fn txn(n: u64, mode: Durability) -> Transaction {
++    Transaction {
++        request_id: identity(n, 0x52),
++        payload: vec![n as u8],
++        durability: mode,
++    }
++}
++fn commit(log: &mut Log<State>, n: u64, mode: Durability) -> Outcome {
++    log.commit(txn(n, mode), |_| Ok(())).unwrap()
++}
++fn frames(bytes: &[u8]) -> Vec<exp1_record_format::Record> {
++    scan_with_limits(
++        bytes,
++        ScanLimits {
++            max_diagnostic_bytes: bytes.len(),
++            ..ScanLimits::default()
++        },
++    )
++    .records
++}
++fn write_frames(path: &Path, records: &[exp1_record_format::Record]) {
++    fs::write(
++        path,
++        records
++            .iter()
++            .flat_map(|r| encode(r).unwrap())
++            .collect::<Vec<_>>(),
++    )
++    .unwrap();
++}
++
++#[test]
++fn rejected_conflict_has_no_bytes_and_never_recovers() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D2);
++    let before = fs::read(t.history()).unwrap();
++    assert_eq!(
++        log.commit(txn(2, Durability::D2), |_| Err(Rejection::Validation(
++            "conflict".into()
++        )))
++        .unwrap(),
++        Outcome::Rejected {
++            reason: Rejection::Validation("conflict".into())
++        }
++    );
++    assert_eq!(fs::read(t.history()).unwrap(), before);
++    drop(log);
++    assert_eq!(&*open(&t.0).unwrap().0.snapshot(), &[1]);
++}
++#[test]
++fn lost_response_retry_and_changed_request_or_durability_are_resolved_without_append() {
++    for mode in [Durability::D1, Durability::D2] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        let outcome = commit(&mut log, 1, mode);
++        drop(log);
++        let (mut log, _) = open(&t.0).unwrap();
++        let before = fs::read(t.history()).unwrap();
++        assert_eq!(
++            log.commit(txn(1, mode), |_| panic!("retry must precede validator"))
++                .unwrap(),
++            outcome
++        );
++        let mut changed = txn(1, mode);
++        changed.payload.push(99);
++        assert_eq!(
++            log.commit(changed, |_| panic!()).unwrap(),
++            Outcome::Rejected {
++                reason: Rejection::RequestIdReuse
++            }
++        );
++        let mut oversized_reuse = txn(1, mode);
++        oversized_reuse.payload = vec![0; uc_core::MAX_PAYLOAD + 1];
++        assert_eq!(
++            log.commit(oversized_reuse, |_| panic!(
++                "retry precedes size/validation"
++            ))
++            .unwrap(),
++            Outcome::Rejected {
++                reason: Rejection::RequestIdReuse
++            }
++        );
++        let other = if mode == Durability::D1 {
++            Durability::D2
++        } else {
++            Durability::D1
++        };
++        assert_eq!(
++            commit(&mut log, 1, other),
++            Outcome::Rejected {
++                reason: Rejection::RequestIdReuse
++            }
++        );
++        assert_eq!(fs::read(t.history()).unwrap(), before);
++    }
++}
++#[test]
++fn publication_is_one_immutable_snapshot_and_timestamp_is_persisted() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    let old = log.snapshot();
++    let observed = Arc::clone(&old);
++    log.set_hook(move |_| assert!(observed.is_empty()));
++    let outcome = commit(&mut log, 1, Durability::D2);
++    assert!(old.is_empty());
++    assert_eq!(&*log.snapshot(), &[1]);
++    let records = frames(&fs::read(t.history()).unwrap());
++    let Body::Final {
++        durability_time, ..
++    } = records[3].body
++    else {
++        panic!()
++    };
++    assert!(
++        matches!(outcome,Outcome::Committed { durability_time: time,.. } if time==durability_time)
++    );
++}
++#[derive(Clone, Copy, Debug)]
++enum Fault {
++    Short,
++    Zero,
++    Error,
++    SubmittedError,
++    Sync,
++}
++struct Script {
++    inner: Box<dyn Writer>,
++    fault: Fault,
++    at: usize,
++    writes: usize,
++    syncs: Cell<usize>,
++}
++impl Write for Script {
++    fn write(&mut self, b: &[u8]) -> io::Result<usize> {
++        self.writes += 1;
++        if self.writes == self.at {
++            match self.fault {
++                Fault::Short => return self.inner.write(&b[..b.len() / 2]),
++                Fault::Zero => return Ok(0),
++                Fault::Error => return Err(io::Error::other("injected write")),
++                Fault::SubmittedError => {
++                    self.inner.write_all(b)?;
++                    return Err(io::Error::other("injected after submission"));
++                }
++                Fault::Sync => {}
++            }
++        }
++        self.inner.write(b)
++    }
++    fn flush(&mut self) -> io::Result<()> {
++        self.inner.flush()
++    }
++}
++impl Writer for Script {
++    fn synchronize(&self) -> io::Result<()> {
++        self.syncs.set(self.syncs.get() + 1);
++        if matches!(self.fault, Fault::Sync) && self.syncs.get() == self.at {
++            return Err(io::Error::other("injected sync"));
++        }
++        self.inner.synchronize()
++    }
++}
++#[test]
++fn injected_short_zero_write_and_sync_errors_at_every_step_poison_until_reopen() {
++    for mode in [Durability::D1, Durability::D2] {
++        for fault in [
++            Fault::Short,
++            Fault::Zero,
++            Fault::Error,
++            Fault::SubmittedError,
++            Fault::Sync,
++        ] {
++            if matches!(fault, Fault::Sync) && mode == Durability::D1 {
++                continue;
++            }
++            let steps = if matches!(fault, Fault::Sync) { 4 } else { 5 };
++            for at in 1..=steps {
++                let t = Temp::new();
++                let (mut log, _) = open(&t.0).unwrap();
++                log.wrap_writer(|inner| {
++                    Box::new(Script {
++                        inner,
++                        fault,
++                        at,
++                        writes: 0,
++                        syncs: Cell::new(0),
++                    })
++                });
++                let outcome = commit(&mut log, 1, mode);
++                let boundary = at >= 4;
++                assert_eq!(
++                    matches!(outcome, Outcome::Indeterminate { .. }),
++                    boundary,
++                    "{mode:?} {fault:?} {at}: {outcome:?}"
++                );
++                assert!(log.is_poisoned());
++                assert!(log.snapshot().is_empty());
++                let before = fs::read(t.history()).unwrap();
++                assert!(matches!(
++                    log.commit(txn(2, mode), |_| panic!()),
++                    Err(LogError::Poisoned)
++                ));
++                assert_eq!(fs::read(t.history()).unwrap(), before);
++                drop(log);
++                let (mut log, report) = open(&t.0).unwrap();
++                let committed = (matches!(fault, Fault::Sync) && at == 4)
++                    || (matches!(fault, Fault::SubmittedError) && at == 5);
++                assert_eq!(
++                    !log.snapshot().is_empty(),
++                    committed,
++                    "{mode:?} {fault:?} {at}"
++                );
++                if !report.unresolved_bindings.is_empty() {
++                    assert_eq!(
++                        commit(&mut log, 1, mode),
++                        Outcome::Rejected {
++                            reason: Rejection::Uncommitted
++                        }
++                    );
++                }
++                let next = commit(&mut log, 2, mode);
++                assert!(matches!(next, Outcome::Committed { .. }));
++                drop(log);
++                open(&t.0).unwrap();
++            }
++        }
++    }
++}
++#[test]
++fn injected_byte_tails_at_every_boundary_and_inside_commit_only_replay_selected_events() {
++    for mode in [Durability::D1, Durability::D2] {
++        let source = Temp::new();
++        let (mut log, _) = open(&source.0).unwrap();
++        commit(&mut log, 1, mode);
++        commit(&mut log, 2, mode);
++        drop(log);
++        let bytes = fs::read(source.history()).unwrap();
++        let records = frames(&bytes);
++        let mut offsets = vec![0];
++        for record in &records {
++            offsets.push(offsets.last().unwrap() + encode(record).unwrap().len());
++        }
++        for (i, &offset) in offsets.iter().enumerate() {
++            let t = Temp::new();
++            fs::write(t.history(), &bytes[..offset]).unwrap();
++            let (mut log, report) = open(&t.0).unwrap();
++            assert_eq!(log.snapshot().len(), i / 5);
++            assert!(report.dropped_tail.is_none());
++            if i % 5 == 4 {
++                assert_eq!(report.uncommitted_finals.len(), 1);
++            }
++            if i % 5 >= 2 {
++                assert_eq!(report.gaps.len(), 1);
++            }
++            assert!(matches!(
++                commit(&mut log, 100, mode),
++                Outcome::Committed { .. }
++            ));
++            drop(log);
++            open(&t.0).unwrap();
++        }
++        // A Final followed by a Commit truncated one byte inside its frame is valid residue.
++        for end in [
++            offsets[4] + 1,
++            offsets[5] - 1,
++            offsets[9] + 1,
++            offsets[10] - 1,
++        ] {
++            let t = Temp::new();
++            fs::write(t.history(), &bytes[..end]).unwrap();
++            let (log, report) = open(&t.0).unwrap();
++            let accepted = if end < offsets[5] {
++                offsets[4]
++            } else {
++                offsets[9]
++            };
++            assert_eq!(report.dropped_tail, Some(accepted as u64));
++            assert!(report.tail_truncated_and_synced);
++            assert_eq!(report.uncommitted_finals.len(), 1);
++            assert_eq!(fs::metadata(t.history()).unwrap().len(), accepted as u64);
++            assert_eq!(log.snapshot().len(), usize::from(end > offsets[5]));
++        }
++    }
++}
++#[test]
++fn injected_interior_final_and_provisional_damage_fail_closed_at_exact_offset() {
++    for index in [2, 3] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        commit(&mut log, 1, Durability::D2);
++        commit(&mut log, 2, Durability::D2);
++        drop(log);
++        let mut bytes = fs::read(t.history()).unwrap();
++        let records = frames(&bytes);
++        let offset: usize = records[..index]
++            .iter()
++            .map(|r| encode(r).unwrap().len())
++            .sum();
++        bytes[offset + 40] ^= 1;
++        fs::write(t.history(), &bytes).unwrap();
++        assert!(matches!(open(&t.0),Err(LogError::Corrupt {offset:o,..}) if o==offset as u64));
++        assert_eq!(fs::read(t.history()).unwrap(), bytes);
++    }
++}
++#[test]
++fn every_final_envelope_mismatch_with_valid_rf1_crcs_fails_closed() {
++    // magic, request, event, sequence, realtime, mode, both explicit-empty counts,
++    // normalized magic/mode/length/payload and trailing byte are independently mutated.
++    for index in [0, 5, 21, 37, 45, 53, 54, 56, 58, 63, 64, 72, usize::MAX] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        commit(&mut log, 1, Durability::D2);
++        drop(log);
++        let mut records = frames(&fs::read(t.history()).unwrap());
++        let Body::Final {
++            complete_envelope, ..
++        } = &mut records[3].body
++        else {
++            panic!()
++        };
++        if index == usize::MAX {
++            complete_envelope.push(0);
++        } else {
++            complete_envelope[index] ^= 0x04;
++        }
++        let final_bytes = encode(&records[3]).unwrap();
++        let Body::Commit { final_crc32c, .. } = &mut records[4].body else {
++            panic!()
++        };
++        *final_crc32c = u32::from_le_bytes(final_bytes[28..32].try_into().unwrap());
++        write_frames(&t.history(), &records);
++        assert!(
++            matches!(
++                open(&t.0),
++                Err(LogError::EnvelopeMismatch {
++                    physical_ordinal: 4
++                })
++            ),
++            "field {index}"
++        );
++        // Envelope validation also applies to valid unselected Final residue.
++        write_frames(&t.history(), &records[..4]);
++        assert!(matches!(
++            open(&t.0),
++            Err(LogError::EnvelopeMismatch {
++                physical_ordinal: 4
++            })
++        ));
++    }
++}
++
++#[test]
++fn valid_but_different_envelope_durability_is_not_an_upgrade() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D1);
++    drop(log);
++    let mut records = frames(&fs::read(t.history()).unwrap());
++    let Body::Final {
++        complete_envelope, ..
++    } = &mut records[3].body
++    else {
++        panic!()
++    };
++    complete_envelope[53] = 2;
++    let encoded = encode(&records[3]).unwrap();
++    let Body::Commit { final_crc32c, .. } = &mut records[4].body else {
++        panic!()
++    };
++    *final_crc32c = u32::from_le_bytes(encoded[28..32].try_into().unwrap());
++    write_frames(&t.history(), &records);
++    assert!(matches!(
++        open(&t.0),
++        Err(LogError::EnvelopeMismatch {
++            physical_ordinal: 4
++        })
++    ));
++}
++
++#[test]
++fn successful_writer_records_exact_r5_sync_placements_and_three_payload_copies() {
++    use std::sync::Mutex;
++    struct Observe {
++        inner: Box<dyn Writer>,
++        calls: Arc<Mutex<Vec<u8>>>,
++    }
++    impl Write for Observe {
++        fn write(&mut self, b: &[u8]) -> io::Result<usize> {
++            self.calls.lock().unwrap().push(b[6]);
++            self.inner.write(b)
++        }
++        fn flush(&mut self) -> io::Result<()> {
++            self.inner.flush()
++        }
++    }
++    impl Writer for Observe {
++        fn synchronize(&self) -> io::Result<()> {
++            self.calls.lock().unwrap().push(0);
++            self.inner.synchronize()
++        }
++    }
++    for mode in [Durability::D1, Durability::D2] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        let calls = Arc::new(Mutex::new(Vec::new()));
++        log.wrap_writer(|inner| {
++            Box::new(Observe {
++                inner,
++                calls: Arc::clone(&calls),
++            })
++        });
++        let observed = Arc::clone(&calls);
++        log.set_hook(move |point| {
++            let kind = match point {
++                uc_core::Point::Binding => 1,
++                uc_core::Point::Reservation => 2,
++                uc_core::Point::Provisional => 3,
++                _ => return,
++            };
++            assert_eq!(
++                observed.lock().unwrap().last(),
++                Some(&if mode == Durability::D2 { 0 } else { kind })
++            );
++        });
++        let payload = b"unique complete opaque payload".to_vec();
++        let transaction = Transaction {
++            request_id: identity(1, 0x52),
++            payload: payload.clone(),
++            durability: mode,
++        };
++        assert!(matches!(
++            log.commit(transaction, |_| Ok(())).unwrap(),
++            Outcome::Committed { .. }
++        ));
++        assert_eq!(
++            *calls.lock().unwrap(),
++            if mode == Durability::D1 {
++                vec![1, 2, 3, 5, 6]
++            } else {
++                vec![1, 0, 2, 0, 3, 0, 5, 6, 0]
++            }
++        );
++        calls.lock().unwrap().clear();
++        log.checkpoint(|s| Ok(s.clone())).unwrap();
++        assert_eq!(
++            *calls.lock().unwrap(),
++            vec![0],
++            "history sync before checkpoint at {mode:?}"
++        );
++        let bytes = fs::read(t.history()).unwrap();
++        assert_eq!(
++            bytes
++                .windows(payload.len())
++                .filter(|w| *w == payload)
++                .count(),
++            3
++        );
++    }
++}
++
++#[test]
++fn checkpoint_is_create_new_and_newest_valid_checkpoint_falls_back_after_injected_partial_write() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D2);
++    let first = log.checkpoint(|s| Ok(s.clone())).unwrap();
++    assert!(matches!(
++        log.checkpoint(|s| Ok(s.clone())),
++        Err(LogError::Io {
++            kind: io::ErrorKind::AlreadyExists,
++            ..
++        })
++    ));
++    commit(&mut log, 2, Durability::D2);
++    let second = log.checkpoint(|s| Ok(s.clone())).unwrap();
++    drop(log);
++    fs::write(&second.path, b"UC1\0partial").unwrap();
++    let (log, report) = open(&t.0).unwrap();
++    assert_eq!(report.checkpoint, Some(first.position));
++    assert_eq!(report.rejected_checkpoints.len(), 1);
++    assert_eq!(&*log.snapshot(), &[1, 2]);
++}
++#[test]
++fn checkpoint_replays_only_later_commits_and_full_replays_have_identical_digests() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D2);
++    let cp = log.checkpoint(|s| Ok(s.clone())).unwrap();
++    commit(&mut log, 2, Durability::D2);
++    drop(log);
++    let (log, report) = open(&t.0).unwrap();
++    assert_eq!(report.checkpoint, Some(cp.position));
++    let expected = sha256(&log.snapshot());
++    assert_eq!(&*log.snapshot(), &[1, 2]);
++    drop(log);
++    fs::remove_file(cp.path).unwrap();
++    for _ in 0..2 {
++        let (log, report) = open(&t.0).unwrap();
++        assert!(report.checkpoint.is_none());
++        assert_eq!(sha256(&log.snapshot()), expected);
++    }
++}
++fn fix_cp_crc(bytes: &mut [u8]) {
++    let n = bytes.len() - 4;
++    let crc = uc_core::crc32c(&bytes[..n]);
++    bytes[n..].copy_from_slice(&crc.to_le_bytes());
++}
++#[test]
++fn injected_checkpoint_corruption_hash_mismatch_and_cache_disagreement_have_distinct_results() {
++    for kind in 0..3 {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        commit(&mut log, 1, Durability::D2);
++        let cp = log.checkpoint(|s| Ok(s.clone())).unwrap();
++        drop(log);
++        let mut bytes = fs::read(&cp.path).unwrap();
++        match kind {
++            0 => {
++                bytes.truncate(20);
++            } // interrupted checkpoint body: rejected, full replay
++            1 => {
++                bytes[28] ^= 1;
++                fix_cp_crc(&mut bytes);
++            } // valid checkpoint CRC, wrong prefix hash: fallback
++            _ => {
++                let n = bytes.len();
++                bytes[n - 5] ^= 1;
++                fix_cp_crc(&mut bytes);
++            } // valid cache framing, disagreement
++        }
++        fs::write(cp.path, bytes).unwrap();
++        if kind == 2 {
++            assert!(matches!(open(&t.0), Err(LogError::CheckpointCacheMismatch)));
++        } else {
++            let (log, report) = open(&t.0).unwrap();
++            assert_eq!(report.rejected_checkpoints.len(), 1);
++            assert_eq!(&*log.snapshot(), &[1]);
++        }
++    }
++}
++#[test]
++fn injected_lost_committed_suffix_below_valid_checkpoint_fails_closed() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D2);
++    let offset = log.history_bytes();
++    commit(&mut log, 2, Durability::D2);
++    let cp = log.checkpoint(|s| Ok(s.clone())).unwrap();
++    drop(log);
++    fs::OpenOptions::new()
++        .write(true)
++        .open(t.history())
++        .unwrap()
++        .set_len(offset)
++        .unwrap();
++    let error = match open(&t.0) {
++        Err(e) => e,
++        Ok(_) => panic!("lost suffix accepted"),
++    };
++    assert!(
++        error
++            .to_string()
++            .contains("history shorter than checkpoint")
++    );
++    // Negative control: without the independent checkpoint the loss is bytewise undecidable.
++    fs::remove_file(cp.path).unwrap();
++    assert_eq!(&*open(&t.0).unwrap().0.snapshot(), &[1]);
++}
++#[test]
++fn reservation_high_water_gap_survives_reopen_and_binding_never_expires() {
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    commit(&mut log, 1, Durability::D2);
++    drop(log);
++    let mut records = frames(&fs::read(t.history()).unwrap());
++    records.truncate(2);
++    let Body::Reservation { high_water, .. } = &mut records[1].body else {
++        panic!()
++    };
++    *high_water = 99;
++    write_frames(&t.history(), &records);
++    let (mut log, report) = open(&t.0).unwrap();
++    assert_eq!(report.gaps, vec![1]);
++    assert_eq!(
++        commit(&mut log, 1, Durability::D2),
++        Outcome::Rejected {
++            reason: Rejection::Uncommitted
++        }
++    );
++    assert!(matches!(
++        commit(&mut log, 2, Durability::D2),
++        Outcome::Committed { sequence: 100, .. }
++    ));
++    log.checkpoint(|s| Ok(s.clone())).unwrap();
++    drop(log);
++    let (mut log, _) = open(&t.0).unwrap();
++    assert_eq!(
++        commit(&mut log, 1, Durability::D2),
++        Outcome::Rejected {
++            reason: Rejection::Uncommitted
++        }
++    );
++}
++#[test]
++fn sha256_known_vector_and_oversize_transaction_rejected_before_mutation() {
++    assert_eq!(
++        sha256(b"abc"),
++        [
++            0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea, 0x41, 0x41, 0x40, 0xde, 0x5d, 0xae,
++            0x22, 0x23, 0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c, 0xb4, 0x10, 0xff, 0x61,
++            0xf2, 0x00, 0x15, 0xad
++        ]
++    );
++    let t = Temp::new();
++    let (mut log, _) = open(&t.0).unwrap();
++    let mut too_big = txn(1, Durability::D1);
++    too_big.payload = vec![0; uc_core::MAX_PAYLOAD + 1];
++    assert!(matches!(
++        log.commit(too_big, |_| panic!()),
++        Err(LogError::Limit)
++    ));
++    assert_eq!(log.history_bytes(), 0);
++    assert!(!log.is_poisoned());
++}
++
++#[test]
++fn rf1_magic_payload_is_rejected_before_write_and_old_binding_is_corrupt() {
++    for mode in [Durability::D1, Durability::D2] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        let mut request = txn(1, mode);
++        request.payload = b"before RDE1 after".to_vec();
++        assert!(
++            matches!(log.commit(request, |_| panic!("before validation")),
++            Err(LogError::Invalid(reason)) if reason == "payload contains the RF1 magic")
++        );
++        assert_eq!(log.history_bytes(), 0);
++        assert!(fs::read(t.history()).unwrap().is_empty());
++        assert!(!log.is_poisoned());
++        commit(&mut log, 1, mode);
++        drop(log);
++        let mut records = frames(&fs::read(t.history()).unwrap());
++        let Body::Binding {
++            normalized_request, ..
++        } = &mut records[0].body
++        else {
++            panic!()
++        };
++        normalized_request[6..14].copy_from_slice(&4u64.to_le_bytes());
++        normalized_request.truncate(14);
++        normalized_request.extend(b"RDE1");
++        // Legitimate RF1 encoding and CRC; rejected by the normalized-request decoder.
++        write_frames(&t.history(), &records[..1]);
++        assert!(
++            matches!(open(&t.0), Err(LogError::Corrupt { offset: 0, error })
++            if error == "payload contains the RF1 magic")
++        );
++    }
++}
++
++#[test]
++fn injected_torn_binding_with_magic_in_valid_uuid_remains_corrupt_undecidable() {
++    // Payload exclusion cannot constrain opaque UUID bytes in the RF1 body.
++    // HEADER_LEN is 32; the scanner searches for magic after that header.
++    for mode in [Durability::D1, Durability::D2] {
++        let t = Temp::new();
++        let (mut log, _) = open(&t.0).unwrap();
++        let mut request = txn(1, mode);
++        request.request_id.0[..4].copy_from_slice(b"RDE1");
++        request.request_id.validate_v4().unwrap();
++        assert!(matches!(
++            log.commit(request, |_| Ok(())).unwrap(),
++            Outcome::Committed { .. }
++        ));
++        drop(log);
++        let records = frames(&fs::read(t.history()).unwrap());
++        let binding = encode(&records[0]).unwrap();
++        assert_eq!(&binding[32..36], b"RDE1");
++        fs::write(t.history(), &binding[..binding.len() - 1]).unwrap();
++        assert!(
++            matches!(open(&t.0), Err(LogError::Corrupt { offset: 0, error })
++            if error.contains("InteriorDamage"))
++        );
++    }
++}
++
++#[test]
++fn replay_io_failure_is_distinct_from_byte_corruption() {
++    let t = Temp::new();
++    // Metadata succeeds; reopening/reading a directory as a history fails at byte zero.
++    assert!(matches!(
++        uc_core::read_history(&t.0),
++        Err(LogError::Io { offset: 0, .. })
++    ));
++}
++
++#[test]
++fn open_never_creates_missing_directory_or_history_and_create_is_exclusive() {
++    let t = Temp::new();
++    let missing = t.0.join("missing");
++    assert!(matches!(open(&missing), Err(LogError::NotFound)));
++    assert!(!missing.exists());
++    assert!(matches!(
++        uc_core::Directory::acquire(&missing),
++        Err(LogError::NotFound)
++    ));
++    assert!(!missing.exists());
++    fs::create_dir(&missing).unwrap();
++    assert!(matches!(open(&missing), Err(LogError::NotFound)));
++    assert_eq!(fs::read_dir(&missing).unwrap().count(), 0);
++    assert!(matches!(
++        Log::create(&missing, apply, decode),
++        Err(LogError::Io {
++            kind: io::ErrorKind::AlreadyExists,
++            ..
++        })
++    ));
++    assert_eq!(fs::read_dir(&missing).unwrap().count(), 0);
++    let existing = fs::read(t.history()).unwrap();
++    assert!(matches!(
++        Log::create(&t.0, apply, decode),
++        Err(LogError::Io {
++            kind: io::ErrorKind::AlreadyExists,
++            ..
++        })
++    ));
++    assert_eq!(fs::read(t.history()).unwrap(), existing);
++    let fresh = missing.join("fresh");
++    let (log, _) = Log::create(&fresh, apply, decode).unwrap();
++    assert!(log.snapshot().is_empty());
++    drop(log);
++    open(&fresh).unwrap();
++}
+diff --git a/experiments/unified-commitment/crates/uc-harness/Cargo.toml b/experiments/unified-commitment/crates/uc-harness/Cargo.toml
+new file mode 100644
+index 0000000..811bba4
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-harness/Cargo.toml
+@@ -0,0 +1,12 @@
++[package]
++name = "uc-harness"
++version = "0.1.0"
++edition.workspace = true
++rust-version.workspace = true
++publish.workspace = true
++[lints]
++workspace = true
++[dependencies]
++uc-core = { path = "../uc-core" }
++uc-memory = { path = "../uc-memory" }
++cm-trace = { path = "../../../convergence-memory/crates/cm-trace" }
+diff --git a/experiments/unified-commitment/crates/uc-harness/src/main.rs b/experiments/unified-commitment/crates/uc-harness/src/main.rs
+new file mode 100644
+index 0000000..235d1e2
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-harness/src/main.rs
+@@ -0,0 +1,166 @@
++use std::path::Path;
++use uc_core::{Durability, Point, identity};
++use uc_memory::{Change, MemoryEngine, encode_state};
++
++fn main() {
++    if let Err(e) = run() {
++        eprintln!("{e}");
++        std::process::exit(1);
++    }
++}
++fn run() -> Result<(), String> {
++    let mut args: Vec<_> = std::env::args().skip(1).collect();
++    if cm_trace::run::generate_cli(&args)? {
++        return Ok(());
++    }
++    if args.first().is_some_and(|s| s == "fault") {
++        if args.len() != 4 {
++            return Err("fault d1|d2|lock DIRECTORY POINT".into());
++        }
++        return fault(&args[1], Path::new(&args[2]), &args[3]);
++    }
++    let retain = cm_trace::run::take_retain_store(&mut args);
++    if args.len() != 4 || args[0] != "run" {
++        return Err("run TRACE.cmt OUT_DIR d1|d2 [--retain-store]".into());
++    }
++    let mode = Durability::parse(&args[3])?;
++    let trace = cm_trace::run::load(Path::new(&args[1]))?;
++    run_series(&trace, Path::new(&args[2]), mode, retain)
++}
++fn run_series(
++    trace: &cm_trace::run::LoadedTrace,
++    output: &Path,
++    mode: Durability,
++    retain: bool,
++) -> Result<(), String> {
++    let label = MemoryEngine::series_label(mode);
++    cm_trace::run::series_with_meta(
++        trace,
++        output,
++        &label,
++        mode.label(),
++        retain,
++        cm_trace::run::SeriesMeta {
++            experiment: "EXP-0003",
++            hypothesis: "HYP-0003",
++            source_prefixes: &[
++                "experiments/unified-commitment/",
++                "experiments/convergence-memory/crates/cm-trace/",
++                "experiments/exp-0001/crates/exp1-record-format/",
++                "experiments/exp-0001/crates/exp1-raw-append-replay/",
++            ],
++        },
++        |dir| MemoryEngine::create_with_label(dir, mode, label.clone()).map(|(engine, _)| engine),
++    )
++}
++fn fault(scenario: &str, directory: &Path, point: &str) -> Result<(), String> {
++    if scenario == "lock" {
++        let (_engine, _) = MemoryEngine::create(directory, Durability::D2)?;
++        println!("locked");
++        use std::io::Write;
++        std::io::stdout().flush().map_err(|e| e.to_string())?;
++        let mut line = String::new();
++        std::io::stdin()
++            .read_line(&mut line)
++            .map_err(|e| e.to_string())?;
++        std::process::abort();
++    }
++    let mode = Durability::parse(scenario)?;
++    let point = Point::parse(point)?;
++    let (mut engine, _) = MemoryEngine::create(directory, mode)?;
++    engine.log_mut().set_hook(move |p| {
++        if p == point {
++            // Out-of-band placement marker in parent-captured stdout, never recovery input.
++            println!("injected process termination at {p:?}");
++            use std::io::Write;
++            std::io::stdout().flush().expect("placement evidence");
++            std::process::abort();
++        }
++    });
++    let a = cm_trace::generate::record(1, 1, &mut cm_trace::generate::SplitMix64(7), false);
++    let b = cm_trace::generate::record(2, 1, &mut cm_trace::generate::SplitMix64(8), false);
++    let changes = [
++        Change::Put {
++            record: Box::new(a),
++            incarnation: 1,
++            insert: true,
++        },
++        Change::Put {
++            record: Box::new(b),
++            incarnation: 1,
++            insert: true,
++        },
++    ];
++    let result = engine
++        .transact(identity(1, 0x52), &changes)
++        .map_err(|e| e.to_string())?;
++    if !matches!(result, uc_core::Outcome::Committed { .. }) {
++        return Err(format!("fault setup: {result:?}"));
++    }
++    if point == Point::Checkpoint {
++        engine
++            .log()
++            .checkpoint(encode_state)
++            .map_err(|e| e.to_string())?;
++    }
++    Err("injection point was not reached".into())
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn series_keeps_one_revision_bound_identity_in_every_evidence_file() {
++        for mode in [Durability::D1, Durability::D2] {
++            let dir = cm_trace::run::test_directory("uc-series-identity");
++            let trace = cm_trace::run::LoadedTrace::from_trace(cm_trace::generate::small());
++            run_series(&trace, &dir, mode, false).unwrap();
++            let environment = std::fs::read_to_string(dir.join("environment.txt")).unwrap();
++            let identity = environment
++                .lines()
++                .find(|s| s.starts_with("engine="))
++                .unwrap();
++            assert!(identity.contains("; rev="));
++            assert!(identity.starts_with(&format!("engine={}", mode.label())));
++            for i in 0..6 {
++                let trial = dir.join(format!(
++                    "{}-{i}",
++                    if i == 0 { "warmup" } else { "measured" }
++                ));
++                for path in [
++                    dir.join("summary.txt"),
++                    trial.join("environment.txt"),
++                    trial.join("throughput.txt"),
++                    trial.join("results.cmt"),
++                ] {
++                    let text = std::fs::read_to_string(&path).unwrap();
++                    assert!(
++                        text.lines().any(|line| line == identity),
++                        "{}",
++                        path.display()
++                    );
++                }
++                let observed = cm_trace::results::Results::decode(
++                    &std::fs::read_to_string(trial.join("observations.cmt")).unwrap(),
++                )
++                .unwrap();
++                assert_eq!(format!("engine={}", observed.engine), identity);
++            }
++            let absolute = dir.canonicalize().unwrap();
++            assert_eq!(
++                absolute.parent().unwrap(),
++                std::env::temp_dir().canonicalize().unwrap()
++            );
++            assert!(
++                absolute
++                    .file_name()
++                    .unwrap()
++                    .to_str()
++                    .unwrap()
++                    .starts_with("cm-uc-series-identity-")
++            );
++            std::fs::remove_dir_all(absolute).unwrap();
++        }
++    }
++}
+diff --git a/experiments/unified-commitment/crates/uc-harness/tests/faults.rs b/experiments/unified-commitment/crates/uc-harness/tests/faults.rs
+new file mode 100644
+index 0000000..7d62123
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-harness/tests/faults.rs
+@@ -0,0 +1,141 @@
++//! Injected process termination. The parent captures the exact placement marker.
++//! These tests do not claim OS-crash or power-loss survival.
++use std::{
++    fs,
++    io::{BufRead, BufReader, Write},
++    path::PathBuf,
++    process::{Command, Stdio},
++};
++use uc_core::{Durability, Outcome, Rejection, identity};
++use uc_memory::{Change, MemoryEngine};
++struct Temp(PathBuf);
++impl Temp {
++    fn new() -> Self {
++        let p = cm_trace::run::test_directory("uc-process");
++        fs::create_dir(&p).unwrap();
++        Self(p)
++    }
++}
++impl Drop for Temp {
++    fn drop(&mut self) {
++        let p = self.0.canonicalize().unwrap();
++        assert_eq!(
++            p.parent().unwrap(),
++            std::env::temp_dir().canonicalize().unwrap()
++        );
++        assert!(
++            p.file_name()
++                .unwrap()
++                .to_str()
++                .unwrap()
++                .starts_with("cm-uc-process-")
++        );
++        fs::remove_dir_all(p).unwrap();
++    }
++}
++fn changes() -> Vec<Change> {
++    vec![
++        Change::Put {
++            record: Box::new(cm_trace::generate::record(
++                1,
++                1,
++                &mut cm_trace::generate::SplitMix64(7),
++                false,
++            )),
++            incarnation: 1,
++            insert: true,
++        },
++        Change::Put {
++            record: Box::new(cm_trace::generate::record(
++                2,
++                1,
++                &mut cm_trace::generate::SplitMix64(8),
++                false,
++            )),
++            incarnation: 1,
++            insert: true,
++        },
++    ]
++}
++#[test]
++fn injected_process_termination_matrix_both_levels_not_os_crash_or_power_loss() {
++    for (name, mode) in [("d1", Durability::D1), ("d2", Durability::D2)] {
++        for point in [
++            "binding",
++            "reservation",
++            "provisional",
++            "final",
++            "commit",
++            "synced",
++            "checkpoint",
++        ] {
++            let t = Temp::new();
++            let output = Command::new(env!("CARGO_BIN_EXE_uc-harness"))
++                .args(["fault", name, t.0.join("store").to_str().unwrap(), point])
++                .output()
++                .unwrap();
++            assert!(!output.status.success());
++            let stdout = String::from_utf8(output.stdout).unwrap();
++            assert!(
++                stdout.contains("injected process termination at"),
++                "{name} {point}: {}",
++                String::from_utf8_lossy(&output.stderr)
++            );
++            assert!(
++                stdout.to_lowercase().contains(point),
++                "wrong placement: {stdout}"
++            );
++            let (mut engine, report) = MemoryEngine::open(&t.0.join("store"), mode).unwrap();
++            let selected = matches!(point, "commit" | "synced" | "checkpoint");
++            assert_eq!(
++                engine.log().snapshot().records().len(),
++                if selected { 2 } else { 0 },
++                "{name} {point}"
++            );
++            let before = engine.log().history_bytes();
++            let outcome = engine.transact(identity(1, 0x52), &changes()).unwrap();
++            if selected {
++                assert!(matches!(outcome,Outcome::Committed {achieved,..} if achieved==mode));
++            } else {
++                assert_eq!(
++                    outcome,
++                    Outcome::Rejected {
++                        reason: Rejection::Uncommitted
++                    }
++                );
++                assert_eq!(report.unresolved_bindings.len(), 1);
++            }
++            assert_eq!(engine.log().history_bytes(), before);
++            if point == "final" {
++                assert_eq!(report.uncommitted_finals, vec![4]);
++            }
++            if point == "checkpoint" {
++                assert!(report.checkpoint.is_some());
++            }
++        }
++    }
++}
++#[test]
++fn injected_owner_abort_releases_os_lock_without_stale_file_deletion() {
++    let t = Temp::new();
++    let mut child = Command::new(env!("CARGO_BIN_EXE_uc-harness"))
++        .args(["fault", "lock", t.0.join("store").to_str().unwrap(), "hold"])
++        .stdin(Stdio::piped())
++        .stdout(Stdio::piped())
++        .spawn()
++        .unwrap();
++    let mut line = String::new();
++    BufReader::new(child.stdout.take().unwrap())
++        .read_line(&mut line)
++        .unwrap();
++    assert_eq!(line.trim(), "locked");
++    assert!(matches!(
++        uc_core::Directory::acquire(&t.0.join("store")),
++        Err(uc_core::LogError::Owned)
++    ));
++    assert!(MemoryEngine::open(&t.0.join("store"), Durability::D2).is_err());
++    child.stdin.take().unwrap().write_all(b"abort\n").unwrap();
++    assert!(!child.wait().unwrap().success());
++    assert!(t.0.join("store/owner.lock").exists());
++    MemoryEngine::open(&t.0.join("store"), Durability::D2).unwrap();
++}
+diff --git a/experiments/unified-commitment/crates/uc-memory/Cargo.toml b/experiments/unified-commitment/crates/uc-memory/Cargo.toml
+new file mode 100644
+index 0000000..8f6b3c9
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-memory/Cargo.toml
+@@ -0,0 +1,11 @@
++[package]
++name = "uc-memory"
++version = "0.1.0"
++edition.workspace = true
++rust-version.workspace = true
++publish.workspace = true
++[lints]
++workspace = true
++[dependencies]
++uc-core = { path = "../uc-core" }
++cm-trace = { path = "../../../convergence-memory/crates/cm-trace" }
+diff --git a/experiments/unified-commitment/crates/uc-memory/src/lib.rs b/experiments/unified-commitment/crates/uc-memory/src/lib.rs
+new file mode 100644
+index 0000000..0f39e9c
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-memory/src/lib.rs
+@@ -0,0 +1,643 @@
++//! EXP-0003 CMM2 adapter. Engine mutations never call the independent CMT1 model.
++use cm_trace::{Answer, Id, Memory, Op, Value, format, hex, run::Engine};
++use std::{
++    collections::{BTreeMap, BTreeSet},
++    path::{Path, PathBuf},
++    sync::Arc,
++    time::Instant,
++};
++use uc_core::{Durability, Log, LogError, OpenReport, Outcome, Rejection, Transaction, Uuid};
++
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub struct Slot {
++    pub incarnation: u64,
++    pub record: Option<Arc<Memory>>,
++}
++#[derive(Clone, Debug, Default, PartialEq, Eq)]
++pub struct State {
++    pub slots: BTreeMap<Id, Slot>,
++    pub edges: BTreeSet<(Id, u64, Id, u64)>,
++}
++impl State {
++    pub fn records(&self) -> Vec<Memory> {
++        self.slots
++            .values()
++            .filter_map(|s| s.record.as_deref().cloned())
++            .collect()
++    }
++    pub fn current(&self, id: &Id, incarnation: u64) -> Result<&Memory, String> {
++        let s = self.slots.get(id).ok_or("NotFound")?;
++        if s.incarnation != incarnation {
++            return Err("StaleIncarnation".into());
++        }
++        s.record.as_deref().ok_or_else(|| "NotFound".into())
++    }
++    pub fn incarnation(&self, id: &Id) -> Option<u64> {
++        self.slots.get(id).map(|s| s.incarnation)
++    }
++    fn record(&self, id: &Id) -> Option<&Memory> {
++        self.slots.get(id)?.record.as_deref()
++    }
++}
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub enum Change {
++    Put {
++        record: Box<Memory>,
++        incarnation: u64,
++        insert: bool,
++    },
++    Update {
++        id: Id,
++        incarnation: u64,
++        field: usize,
++        value: Value,
++        equals: Option<Value>,
++    },
++    Delete {
++        id: Id,
++        incarnation: u64,
++    },
++    Link {
++        from: Id,
++        from_incarnation: u64,
++        to: Id,
++        to_incarnation: u64,
++    },
++}
++pub fn encode_changes(changes: &[Change]) -> Vec<u8> {
++    let mut out = String::from("CMM2\n");
++    for change in changes {
++        match change {
++            Change::Put {
++                record,
++                incarnation,
++                insert,
++            } => out.push_str(&format!(
++                "put\t{incarnation}\t{}\t{}\n",
++                u8::from(*insert),
++                format::memory(record)
++            )),
++            Change::Update {
++                id,
++                incarnation,
++                field,
++                value,
++                equals,
++            } => out.push_str(&format!(
++                "update\t{incarnation}\t{}\t{field}\t{}\t{}\n",
++                hex(id),
++                format::value(value),
++                equals.as_ref().map_or_else(|| "-".into(), format::value)
++            )),
++            Change::Delete { id, incarnation } => {
++                out.push_str(&format!("delete\t{incarnation}\t{}\n", hex(id)))
++            }
++            Change::Link {
++                from,
++                from_incarnation,
++                to,
++                to_incarnation,
++            } => out.push_str(&format!(
++                "link\t{from_incarnation}\t{}\t{to_incarnation}\t{}\n",
++                hex(from),
++                hex(to)
++            )),
++        }
++    }
++    out.into_bytes()
++}
++fn number<T: std::str::FromStr>(s: &str) -> Result<T, String> {
++    s.parse().map_err(|_| "invalid CMM2 number".into())
++}
++pub fn decode_changes(bytes: &[u8]) -> Result<Vec<Change>, String> {
++    let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
++    let text = text.strip_prefix("CMM2\n").ok_or("CMM2 magic")?;
++    if !text.ends_with('\n') {
++        return Err("empty/truncated CMM2".into());
++    }
++    let mut changes = Vec::new();
++    for line in text.lines() {
++        let f: Vec<_> = line.split('\t').collect();
++        let change = match f.as_slice() {
++            ["put", inc, insert, rest @ ..] if !rest.is_empty() => Change::Put {
++                record: Box::new(format::parse_memory(&rest.join("\t"))?),
++                incarnation: number(inc)?,
++                insert: match *insert {
++                    "0" => false,
++                    "1" => true,
++                    _ => return Err("put mode".into()),
++                },
++            },
++            ["update", inc, id, field, value, equals] => Change::Update {
++                id: format::id(id)?,
++                incarnation: number(inc)?,
++                field: number(field)?,
++                value: format::parse_value(value)?,
++                equals: if *equals == "-" {
++                    None
++                } else {
++                    Some(format::parse_value(equals)?)
++                },
++            },
++            ["delete", inc, id] => Change::Delete {
++                id: format::id(id)?,
++                incarnation: number(inc)?,
++            },
++            ["link", from_inc, from, to_inc, to] => Change::Link {
++                from: format::id(from)?,
++                from_incarnation: number(from_inc)?,
++                to: format::id(to)?,
++                to_incarnation: number(to_inc)?,
++            },
++            _ => return Err("CMM2 operation".into()),
++        };
++        changes.push(change);
++        if changes.len() > 1024 {
++            return Err("transaction operation limit".into());
++        }
++    }
++    Ok(changes)
++}
++fn apply_changes(state: &mut State, changes: &[Change]) -> Result<(), String> {
++    for change in changes {
++        match change {
++            Change::Put {
++                record,
++                incarnation,
++                insert,
++            } => {
++                record.validate()?;
++                if *insert {
++                    if state.record(&record.id).is_some() {
++                        return Err("Duplicate".into());
++                    }
++                    let next = state
++                        .incarnation(&record.id)
++                        .unwrap_or(0)
++                        .checked_add(1)
++                        .ok_or("incarnation overflow")?;
++                    if *incarnation != next {
++                        return Err("StaleIncarnation".into());
++                    }
++                } else {
++                    state.current(&record.id, *incarnation)?;
++                }
++                state.slots.insert(
++                    record.id,
++                    Slot {
++                        incarnation: *incarnation,
++                        record: Some(Arc::new(record.as_ref().clone())),
++                    },
++                );
++            }
++            Change::Update {
++                id,
++                incarnation,
++                field,
++                value,
++                equals,
++            } => {
++                let mut record = state.current(id, *incarnation)?.clone();
++                let prior = record.fields.get(*field).ok_or("invalid field")?;
++                if equals.as_ref().is_some_and(|v| v != prior) {
++                    return Err("GuardFailed".into());
++                }
++                record.fields[*field] = value.clone();
++                record.validate()?;
++                state.slots.insert(
++                    *id,
++                    Slot {
++                        incarnation: *incarnation,
++                        record: Some(Arc::new(record)),
++                    },
++                );
++            }
++            Change::Delete { id, incarnation } => {
++                state.current(id, *incarnation)?;
++                state.slots.get_mut(id).unwrap().record = None;
++                state.edges.retain(|(a, _, b, _)| a != id && b != id);
++            }
++            Change::Link {
++                from,
++                from_incarnation,
++                to,
++                to_incarnation,
++            } => {
++                state.current(from, *from_incarnation)?;
++                state.current(to, *to_incarnation)?;
++                state
++                    .edges
++                    .insert((*from, *from_incarnation, *to, *to_incarnation));
++            }
++        }
++    }
++    Ok(())
++}
++pub fn apply(state: &mut State, bytes: &[u8]) -> Result<(), String> {
++    apply_changes(state, &decode_changes(bytes)?)
++}
++pub fn encode_state(state: &State) -> Result<Vec<u8>, String> {
++    let mut text = String::from("CMS2\n");
++    for (id, slot) in &state.slots {
++        text.push_str(&format!(
++            "slot\t{}\t{}\t{}\n",
++            slot.incarnation,
++            hex(id),
++            slot.record
++                .as_ref()
++                .map_or_else(|| "-".into(), |m| format::memory(m))
++        ));
++    }
++    for (from, fi, to, ti) in &state.edges {
++        text.push_str(&format!("edge\t{fi}\t{}\t{ti}\t{}\n", hex(from), hex(to)));
++    }
++    Ok(text.into_bytes())
++}
++pub fn decode_state(bytes: &[u8]) -> Result<State, String> {
++    let text = std::str::from_utf8(bytes)
++        .map_err(|e| e.to_string())?
++        .strip_prefix("CMS2\n")
++        .ok_or("CMS2 magic")?;
++    let mut state = State::default();
++    for line in text.lines() {
++        let f: Vec<_> = line.split('\t').collect();
++        match f.as_slice() {
++            ["slot", inc, id, rest @ ..] if !rest.is_empty() => {
++                let id = format::id(id)?;
++                let incarnation = number::<u64>(inc)?;
++                if incarnation == 0 {
++                    return Err("zero incarnation".into());
++                }
++                let record = if rest == ["-"] {
++                    None
++                } else {
++                    let m = format::parse_memory(&rest.join("\t"))?;
++                    if m.id != id {
++                        return Err("slot identity".into());
++                    }
++                    Some(Arc::new(m))
++                };
++                if state
++                    .slots
++                    .insert(
++                        id,
++                        Slot {
++                            incarnation,
++                            record,
++                        },
++                    )
++                    .is_some()
++                {
++                    return Err("duplicate slot".into());
++                }
++            }
++            ["edge", fi, from, ti, to] => {
++                let change = Change::Link {
++                    from: format::id(from)?,
++                    from_incarnation: number(fi)?,
++                    to: format::id(to)?,
++                    to_incarnation: number(ti)?,
++                };
++                apply_changes(&mut state, &[change])?;
++            }
++            _ => return Err("CMS2 entry".into()),
++        }
++    }
++    if encode_state(&state)? != bytes {
++        return Err("noncanonical CMS2".into());
++    }
++    Ok(state)
++}
++
++pub struct MemoryEngine {
++    log: Option<Log<State>>,
++    directory: PathBuf,
++    durability: Durability,
++    label: String,
++}
++impl MemoryEngine {
++    pub fn open(directory: &Path, durability: Durability) -> Result<(Self, OpenReport), String> {
++        let (log, report) = Log::open(directory, apply, decode_state).map_err(|e| e.to_string())?;
++        Ok((
++            Self {
++                log: Some(log),
++                directory: directory.to_owned(),
++                durability,
++                label: Self::series_label(durability),
++            },
++            report,
++        ))
++    }
++    pub fn series_label(durability: Durability) -> String {
++        format!("{}; rev={}", durability.label(), cm_trace::run::revision())
++    }
++    pub fn create(directory: &Path, durability: Durability) -> Result<(Self, OpenReport), String> {
++        Self::create_with_label(directory, durability, Self::series_label(durability))
++    }
++    pub fn create_with_label(
++        directory: &Path,
++        durability: Durability,
++        label: String,
++    ) -> Result<(Self, OpenReport), String> {
++        let (log, report) =
++            Log::create(directory, apply, decode_state).map_err(|e| e.to_string())?;
++        Ok((
++            Self {
++                log: Some(log),
++                directory: directory.to_owned(),
++                durability,
++                label,
++            },
++            report,
++        ))
++    }
++    pub fn log(&self) -> &Log<State> {
++        self.log.as_ref().expect("open engine")
++    }
++    pub fn log_mut(&mut self) -> &mut Log<State> {
++        self.log.as_mut().expect("open engine")
++    }
++    pub fn transact(&mut self, request_id: Uuid, changes: &[Change]) -> Result<Outcome, LogError> {
++        self.transact_checked(request_id, changes, |_| Ok(()))
++    }
++    pub fn transact_checked(
++        &mut self,
++        request_id: Uuid,
++        changes: &[Change],
++        validate: impl FnOnce(&State) -> Result<(), Rejection>,
++    ) -> Result<Outcome, LogError> {
++        let payload = encode_changes(changes);
++        let txn = Transaction {
++            request_id,
++            payload,
++            durability: self.durability,
++        };
++        self.log_mut().commit(txn, |state| {
++            validate(state)?;
++            let mut staged = state.clone();
++            apply_changes(&mut staged, changes).map_err(Rejection::Validation)
++        })
++    }
++    fn persist(
++        &mut self,
++        changes: &[Change],
++        guard: impl FnOnce(&State) -> Result<(), Rejection>,
++    ) -> Result<(), String> {
++        let request = self.log().next_request_id();
++        match self
++            .transact_checked(request, changes, guard)
++            .map_err(|e| e.to_string())?
++        {
++            Outcome::Committed { .. } => Ok(()),
++            other => Err(format!("transaction: {other:?}")),
++        }
++    }
++}
++impl Engine for MemoryEngine {
++    fn creates_store_directory() -> bool {
++        true
++    }
++    fn label(&self) -> String {
++        self.label.clone()
++    }
++    fn durability(&self) -> String {
++        self.durability.label().into()
++    }
++    fn records(&self) -> Result<Vec<Memory>, String> {
++        Ok(self.log().snapshot().records())
++    }
++    fn execute(&mut self, op: &Op) -> Result<Answer, String> {
++        let state = self.log().snapshot();
++        let status = match op {
++            Op::Insert(m) => {
++                if state.record(&m.id).is_some() {
++                    "Duplicate"
++                } else {
++                    let incarnation = state
++                        .incarnation(&m.id)
++                        .unwrap_or(0)
++                        .checked_add(1)
++                        .ok_or("incarnation overflow")?;
++                    self.persist(
++                        &[Change::Put {
++                            record: Box::new(m.clone()),
++                            incarnation,
++                            insert: true,
++                        }],
++                        |_| Ok(()),
++                    )?;
++                    "Inserted"
++                }
++            }
++            Op::Replace(m) => {
++                if state.record(&m.id).is_none() {
++                    "NotFound"
++                } else {
++                    self.persist(
++                        &[Change::Put {
++                            record: Box::new(m.clone()),
++                            incarnation: state.incarnation(&m.id).unwrap(),
++                            insert: false,
++                        }],
++                        |_| Ok(()),
++                    )?;
++                    "Replaced"
++                }
++            }
++            Op::Guard {
++                record,
++                field,
++                equals,
++            } => match state.record(&record.id) {
++                None => "NotFound",
++                Some(m) if m.fields.get(*field) != Some(equals) => "GuardFailed",
++                Some(_) => {
++                    self.persist(
++                        &[Change::Put {
++                            record: Box::new(record.clone()),
++                            incarnation: state.incarnation(&record.id).unwrap(),
++                            insert: false,
++                        }],
++                        |current| {
++                            if current
++                                .record(&record.id)
++                                .and_then(|m| m.fields.get(*field))
++                                == Some(equals)
++                            {
++                                Ok(())
++                            } else {
++                                Err(Rejection::Validation("GuardFailed".into()))
++                            }
++                        },
++                    )?;
++                    "Replaced"
++                }
++            },
++            Op::Update(id, value) => {
++                if state.record(id).is_none() {
++                    "NotFound"
++                } else {
++                    self.persist(
++                        &[Change::Update {
++                            id: *id,
++                            incarnation: state.incarnation(id).unwrap(),
++                            field: 10,
++                            value: Value::Int(*value),
++                            equals: None,
++                        }],
++                        |_| Ok(()),
++                    )?;
++                    "Updated"
++                }
++            }
++            Op::Delete(id) => {
++                if state.record(id).is_none() {
++                    "NotFound"
++                } else {
++                    self.persist(
++                        &[Change::Delete {
++                            id: *id,
++                            incarnation: state.incarnation(id).unwrap(),
++                        }],
++                        |_| Ok(()),
++                    )?;
++                    "Deleted"
++                }
++            }
++            Op::Get(id) => {
++                return Ok(state.record(id).map_or_else(
++                    || Answer::outcome("NotFound"),
++                    |m| Answer::rows(vec![m.clone()]),
++                ));
++            }
++            Op::Equal(s) => {
++                return Ok(Answer::rows(
++                    state
++                        .records()
++                        .into_iter()
++                        .filter(|m| matches!(&m.fields[1],Value::Text(v) if v == s))
++                        .collect(),
++                ));
++            }
++            Op::Aggregate => {
++                let (mut count, mut sum, mut min, mut max) = (0, 0i128, None, None);
++                for slot in state.slots.values() {
++                    if let Some(m) = &slot.record {
++                        let v = m.fields[10].integer();
++                        count += 1;
++                        sum += i128::from(v);
++                        min = Some(min.map_or(v, |x: i64| x.min(v)));
++                        max = Some(max.map_or(v, |x: i64| x.max(v)));
++                    }
++                }
++                return Ok(Answer {
++                    aggregate: Some((count, sum, min, max)),
++                    ..Answer::outcome("Aggregate")
++                });
++            }
++            Op::Page { after, limit } => {
++                let mut rows: Vec<_> = state
++                    .records()
++                    .into_iter()
++                    .filter(|m| after.is_none_or(|a| (m.fields[6].integer(), m.id) > a))
++                    .collect();
++                rows.sort_by_key(|m| (m.fields[6].integer(), m.id));
++                rows.truncate(*limit);
++                return Ok(Answer::rows(rows));
++            }
++        };
++        Ok(Answer::outcome(status))
++    }
++    fn finish(&mut self, expected: &[Memory]) -> Result<Vec<(String, u128)>, String> {
++        let history = uc_core::read_history(&self.directory.join(uc_core::HISTORY_FILE))
++            .map_err(|e| e.to_string())?;
++        let replay_ns = history.report.replay_time.as_nanos();
++        let start = Instant::now();
++        let changes: Vec<_> = history
++            .events
++            .iter()
++            .map(|e| decode_changes(&e.payload))
++            .collect::<Result<_, _>>()?;
++        let decode_ns = start.elapsed().as_nanos();
++        drop(history);
++        let start = Instant::now();
++        let mut state = State::default();
++        for transaction in &changes {
++            apply_changes(&mut state, transaction)?;
++        }
++        let rows_ns = start.elapsed().as_nanos();
++        let start = Instant::now();
++        let columns = rebuild_columns(&changes);
++        let columns_ns = start.elapsed().as_nanos();
++        let rows = state.records();
++        let ids: Vec<_> = columns[0].keys().copied().collect();
++        if columns
++            .iter()
++            .any(|c| c.keys().copied().collect::<Vec<_>>() != ids)
++        {
++            return Err("column identities".into());
++        }
++        let column_rows: Vec<_> = ids
++            .into_iter()
++            .map(|id| Memory {
++                id,
++                fields: std::array::from_fn(|i| columns[i][&id].clone()),
++            })
++            .collect();
++        if rows != expected || column_rows != expected {
++            return Err("independent row/column oracle mismatch".into());
++        }
++        let append_ns = self.log().append_time.as_nanos();
++        let payload_bytes = self.log().payload_bytes;
++        let physical_bytes = self.log().history_bytes();
++        // Counts are retained separately from latency samples; never labelled nanoseconds.
++        std::fs::write(self.directory.with_extension("amplification.txt"), format!("payload_bytes={payload_bytes}\nphysical_history_bytes={physical_bytes}\npayload_copies=3\n")).map_err(|e| e.to_string())?;
++        let start = Instant::now();
++        self.log()
++            .checkpoint(encode_state)
++            .map_err(|e| e.to_string())?;
++        let checkpoint_ns = start.elapsed().as_nanos();
++        drop(self.log.take());
++        let start = Instant::now();
++        let (log, report) =
++            Log::open(&self.directory, apply, decode_state).map_err(|e| e.to_string())?;
++        let open_ns = start.elapsed().as_nanos();
++        self.log = Some(log);
++        if report.checkpoint.is_none() || self.log().snapshot().as_ref() != &state {
++            return Err("checkpoint reconstruction mismatch".into());
++        }
++        Ok(vec![
++            ("append".into(), append_ns),
++            ("replay".into(), replay_ns),
++            ("decode".into(), decode_ns),
++            ("rows".into(), rows_ns),
++            ("columns".into(), columns_ns),
++            ("checkpoint".into(), checkpoint_ns),
++            ("open_from_checkpoint".into(), open_ns),
++        ])
++    }
++}
++fn rebuild_columns(transactions: &[Vec<Change>]) -> [BTreeMap<Id, Value>; 13] {
++    let mut columns: [BTreeMap<Id, Value>; 13] = std::array::from_fn(|_| BTreeMap::new());
++    for change in transactions.iter().flatten() {
++        match change {
++            Change::Put { record, .. } => {
++                for (column, value) in columns.iter_mut().zip(&record.fields) {
++                    column.insert(record.id, value.clone());
++                }
++            }
++            Change::Update {
++                id, field, value, ..
++            } => {
++                columns[*field].insert(*id, value.clone());
++            }
++            Change::Delete { id, .. } => {
++                for column in &mut columns {
++                    column.remove(id);
++                }
++            }
++            Change::Link { .. } => {}
++        }
++    }
++    columns
++}
+diff --git a/experiments/unified-commitment/crates/uc-memory/tests/scenarios.rs b/experiments/unified-commitment/crates/uc-memory/tests/scenarios.rs
+new file mode 100644
+index 0000000..9748faf
+--- /dev/null
++++ b/experiments/unified-commitment/crates/uc-memory/tests/scenarios.rs
+@@ -0,0 +1,302 @@
++//! Plan scenarios: injected byte faults and deterministic validation, not host-failure evidence.
++use cm_trace::{
++    Memory, Op, Value,
++    generate::{SplitMix64, record},
++    run::{Engine, LoadedTrace},
++};
++use std::{fs, path::PathBuf};
++use uc_core::{Durability, Outcome, Rejection, identity};
++use uc_memory::{Change, MemoryEngine, encode_state};
++struct Temp(PathBuf);
++impl Temp {
++    fn new(label: &str) -> Self {
++        let p = cm_trace::run::test_directory(label);
++        fs::create_dir(&p).unwrap();
++        Self(p)
++    }
++    fn store(&self) -> PathBuf {
++        self.0.join("store")
++    }
++    fn create(&self) -> MemoryEngine {
++        MemoryEngine::create(&self.store(), Durability::D2)
++            .unwrap()
++            .0
++    }
++    fn open(&self) -> MemoryEngine {
++        MemoryEngine::open(&self.store(), Durability::D2).unwrap().0
++    }
++}
++impl Drop for Temp {
++    fn drop(&mut self) {
++        let p = self.0.canonicalize().unwrap();
++        assert_eq!(
++            p.parent().unwrap(),
++            std::env::temp_dir().canonicalize().unwrap()
++        );
++        assert!(
++            p.file_name()
++                .unwrap()
++                .to_str()
++                .unwrap()
++                .starts_with("cm-uc-")
++        );
++        fs::remove_dir_all(p).unwrap();
++    }
++}
++fn memory(n: u64, rev: i64) -> Memory {
++    record(n, rev, &mut SplitMix64(7), false)
++}
++fn insert(m: Memory, incarnation: u64) -> Change {
++    Change::Put {
++        record: Box::new(m),
++        incarnation,
++        insert: true,
++    }
++}
++fn update(m: &Memory, incarnation: u64, value: i64) -> Change {
++    Change::Update {
++        id: m.id,
++        incarnation,
++        field: 10,
++        value: Value::Int(value),
++        equals: None,
++    }
++}
++fn committed(outcome: Outcome) {
++    assert!(matches!(outcome, Outcome::Committed { .. }), "{outcome:?}");
++}
++
++#[test]
++fn automatic_requests_use_a_separate_domain_from_explicit_requests() {
++    let t = Temp::new("uc-request-domains");
++    let mut engine = t.create();
++    committed(
++        engine
++            .transact(identity(6, 0x52), &[insert(memory(1, 1), 1)])
++            .unwrap(),
++    );
++    // The next physical ordinal is 6; the former auto namespace reused the explicit ID.
++    assert_eq!(engine.log().next_request_id(), identity(6, 0x41));
++    engine.execute(&Op::Insert(memory(2, 1))).unwrap();
++    assert_eq!(engine.records().unwrap().len(), 2);
++    drop(engine);
++    assert_eq!(t.open().records().unwrap().len(), 2);
++}
++
++#[test]
++fn conflict_rejects_entire_field_transaction_before_append_and_reopen() {
++    let t = Temp::new("uc-conflict");
++    let mut e = t.create();
++    let m = memory(1, 1);
++    committed(
++        e.transact(identity(1, 0x52), &[insert(m.clone(), 1)])
++            .unwrap(),
++    );
++    let before = e.log().history_bytes();
++    let changes = [
++        update(&m, 1, 22),
++        Change::Update {
++            id: m.id,
++            incarnation: 1,
++            field: 10,
++            value: Value::Int(33),
++            equals: Some(Value::Int(1)),
++        },
++    ];
++    assert!(matches!(
++        e.transact(identity(2, 0x52), &changes).unwrap(),
++        Outcome::Rejected { .. }
++    ));
++    assert_eq!(e.log().history_bytes(), before);
++    drop(e);
++    assert_eq!(t.open().records().unwrap(), vec![m.clone()]);
++    // Negative control: sequential per-operation publication would leak the first value.
++    let mut broken = uc_memory::State::default();
++    uc_memory::apply(
++        &mut broken,
++        &uc_memory::encode_changes(&[insert(m.clone(), 1)]),
++    )
++    .unwrap();
++    assert!(uc_memory::apply(&mut broken, &uc_memory::encode_changes(&changes)).is_err());
++    assert_ne!(broken.records(), vec![m]);
++}
++#[test]
++fn committed_field_update_then_delete_stays_absent_after_reopen() {
++    let t = Temp::new("uc-delete");
++    let mut e = t.create();
++    let m = memory(1, 1);
++    for op in [
++        Op::Insert(m.clone()),
++        Op::Update(m.id, 44),
++        Op::Delete(m.id),
++    ] {
++        e.execute(&op).unwrap();
++    }
++    drop(e);
++    assert!(t.open().records().unwrap().is_empty());
++    // Negative control: replay the actual history with deletion handling disabled.
++    let history = uc_core::read_history(&t.store().join(uc_core::HISTORY_FILE)).unwrap();
++    let mut broken = uc_memory::State::default();
++    for event in history.events {
++        let changes: Vec<_> = uc_memory::decode_changes(&event.payload)
++            .unwrap()
++            .into_iter()
++            .filter(|c| !matches!(c, Change::Delete { .. }))
++            .collect();
++        if !changes.is_empty() {
++            uc_memory::apply(&mut broken, &uc_memory::encode_changes(&changes)).unwrap();
++        }
++    }
++    assert_eq!(broken.records().len(), 1);
++    assert_eq!(broken.records()[0].fields[10], Value::Int(44));
++}
++#[test]
++fn replacement_supersedes_older_field_transaction_with_checkpoint_and_full_replay() {
++    let t = Temp::new("uc-replacement");
++    let mut e = t.create();
++    let old = memory(1, 1);
++    let replacement = memory(1, 9);
++    for op in [
++        Op::Insert(old.clone()),
++        Op::Update(old.id, 44),
++        Op::Replace(replacement.clone()),
++    ] {
++        e.execute(&op).unwrap();
++    }
++    let cp = e.log().checkpoint(encode_state).unwrap();
++    drop(e);
++    let (e, report) = MemoryEngine::open(&t.store(), Durability::D2).unwrap();
++    assert!(report.checkpoint.is_some());
++    assert_eq!(e.records().unwrap(), vec![replacement.clone()]);
++    drop(e);
++    fs::remove_file(cp.path).unwrap();
++    assert_eq!(t.open().records().unwrap(), vec![replacement.clone()]);
++    // Negative control: replay the actual old field change after the checkpoint replacement.
++    let history = uc_core::read_history(&t.store().join(uc_core::HISTORY_FILE)).unwrap();
++    let mut broken = uc_memory::State::default();
++    for event in &history.events {
++        uc_memory::apply(&mut broken, &event.payload).unwrap();
++    }
++    uc_memory::apply(&mut broken, &history.events[1].payload).unwrap();
++    assert_ne!(broken.records(), vec![replacement]);
++}
++#[test]
++fn deleted_recreated_uuid_rejects_predecessor_updates_and_edges_including_after_checkpoint() {
++    let t = Temp::new("uc-incarnation");
++    let mut e = t.create();
++    let a = memory(1, 1);
++    let b = memory(2, 1);
++    let edge = Change::Link {
++        from: a.id,
++        from_incarnation: 1,
++        to: b.id,
++        to_incarnation: 1,
++    };
++    committed(
++        e.transact(
++            identity(1, 0x52),
++            &[insert(a.clone(), 1), insert(b.clone(), 1), edge.clone()],
++        )
++        .unwrap(),
++    );
++    assert_eq!(e.log().snapshot().edges.len(), 1);
++    e.execute(&Op::Delete(a.id)).unwrap();
++    e.execute(&Op::Insert(memory(1, 9))).unwrap();
++    assert!(e.log().snapshot().edges.is_empty());
++    assert_eq!(e.log().snapshot().incarnation(&a.id), Some(2));
++    for change in [update(&a, 1, 99), edge] {
++        assert!(matches!(
++            e.transact(e.log().next_request_id(), &[change]).unwrap(),
++            Outcome::Rejected {
++                reason: Rejection::Validation(_)
++            }
++        ));
++    }
++    e.log().checkpoint(encode_state).unwrap();
++    drop(e);
++    let mut e = t.open();
++    assert_eq!(e.log().snapshot().incarnation(&a.id), Some(2));
++    assert!(matches!(
++        e.transact(e.log().next_request_id(), &[update(&a, 1, 99)])
++            .unwrap(),
++        Outcome::Rejected { .. }
++    ));
++    assert!(e.log().snapshot().edges.is_empty());
++    assert_eq!(e.log().snapshot().current(&a.id, 2).unwrap(), &memory(1, 9));
++    // Negative control: rebinding the stale request to current incarnation demonstrates the oracle's sensitivity.
++    committed(
++        e.transact(e.log().next_request_id(), &[update(&a, 2, 99)])
++            .unwrap(),
++    );
++    assert_ne!(e.log().snapshot().current(&a.id, 2).unwrap(), &memory(1, 9));
++}
++#[test]
++fn injected_truncated_batch_final_never_exposes_partial_transaction() {
++    let t = Temp::new("uc-batch-tail");
++    let mut e = t.create();
++    committed(
++        e.transact(
++            identity(1, 0x52),
++            &[insert(memory(1, 1), 1), insert(memory(2, 1), 1)],
++        )
++        .unwrap(),
++    );
++    let history = uc_core::read_history(&t.store().join(uc_core::HISTORY_FILE)).unwrap();
++    assert_eq!(history.events.len(), 1);
++    let offset = history.events[0].position.offset;
++    drop(e);
++    fs::OpenOptions::new()
++        .write(true)
++        .open(t.store().join(uc_core::HISTORY_FILE))
++        .unwrap()
++        .set_len(offset - 1)
++        .unwrap();
++    assert!(t.open().records().unwrap().is_empty());
++    // Negative control: applying the unselected event payload would expose both uncommitted changes.
++    let mut broken = uc_memory::State::default();
++    uc_memory::apply(&mut broken, &history.events[0].payload).unwrap();
++    assert_eq!(broken.records().len(), 2);
++}
++#[test]
++fn response_loss_resolves_to_same_transaction_and_stable_state() {
++    let t = Temp::new("uc-retry");
++    let mut e = t.create();
++    let changes = [insert(memory(1, 1), 1), update(&memory(1, 1), 1, 2)];
++    let request = identity(1, 0x52);
++    let original = e.transact(request, &changes).unwrap();
++    drop(e);
++    let mut e = t.open();
++    let before = e.log().history_bytes();
++    assert_eq!(e.transact(request, &changes).unwrap(), original);
++    assert_eq!(e.log().history_bytes(), before);
++    // Without retry resolution validation of the repeated insert returns Duplicate, not the original outcome.
++    assert!(matches!(
++        e.transact(identity(2, 0x52), &changes).unwrap(),
++        Outcome::Rejected { .. }
++    ));
++}
++#[test]
++fn small_and_1k_cmt1_traces_match_independent_oracle_in_both_durability_settings() {
++    for mode in [Durability::D1, Durability::D2] {
++        for trace in [
++            cm_trace::generate::small(),
++            cm_trace::generate::repeated(1000, 7),
++        ] {
++            let t = Temp::new("uc-traces");
++            let trace = LoadedTrace::from_trace(trace);
++            let (mut engine, _) = MemoryEngine::create(&t.store(), mode).unwrap();
++            let report = cm_trace::run::trial(&trace, &mut engine, &t.0).unwrap();
++            assert_eq!(report.mismatches, 0, "{} {mode:?}", trace.name);
++            for stage in [
++                "replay",
++                "decode",
++                "rows",
++                "columns",
++                "checkpoint",
++                "open_from_checkpoint",
++            ] {
++                assert!(report.samples.iter().any(|(s, _)| s == stage));
++            }
++        }
++    }
++}
+diff --git a/experiments/unified-commitment/rust-toolchain.toml b/experiments/unified-commitment/rust-toolchain.toml
+new file mode 100644
+index 0000000..b026b6e
+--- /dev/null
++++ b/experiments/unified-commitment/rust-toolchain.toml
+@@ -0,0 +1,4 @@
++[toolchain]
++channel = "1.89.0"
++profile = "minimal"
++components = ["rustfmt", "clippy"]

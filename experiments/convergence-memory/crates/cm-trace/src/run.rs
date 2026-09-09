@@ -11,7 +11,38 @@ use std::{
     process::Command,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
+/// Metadata selection is independent of the shared CMT1 operation/results contract.
+#[derive(Clone, Copy)]
+pub struct SeriesMeta<'a> {
+    pub experiment: &'a str,
+    pub hypothesis: &'a str,
+    pub source_prefixes: &'a [&'a str],
+}
+pub const EXP0002_META: SeriesMeta<'static> = SeriesMeta {
+    experiment: "EXP-0002",
+    hypothesis: "HYP-0002",
+    source_prefixes: &[
+        "experiments/convergence-memory/",
+        "experiments/convergence-memory-legacy/",
+    ],
+};
+impl SeriesMeta<'_> {
+    fn header(self) -> String {
+        format!(
+            "CMT1-results\t1\nexperiment={}\nhypothesis={}\n",
+            self.experiment, self.hypothesis
+        )
+    }
+}
+
 pub trait Engine {
+    /// True when the factory exclusively creates its store; existing engines receive a directory.
+    fn creates_store_directory() -> bool
+    where
+        Self: Sized,
+    {
+        false
+    }
     fn label(&self) -> String;
     fn durability(&self) -> String;
     fn execute(&mut self, op: &Op) -> Result<Answer, String>;
@@ -136,6 +167,7 @@ fn metadata(
     durability: &str,
     trace: &LoadedTrace,
     retain_store: bool,
+    meta: SeriesMeta<'_>,
 ) -> String {
     let os = if cfg!(windows) {
         powershell_command(&[
@@ -155,7 +187,8 @@ fn metadata(
         )
     };
     let mut environment = format!(
-        "CMT1-results\t1\nexperiment=EXP-0002\nhypothesis=HYP-0002\nengine={label}\ncandidate_durability={D1}\nengine_durability={durability}\nequivalence=non-equivalent native durability; no winner claim\ncreated_unix_ns={}\nrevision={}\nporcelain={:?}\ncommand={:?}\nrustc={}\ncargo={}\nos={}\narch={}\ndebug_assertions={}\nRUSTFLAGS={:?}\nCARGO_ENCODED_RUSTFLAGS={:?}\ncache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured\nconcurrency=1; queue_depth=1; batch_width=1\nclock=std::time::Instant, nanoseconds; probe overhead uncalibrated\nrss_method=bytes; Linux VmHWM converted from KiB or Windows PeakWorkingSet64 via pwsh then powershell, process-lifetime high water including harness/oracle\nfile_size_method=sum logical lengths of store files, not allocated extents\nhardware_and_filesystem={}\nuncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable\n",
+        "{}engine={label}\ncandidate_durability={D1}\nengine_durability={durability}\nequivalence=non-equivalent native durability; no winner claim\ncreated_unix_ns={}\nrevision={}\nporcelain={:?}\ncommand={:?}\nrustc={}\ncargo={}\nos={}\narch={}\ndebug_assertions={}\nRUSTFLAGS={:?}\nCARGO_ENCODED_RUSTFLAGS={:?}\ncache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured\nconcurrency=1; queue_depth=1; batch_width=1\nclock=std::time::Instant, nanoseconds; probe overhead uncalibrated\nrss_method=bytes; Linux VmHWM converted from KiB or Windows PeakWorkingSet64 via pwsh then powershell, process-lifetime high water including harness/oracle\nfile_size_method=sum logical lengths of store files, not allocated extents\nhardware_and_filesystem={}\nuncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable\n",
+        meta.header(),
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
@@ -201,55 +234,140 @@ fn metadata(
     ));
     environment
 }
-fn snapshot(output: &Path) -> Result<(), String> {
+fn git_bytes(root: &Path, args: &[&str], allow_difference: bool) -> Result<Vec<u8>, String> {
+    let output = Command::new("git")
+        .current_dir(root)
+        .args(args)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !(output.status.success() || allow_difference && output.status.code() == Some(1)) {
+        return Err(format!(
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    Ok(output.stdout)
+}
+fn source_paths(root: &Path, others: bool) -> Result<Vec<String>, String> {
+    let mut args = vec![
+        "ls-files",
+        "--full-name",
+        "-z",
+        "--others",
+        "--exclude-standard",
+    ];
+    if !others {
+        args.push("--cached");
+    }
+    let bytes = git_bytes(root, &args, false)?;
+    bytes
+        .split(|b| *b == 0)
+        .filter(|p| !p.is_empty())
+        .map(|p| {
+            let name = std::str::from_utf8(p).map_err(|e| e.to_string())?;
+            if name.contains(['\n', '\r']) {
+                return Err("source manifest does not support newline filenames".into());
+            }
+            Ok(name.to_owned())
+        })
+        .collect()
+}
+fn snapshot_at(output: &Path, source_root: &Path, meta: SeriesMeta<'_>) -> Result<(), String> {
     let output_absolute = output.canonicalize().map_err(|e| e.to_string())?;
-    let source_root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
-    write(
-        &output.join("source.patch"),
-        &command("git", &["diff", "HEAD", "--binary"]),
-    )?;
-    let paths = command(
-        "git",
-        &[
-            "-C",
-            source_root.to_str().ok_or("source root is not UTF-8")?,
-            "ls-files",
-            "--full-name",
-            "--cached",
-            "--others",
-            "--exclude-standard",
-        ],
-    );
-    let mut manifest = String::new();
-    for name in paths.lines() {
+    let source_absolute = source_root.canonicalize().map_err(|e| e.to_string())?;
+    if meta
+        .source_prefixes
+        .iter()
+        .any(|prefix| output_absolute.starts_with(source_absolute.join(prefix)))
+    {
+        return Err("series output must be outside source prefixes to avoid a self-referential source manifest".into());
+    }
+    let eligible = |name: &str| -> Result<bool, String> {
         let relative = Path::new(name);
         if relative.is_absolute()
             || relative
                 .components()
                 .any(|c| matches!(c, std::path::Component::ParentDir))
         {
-            continue;
+            return Err("unsafe source path".into());
         }
         let p = source_root.join(relative);
-        if !(name.starts_with("experiments/convergence-memory/")
-            || name.starts_with("experiments/convergence-memory-legacy/"))
-            || name.contains("/target/")
-        {
-            continue;
+        Ok(meta
+            .source_prefixes
+            .iter()
+            .any(|prefix| name.starts_with(prefix))
+            && p.is_file()
+            && !p
+                .canonicalize()
+                .map_err(|e| e.to_string())?
+                .starts_with(&output_absolute))
+    };
+    // Preserve binary bytes and final newlines: command() trims and is unsuitable for patches.
+    let mut patch = git_bytes(
+        source_root,
+        &[
+            "-c",
+            "core.autocrlf=false",
+            "-c",
+            "core.safecrlf=false",
+            "-c",
+            "diff.noprefix=false",
+            "-c",
+            "diff.mnemonicPrefix=false",
+            "diff",
+            "HEAD",
+            "--binary",
+            "--no-ext-diff",
+            "--no-textconv",
+        ],
+        false,
+    )?;
+    for name in source_paths(source_root, true)? {
+        if eligible(&name)? {
+            let null = if cfg!(windows) { "NUL" } else { "/dev/null" };
+            patch.extend(git_bytes(
+                source_root,
+                &[
+                    "-c",
+                    "core.autocrlf=false",
+                    "-c",
+                    "core.safecrlf=false",
+                    "-c",
+                    "diff.noprefix=false",
+                    "-c",
+                    "diff.mnemonicPrefix=false",
+                    "diff",
+                    "--no-index",
+                    "--binary",
+                    "--no-ext-diff",
+                    "--no-textconv",
+                    "--",
+                    null,
+                    &name,
+                ],
+                true,
+            )?);
         }
-        if !p.is_file() {
-            continue;
+    }
+    file(&output.join("source.patch"))?
+        .write_all(&patch)
+        .map_err(|e| e.to_string())?;
+    let mut paths = source_paths(source_root, false)?;
+    // git ls-files can list both an index entry and an untracked replacement. Hash each path once.
+    paths.sort();
+    paths.dedup();
+    let mut manifest = String::new();
+    for name in paths {
+        if eligible(&name)? {
+            let bytes = fs::read(source_root.join(&name)).map_err(|e| e.to_string())?;
+            manifest.push_str(&format!("{}  {name}\n", hex(&sha256(&bytes))));
         }
-        if p.canonicalize()
-            .map_err(|e| e.to_string())?
-            .starts_with(&output_absolute)
-        {
-            continue;
-        }
-        let bytes = fs::read(&p).map_err(|e| e.to_string())?;
-        manifest.push_str(&format!("{}  {name}\n", hex(&sha256(&bytes))));
     }
     write(&output.join("source.sha256"), &manifest)
+}
+fn snapshot(output: &Path, meta: SeriesMeta<'_>) -> Result<(), String> {
+    let root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
+    snapshot_at(output, &root, meta)
 }
 pub struct TrialReport {
     pub mismatches: usize,
@@ -358,10 +476,31 @@ pub fn series_with_retention<E: Engine>(
     retain_store: bool,
     create: impl Fn(&Path) -> Result<E, String>,
 ) -> Result<(), String> {
+    series_with_meta(
+        trace,
+        output,
+        label,
+        durability,
+        retain_store,
+        EXP0002_META,
+        create,
+    )
+}
+
+/// Explicit experiment identity and recoverable source selection; legacy entry points use EXP0002_META.
+pub fn series_with_meta<E: Engine>(
+    trace: &LoadedTrace,
+    output: &Path,
+    label: &str,
+    durability: &str,
+    retain_store: bool,
+    meta: SeriesMeta<'_>,
+    create: impl Fn(&Path) -> Result<E, String>,
+) -> Result<(), String> {
     fs::create_dir(output).map_err(|e| format!("exclusive output {}: {e}", output.display()))?;
-    let env = metadata(output, label, durability, trace, retain_store);
+    let env = metadata(output, label, durability, trace, retain_store, meta);
     write(&output.join("environment.txt"), &env)?;
-    snapshot(output)?;
+    snapshot(output, meta)?;
     if retain_store {
         write(&output.join("trace.cmt"), &format::encode(trace))?;
     }
@@ -379,7 +518,9 @@ pub fn series_with_retention<E: Engine>(
         fs::create_dir(&dir).map_err(|e| e.to_string())?;
         write(&dir.join("environment.txt"), &env)?;
         let store = dir.join("store");
-        fs::create_dir(&store).map_err(|e| e.to_string())?;
+        if !E::creates_store_directory() {
+            fs::create_dir(&store).map_err(|e| e.to_string())?;
+        }
         let start = Instant::now();
         let mut engine = match create(&store) {
             Ok(e) => e,
@@ -504,6 +645,9 @@ fn raw_references(trial: &Path) -> Result<String, String> {
 fn remove_trial_store(trial: &Path) -> Result<(), String> {
     let trial = trial.canonicalize().map_err(|e| e.to_string())?;
     let store = trial.join("store");
+    if !store.try_exists().map_err(|e| e.to_string())? {
+        return Ok(());
+    }
     if fs::symlink_metadata(&store)
         .map_err(|e| e.to_string())?
         .file_type()
@@ -567,6 +711,203 @@ pub fn test_directory(label: &str) -> std::path::PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn default_metadata_header_is_byte_identical_to_exp0002() {
+        assert_eq!(
+            EXP0002_META.header().as_bytes(),
+            b"CMT1-results\t1\nexperiment=EXP-0002\nhypothesis=HYP-0002\n"
+        );
+        assert_eq!(
+            EXP0002_META.source_prefixes,
+            &[
+                "experiments/convergence-memory/",
+                "experiments/convergence-memory-legacy/"
+            ]
+        );
+    }
+    #[test]
+    fn retained_binary_patch_reconstructs_every_manifest_hash_in_fresh_worktree() {
+        // A local clone owns all test Git metadata. Never add a worktree to the source repository.
+        let root = std::path::PathBuf::from(command("git", &["rev-parse", "--show-toplevel"]));
+        let temp = test_directory("patch-reconstruct");
+        fs::create_dir(&temp).unwrap();
+        let clone = temp.join("clone");
+        let common = String::from_utf8(
+            git_bytes(
+                &root,
+                &["rev-parse", "--path-format=absolute", "--git-common-dir"],
+                false,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        // Object-sharing local fixture, avoiding a transport process or writes to source Git metadata.
+        git_bytes(&temp, &["init", clone.to_str().unwrap()], false).unwrap();
+        git_bytes(&clone, &["config", "core.autocrlf", "false"], false).unwrap();
+        fs::write(
+            clone.join(".git/objects/info/alternates"),
+            format!("{}/objects\n", common.trim()),
+        )
+        .unwrap();
+        let revision = command("git", &["rev-parse", "HEAD"]);
+        git_bytes(
+            &clone,
+            &["update-ref", "refs/heads/source", &revision],
+            false,
+        )
+        .unwrap();
+        let worktree = temp.join("replayed");
+        git_bytes(
+            &clone,
+            &[
+                "worktree",
+                "add",
+                "--detach",
+                worktree.to_str().unwrap(),
+                &revision,
+            ],
+            false,
+        )
+        .unwrap();
+        let output = temp.join("snapshot");
+        fs::create_dir(&output).unwrap();
+        let meta = SeriesMeta {
+            experiment: "EXP-0003",
+            hypothesis: "HYP-0003",
+            source_prefixes: &[
+                "experiments/unified-commitment/",
+                "experiments/convergence-memory/crates/cm-trace/",
+                "experiments/exp-0001/crates/exp1-record-format/",
+                "experiments/exp-0001/crates/exp1-raw-append-replay/",
+            ],
+        };
+        let verify = |manifest: &Path, restored: &Path| {
+            let entries = fs::read_to_string(manifest).unwrap();
+            assert!(!entries.is_empty());
+            for line in entries.lines() {
+                let (expected, name) = line.split_once("  ").unwrap();
+                assert_eq!(
+                    hex(&sha256(&fs::read(restored.join(name)).unwrap())),
+                    expected,
+                    "{name}"
+                );
+            }
+        };
+        let mut status_args = vec!["status", "--porcelain", "--untracked-files=all", "--"];
+        status_args.extend_from_slice(meta.source_prefixes);
+        let dirty = !git_bytes(&root, &status_args, false).unwrap().is_empty();
+        if dirty {
+            eprintln!(
+                "skip real-checkout reconstruction: uncommitted changes under source prefixes; fixture reconstruction still required"
+            );
+        } else {
+            snapshot_at(&output, &root, meta).unwrap();
+            let patch = output.join("source.patch");
+            if fs::metadata(&patch).unwrap().len() > 0 {
+                git_bytes(
+                    &worktree,
+                    &["apply", "--binary", patch.to_str().unwrap()],
+                    false,
+                )
+                .unwrap();
+            }
+            verify(&output.join("source.sha256"), &worktree);
+        }
+        // Exercise tracked edits and untracked binary data even when CI's real checkout is clean.
+        let binary =
+            worktree.join("experiments/convergence-memory/crates/cm-trace/untracked sample.bin");
+        fs::write(&binary, [0, 255, 0, 13, 10, 1]).unwrap();
+        let tracked = worktree.join("experiments/convergence-memory/crates/cm-trace/src/sha.rs");
+        let mut bytes = fs::read(&tracked).unwrap();
+        bytes.extend(b"\n// reconstruction fixture\n");
+        fs::write(tracked, bytes).unwrap();
+        let output2 = temp.join("snapshot2");
+        fs::create_dir(&output2).unwrap();
+        snapshot_at(&output2, &worktree, meta).unwrap();
+        let restored = temp.join("restored");
+        git_bytes(
+            &clone,
+            &[
+                "worktree",
+                "add",
+                "--detach",
+                restored.to_str().unwrap(),
+                &revision,
+            ],
+            false,
+        )
+        .unwrap();
+        git_bytes(
+            &restored,
+            &[
+                "apply",
+                "--binary",
+                output2.join("source.patch").to_str().unwrap(),
+            ],
+            false,
+        )
+        .unwrap();
+        verify(&output2.join("source.sha256"), &restored);
+        // Both source and restore use hostile host configuration during snapshot/apply.
+        // Materialize the restore's revision bytes before enabling checkout conversion.
+        let crlf_restore = temp.join("crlf-restored");
+        git_bytes(
+            &clone,
+            &[
+                "worktree",
+                "add",
+                "--detach",
+                crlf_restore.to_str().unwrap(),
+                &revision,
+            ],
+            false,
+        )
+        .unwrap();
+        for (key, value) in [
+            ("core.autocrlf", "true"),
+            ("core.safecrlf", "true"),
+            ("diff.noprefix", "true"),
+            ("diff.mnemonicPrefix", "true"),
+        ] {
+            git_bytes(&clone, &["config", key, value], false).unwrap();
+        }
+        let tracked = worktree.join("experiments/convergence-memory/crates/cm-trace/src/sha.rs");
+        let text = fs::read_to_string(&tracked).unwrap();
+        fs::write(&tracked, text.replace("\r\n", "\n").replace('\n', "\r\n")).unwrap();
+        let crlf_output = temp.join("crlf-snapshot");
+        fs::create_dir(&crlf_output).unwrap();
+        snapshot_at(&crlf_output, &worktree, meta).unwrap();
+        for directory in [&worktree, &crlf_restore] {
+            assert_eq!(
+                git_bytes(directory, &["config", "core.autocrlf"], false).unwrap(),
+                b"true\n"
+            );
+        }
+        git_bytes(
+            &crlf_restore,
+            &[
+                "apply",
+                "--binary",
+                crlf_output.join("source.patch").to_str().unwrap(),
+            ],
+            false,
+        )
+        .unwrap();
+        verify(&crlf_output.join("source.sha256"), &crlf_restore);
+        let temp = temp.canonicalize().unwrap();
+        assert_eq!(
+            temp.parent().unwrap(),
+            std::env::temp_dir().canonicalize().unwrap()
+        );
+        assert!(
+            temp.file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .starts_with("cm-patch-reconstruct-")
+        );
+        fs::remove_dir_all(temp).unwrap();
+    }
     #[test]
     fn rss_probe_is_positive_bytes_or_explicitly_unavailable() {
         let value = peak_rss();

@@ -1,0 +1,24 @@
+CMT1-results	1
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim
+engine=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim; rev=e62fa699d3b264c0717428f86c0d11936ac3688a
+valid=true
+legacy_internal_stages=unavailable through public adapter; no isolated append/replay/decode/row/column timing
+quantiles=nearest-rank; warmup excluded; raw samples in results.cmt and trials.csv
+stage,count,min,p50,p90,p95,p99,max
+aggregate,25,18900,51500,55500,88100,101400,101400
+append,5,38606344600,39478778300,40533087000,40533087000,40533087000,40533087000
+checkpoint,5,486489500,514741200,556051500,556051500,556051500,556051500
+columns,5,21088100,23939600,28805700,28805700,28805700,28805700
+decode,5,734427800,780939200,894423900,894423900,894423900,894423900
+delete,10000,2717200,2987600,3329300,3532800,4216100,54942900
+equal,25,1238700,1509600,2155000,3097400,3116800,3116800
+get,25,1100,2400,4000,7600,7700,7700
+guard,30000,100,3114700,3534300,3707400,4406900,80931600
+insert,15000,2769800,3230600,3593000,3803500,4598300,118295500
+open_from_checkpoint,5,1645398300,1766167100,1837050700,1837050700,1837050700,1837050700
+page,50,788900,1399700,1990300,2745900,3725800,3725800
+replace,10000,2824600,3257500,3654200,3853700,4613100,49575100
+replay,5,786019200,828730300,856757400,856757400,856757400,856757400
+rows,5,14695500,17954700,23740000,23740000,23740000,23740000
+update,10000,2730100,2995200,3339200,3580500,4235700,43927200

@@ -1,4 +1,4 @@
-name: EXP-0002 Memory convergence
+name: EXP-0002 and EXP-0003 Memory and commitment
 on:
   pull_request:
   push:
@@ -10,12 +10,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        workspace: [convergence-memory, convergence-memory-legacy]
+        workspace: [convergence-memory, convergence-memory-legacy, unified-commitment]
     env:
       CARGO_INCREMENTAL: 0
       RUST_BACKTRACE: 1
       RUSTFLAGS: -Dwarnings
     steps:
+      # Reconstruction needs only HEAD and its tree/blobs, available in this shallow checkout;
+      # fixture worktrees use read-only object alternates, not parent history or a fetch.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install frozen toolchain
         run: |

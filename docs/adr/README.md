@@ -45,5 +45,6 @@ An ADR records why a choice was made under known evidence and constraints. It is
 
 | ADR | Status | Scope |
 |---|---|---|
+| [ADR-0003](ADR-0003-unified-commitment.md) | Proposed | Owner-frozen experiment-local transaction, retry, incarnation and checkpoint choices; no production graduation. |
 | [ADR-0001](ADR-0001-evidence-driven-architecture.md) | Accepted | Evidence-driven governance process. |
 | [ADR-0002](ADR-0002-foundational-canonical-history-constraints.md) | Accepted | Approved semantic research constraints; not empirical validation. |

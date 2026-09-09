@@ -67,6 +67,13 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
 
 ## Current phase
 
+The owner’s merge plan step 3 now also authorizes
+[EXP-0003 unified commitment](docs/experiments/EXP-0003-unified-commitment.md):
+a bounded D1/D2 RF1 transaction core with Memory incarnation, retry resolution,
+checkpoints and injected process-termination/torn-tail tests. Platform durability
+evidence and manual descriptive measurements remain pending. No OS-crash or
+power-loss claim, production graduation, or later feature integration follows.
+
 The project has completed measurement-readiness documentation and contains bounded
 experimental Rust implementations and CI. No production architecture is proven.
 The existing EXP-0001 correctness and exploratory evidence remains intact.

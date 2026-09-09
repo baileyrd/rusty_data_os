@@ -5,6 +5,24 @@
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
+## EXP-0003 — owner-authorized unified commitment
+
+The [merge plan, step 3](plans/data-os-multimodal-merge-plan-2026-09-08.md) authorizes
+[EXP-0003](experiments/EXP-0003-unified-commitment.md), Ready, and
+[HYP-0003](hypotheses/HYP-0003-unified-commitment.md), Open. The standalone
+[unified-commitment workspace](../experiments/unified-commitment/README.md) implements
+bounded one-writer RF1 transactions, D1/D2 placements, retry retention, incarnation,
+validated checkpoints and injected process-termination/torn-tail correctness tests.
+The platform durability contract remains evidence-pending; no OS-crash/power-loss claim.
+Manual 1K/10K descriptive series and independent review remain pending. The
+[implementation report](experiments/EXP-0003/IMPLEMENTATION-REPORT.md) records proof
+and deviations; the [results index](experiments/EXP-0003/results/README.md) accepts
+only clean-revision or patch-reconstructable source manifests. The only Step 2 source
+change is backward-compatible runner metadata/source retention; EXP-0001 and prior
+EXP-0002 evidence are unchanged. No production, D3, compaction or step 4 integration.
+
+The historical status and authorization ledger below remain intact.
+
 ## 1. Current facts
 
 The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. Experimental codec, D1 append/replay, exploratory harnesses and standalone EXP-0002 workspaces exist; no production engine baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Confirmatory EXP-0001 generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.

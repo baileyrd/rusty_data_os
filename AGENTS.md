@@ -90,6 +90,8 @@ When Rust code begins:
 
 ## 10. Current constraint
 
+The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 3, separately authorizes EXP-0003's bounded D1/D2 transaction core, injected-fault recovery tests, and manual descriptive measurements while preserving the existing evidence requirements and OS-crash/power-loss exclusions; the host's 2026-09-09 acceptance of disposition P1 in [docs/experiments/EXP-0003/HOST-DISPOSITIONS.md](docs/experiments/EXP-0003/HOST-DISPOSITIONS.md), under the owner's merge-plan step 3 authority and approved work order, additionally authorizes rejection of payload bytes containing RF1 magic, and its disposition Q3 authorizes the explicit create/open split with the runner's `creates_store_directory` opt-in.
+
 The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 2, separately authorizes EXP-0002 shared Memory trace generation, candidate and pinned legacy adapters, correctness tests, CI, and manual descriptive measurements while preserving the existing evidence and correctness requirements.
 
 The project remains planning/readiness-first; no engine architecture is final. Slice A/A1 and Slice

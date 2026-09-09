@@ -1,0 +1,11 @@
+[package]
+name = "uc-core"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+[lints]
+workspace = true
+[dependencies]
+exp1-record-format = { path = "../../../exp-0001/crates/exp1-record-format" }
+exp1-raw-append-replay = { path = "../../../exp-0001/crates/exp1-raw-append-replay" }

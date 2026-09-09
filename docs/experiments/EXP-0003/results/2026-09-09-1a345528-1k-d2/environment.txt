@@ -1,0 +1,60 @@
+CMT1-results	1
+experiment=EXP-0003
+hypothesis=HYP-0003
+engine=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim; rev=e62fa699d3b264c0717428f86c0d11936ac3688a
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim
+equivalence=non-equivalent native durability; no winner claim
+created_unix_ns=1788963661361511100
+revision=e62fa699d3b264c0717428f86c0d11936ac3688a
+porcelain="M .github/workflows/convergence-memory.yml\n M AGENTS.md\n M README.md\n M docs/GLOSSARY.md\n M docs/PROJECT-STATUS.md\n M docs/RESEARCH-QUESTIONS.md\n M docs/TRACEABILITY.md\n M docs/adr/README.md\n M docs/experiments/README.md\n M experiments/README.md\n M experiments/convergence-memory/crates/cm-trace/src/run.rs\n?? docs/adr/ADR-0003-unified-commitment.md\n?? docs/experiments/EXP-0003-unified-commitment.md\n?? docs/experiments/EXP-0003/HOST-DISPOSITIONS.md\n?? docs/experiments/EXP-0003/IMPLEMENTATION-REPORT.md\n?? docs/experiments/EXP-0003/PROOF-attempt1.txt\n?? docs/experiments/EXP-0003/PROOF-before-retry-regression.txt\n?? docs/experiments/EXP-0003/PROOF-fix-round1.txt\n?? docs/experiments/EXP-0003/PROOF-fix-round2.txt\n?? docs/experiments/EXP-0003/PROOF.txt\n?? docs/experiments/EXP-0003/results/README.md\n?? docs/hypotheses/HYP-0003-unified-commitment.md\n?? experiments/unified-commitment/.gitignore\n?? experiments/unified-commitment/Cargo.lock\n?? experiments/unified-commitment/Cargo.toml\n?? experiments/unified-commitment/README.md\n?? experiments/unified-commitment/crates/uc-core/Cargo.toml\n?? experiments/unified-commitment/crates/uc-core/src/checkpoint.rs\n?? experiments/unified-commitment/crates/uc-core/src/envelope.rs\n?? experiments/unified-commitment/crates/uc-core/src/lib.rs\n?? experiments/unified-commitment/crates/uc-core/src/recovery.rs\n?? experiments/unified-commitment/crates/uc-core/src/sha.rs\n?? experiments/unified-commitment/crates/uc-core/tests/recovery.rs\n?? experiments/unified-commitment/crates/uc-harness/Cargo.toml\n?? experiments/unified-commitment/crates/uc-harness/src/main.rs\n?? experiments/unified-commitment/crates/uc-harness/tests/faults.rs\n?? experiments/unified-commitment/crates/uc-memory/Cargo.toml\n?? experiments/unified-commitment/crates/uc-memory/src/lib.rs\n?? experiments/unified-commitment/crates/uc-memory/tests/scenarios.rs\n?? experiments/unified-commitment/rust-toolchain.toml"
+command=["C:\\dev\\rusty_data_os-step3\\experiments\\unified-commitment\\target\\release\\uc-harness.exe", "run", "C:/tools/naner/home/.tmp/claude/C--dev-rusty-data-os/a7f95b87-afcb-42cf-98ce-1cddf2939026/scratchpad/exp0003-final2/1k.cmt", "C:/tools/naner/home/.tmp/claude/C--dev-rusty-data-os/a7f95b87-afcb-42cf-98ce-1cddf2939026/scratchpad/exp0003-final2/1k-d2", "d2"]
+rustc=rustc 1.98.0 (88d9e12ae 2026-08-18)
+binary: rustc
+commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea
+commit-date: 2026-08-18
+host: x86_64-pc-windows-gnu
+release: 1.98.0
+LLVM version: 22.1.8
+cargo=cargo 1.98.0 (797e8a9bc 2026-08-05)
+os=windows
+arch=x86_64
+debug_assertions=false
+RUSTFLAGS=Err(NotPresent)
+CARGO_ENCODED_RUSTFLAGS=Err(NotPresent)
+cache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured
+concurrency=1; queue_depth=1; batch_width=1
+clock=std::time::Instant, nanoseconds; probe overhead uncalibrated
+rss_method=bytes; Linux VmHWM converted from KiB or Windows PeakWorkingSet64 via pwsh then powershell, process-lifetime high water including harness/oracle
+file_size_method=sum logical lengths of store files, not allocated extents
+hardware_and_filesystem=[32;1mCaption                : [0mMicrosoft Windows 11 Enterprise
+[32;1mVersion                : [0m10.0.26100
+[32;1mTotalVisibleMemorySize : [0m32692044
+
+
+[32;1mName                      : [0mAMD Ryzen 7 PRO 250 w/ Radeon 780M Graphics    
+[32;1mNumberOfCores             : [0m8
+[32;1mNumberOfLogicalProcessors : [0m16
+
+
+[32;1mDriveLetter[0m[32;1m FileSystem[0m[32;1m AllocationUnitSize[0m
+[32;1m-----------[0m [32;1m----------[0m [32;1m------------------[0m
+          C NTFS                     4096
+            NTFS                     4096
+
+
+[32;1mFriendlyName     [0m[32;1m MediaType[0m[32;1m          Size[0m
+[32;1m------------     [0m [32;1m---------[0m [32;1m         ----[0m
+EG6 KIOXIA 1024GB SSD       1024209543168
+uncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable
+generator_seed=7
+trace_id=repeated-mutations-1k
+record_count=1000
+operation_count=15025
+shape=[200, 2000, 50, 500, 8]
+input_sha256=53201589e30fd48d4aeab077a6435bddc86902c25bd35bf70d1f39044cd070d0
+regeneration_command=cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/convergence-memory/Cargo.toml -p cm-harness --locked --offline -- generate 1k regenerated-1k.cmt
+regeneration_note=run from repository root; destination must not exist; verify regenerated SHA-256 against input_sha256, including for edited named traces
+retain_store=false
+source_retention=source.sha256 and source.patch; no source tree copy
+rss_baseline_after_load=130527232

@@ -1,0 +1,12 @@
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim
+engine=unified D2 per-transaction sync (R5 placements); tested failure model: injected process termination and torn tails; platform durability contract evidence-pending; no OS-crash or power-loss claim; rev=e62fa699d3b264c0717428f86c0d11936ac3688a
+phase=measured
+valid=true
+operations=150115
+operation_time_ns=471448501900
+operations_per_second=318.4122961363047
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a7f95b87-afcb-42cf-98ce-1cddf2939026\\scratchpad\\exp0003-final2\\10k-d2\\measured-4\\results.cmt"
+raw_sha256=d308c0c47149c7787cf718c4309429d66216892410b44fc94f032a82341432bf
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a7f95b87-afcb-42cf-98ce-1cddf2939026\\scratchpad\\exp0003-final2\\10k-d2\\measured-4\\observations.cmt"
+raw_sha256=8b8060466a519fd040273ce6246783985db57076888166f8578ef7894d864340
