@@ -313,3 +313,78 @@
 - Committed on `codex/merge-step4-entity-relation-core` (worktree `C:/dev/rusty_data_os-step4`, not pushed): `d90b39c` (26 files, 3,657 insertions), including the four host proof logs as evidence. No residuals carried — inspection and host review both found zero defects.
 - Deferred, tracked in `docs/roadmap/ROADMAP.md` on that branch: Memory<->Entity cross-domain atomicity (the one real cross-table link in the legacy codebase), a compatibility facade, and SQL/protocol-fixture reuse — none requested yet; would need their own scoped work orders.
 - Owner note carried forward: everything migrates to `https://github.com/Rusty-Mill/rusty_data_os.git` when the owner decides; still no push authorized to any remote.
+
+## Step 4b-i — Codex plan review (Data OS: protocol-22 wire facade infrastructure, uc-protocol)
+
+- Recon: two Explore agents in parallel plus direct host reads of `rusty_multimodal_db@232b16e`
+  captured the exact wire framing/codec byte rules (u32 LE frame length; bincode-compatible
+  fixint/LE encoding; enum = u32 LE variant index except `Option` = 1-byte discriminant;
+  `String`/`Vec` = u64 LE length prefix), the complete `Request`(32)/`Response`(21) type surface
+  and every supporting type, the `Hello` min(client,server) handshake, `ConnectionStore`'s method
+  surface and generic `dispatch`, and the Memory-domain adapter's exact dispatch chain/schema
+  mechanism (for reference; Memory/Entity/Relation wiring is deferred to a later work order).
+- Owner scope decisions (asked 2026-09-09): (1) the facade is reimplemented inside `rusty_data_os`
+  only, never touching `rusty_multimodal_db`; (2) `AGENTS.md` §3's server/networking prohibition
+  and `docs/RESEARCH-ROADMAP.md`'s Phase 7 gate are amended now, as this work order's first
+  change, per the merge plan's own "align active repository instructions... in the first relevant
+  implementation change" directive — a named, bounded exception (EXP-0005), not a general lift.
+- Work order drafted: `step4b-protocol-facade-spec.md` — 4b-i of Step 4b: wire codec, dispatch
+  trait, and a per-connection protocol loop only; no real domain adapter wired (deferred to 4b-ii);
+  no real `TcpListener`/socket code (D2, deferred); no `bincode`/`serde`/`uuid` dependency (D1, D3,
+  matching this workspace's hand-written-codec convention); no enforced authentication (D4); no
+  protocol-version downgrading (D5). New crate `uc-protocol` added to the existing
+  `experiments/unified-commitment` workspace. Worktree `C:/dev/rusty_data_os-step4b` on
+  `codex/merge-step4b-protocol-facade` from `d90b39c` (Step 4a's close).
+- Independent verification tool: the host wrote and ran a reference decoder
+  (implementing the same byte rules) against all 66 real lines of
+  `rusty_multimodal_db`'s `tests/fixtures/wire-vectors.txt`; zero decode errors, every line
+  produced a sane literal value. Recorded as `step4b-fixture-expected-values.txt`, required by the
+  spec (R4/D6) as the literal-value ground truth every implementation must decode to, not merely
+  round-trip.
+- Review 1 (`runs/step4b-review/claudex-wl_7wxsb/`, session `01a08740-d1b4-7632-89ac-6cad4a2ea2b6`,
+  plan sha256 `021eab10…3a76`): **REVISE**, 5 high + 2 medium. P4B-001 `Transaction` misrouted into
+  the session-only fallback (legacy dispatches it for real when no session is open). P4B-002
+  missing `write_batch_checked`'s fail-closed default (my draft allowed an unsafe pipelined
+  fallback for atomic batches). P4B-003 missing `detach_record`/cross-table `Delete` cascade
+  (dangling edges after a cross-table delete). P4B-004 no shared cross-connection relationship
+  mutex (a two-connection race could still produce a dangling edge even with the P4B-003 fix).
+  P4B-005 `BeginWith`'s three flag behaviors (read-your-writes, validate-on-stage, snapshot
+  isolation) reduced to bare "staged writes". P4B-006 missing cross-table `Join` (`join_across`).
+  P4B-007 round-trip-only fixture proof cannot catch a self-consistent wrong decoder (e.g. a
+  byte-order error or two swapped same-shaped variants). All seven accepted
+  (`feedback-S4B-review1.md`); spec revised to hash `4b477545…f9a359`.
+- Review 2 (`runs/step4b-review/claudex-4emv6v9c/`, same session, plan sha256 `4b477545…f9a359`):
+  **REVISE**, 1 high + 2 medium. P4B-008 the session-open guard set covered only `Transaction`/
+  `Begin`, omitting `Insert`/`Link`/`Replace`/`Delete`/`Compact`/`ReplaceIf`/`WriteBatch`/`Use` —
+  all eleven guarded requests must be rejected `SessionOpen` before any table-switch or mutation
+  effect. P4B-009 missing `MAX_STAGED_OPS`/`MAX_BATCH_OPS` (both 4096) and their exact
+  `SessionFull`/`Malformed` rejection semantics. P4B-010 the P4B-006 Join fix conflated
+  `Malformed` and `Unsupported`, which `validate_join`'s real 4-way match keeps distinct. All
+  three accepted (`feedback-S4B-review2.md`); spec revised to hash `66a53b9f…57d80`.
+- Review 3 (`runs/step4b-review/claudex-x0st7q1b/`, same session, 57 s): **APPROVED**, no findings.
+  Three review rounds total (7 → 3 → 0 findings), all host-accepted; ten findings closed overall.
+- Build launching against the approved spec (hash `66a53b9f…57d80`,
+  `runs/step4b-review/claudex-x0st7q1b/result.json` as `--approval`). Budgets: MAX_FIX_ROUNDS=2,
+  MAX_INSPECTION_ROUNDS=2.
+
+### Step 4b-i round S4B-1 result
+
+- Result: `runs/step4b-build/claudex-w3xxslf9/` (session `01a08755-d6c9-7b11-bc03-930b56049484`, 2008 s, exit 0, plan sha256 `66a53b9f…57d80` (approved), base `d90b39c`, snapshot sha256 `53e59c59…013864e`, 37 files: new `experiments/unified-commitment/crates/uc-protocol/` (`src/{lib,types,codec,framing,dispatch,query,store,connection}.rs`, `tests/{conformance,dispatch,sessions,relationships}.rs`, `tests/support/{mod,interleaving}.rs`, `tests/fixtures/{wire-vectors.txt,step4b-fixture-expected-values.txt,generate_expected.py,expected_cases.rs}`); workspace `Cargo.toml`/`Cargo.lock`/`README.md` add the member; `docs/adr/ADR-0005-protocol-facade.md`, `docs/experiments/EXP-0005-protocol-facade.md` + `EXP-0005/{IMPLEMENTATION-REPORT.md,proof-output.txt}`, `docs/hypotheses/HYP-0005-protocol-facade.md`; AGENTS §3 and RESEARCH-ROADMAP.md Phase 7 carry the exact R0 exception text; AGENTS/README/GLOSSARY/PROJECT-STATUS/RESEARCH-QUESTIONS/TRACEABILITY/experiments-README updates.
+- Codex-reported proof: exact chain exit 0; 209 tests (97 unified-commitment = 59 unchanged + 38 new protocol, 17 convergence-memory, 95 exp-0001 harness-excluded); all 66 fixture lines pass both literal-value and byte-round-trip checks; the D7 two-connection interleaving test and its mutex-removal negative control both pass; links; diff check. No core/Memory/Entity/Relation/harness change; no socket binding; no commit/push. Disclosed deviation: the host's own R7 test-requirement wording ("Delete... confirmed absent after Rollback") was internally contradictory given "zero effect" — Codex flagged it and implemented the sensible reading (the *deletion* is what's absent; the existing record and its edges remain present after Rollback), with an explicit test; asked for independent review to confirm. Also disclosed: `uc_core::Uuid` lacks `Ord` so a separate 16-byte `RecordId` was defined (matching D3); `Registry::new` rejects empty/duplicate/mismatched table names and an out-of-range primary index; legacy `page_keys` was included in `Store` to preserve the full method surface; a pre-existing fixture data quirk (an unrelated row with value 999) was caught and the literal expected result corrected to include it, not the frozen fixture itself.
+- Host review (source read directly): `Registry` (`connection.rs`) — `Clone`-derived, `relationship_lock: Option<Arc<Mutex<()>>>` present only when some relation declares a `target_table` (`connection.rs:29-41`); the guard is acquired once, before any adapter access, for exactly `Link`/`Delete`/`WriteBatch`, and its scope spans the whole request handler (`connection.rs:216-229`) — matches D7/P4B-004 exactly. The full eleven-item session-guard match (`connection.rs:239-251`) matches P4B-008 exactly. `write_batch_checked`'s fail-closed default (`store.rs:148-158`) is byte-for-byte the cited legacy default — matches P4B-002. `validate_join` (`query.rs:109-130`) is an exact reproduction of the legacy 4-way match, including the `right_schema.ok_or(Malformed)` case — matches P4B-010 exactly. `Request::Transaction` has a real dispatch arm (`dispatch.rs:92`), not a fallback — matches P4B-001.
+- Host proof (`proof-S4B-1..4.log`, snapshot `53e59c59…013864e`): unified-commitment fmt/clippy/test PASS (97 tests, including the named interleaving test and its mutex-scope companion, session-guard, staging-cap, and BeginWith-flag tests observed by name); convergence-memory PASS (17); exp-0001 PASS (95, harness excluded); links PASS; diff check PASS. Independently confirms Codex's reported counts and outcome exactly. Inspection 1 (fresh Claude CLI) launching on this snapshot.
+
+## Step 4b-i inspection 1 — fresh Claude CLI on snapshot `53e59c59…013864e` (final, in budget)
+
+- Result: `runs/step4b-inspect/claudex-oktxlzvr/` (session `36d5022b-dbcd-476b-a813-c33a1053b9d7`, 461 s, claude.exe 2.1.266). First launch attempt (`runs/step4b-inspect/claudex-jqx66nnc/`) failed in 5 s with API 401 "WWW Authorization Required" — the same network-appliance 307-redirect interception seen earlier in this project; confirmed via curl probe, waited for it to clear (redirect gone within ~15 minutes), relaunched successfully.
+- **Verdict: APPROVED, 2 low findings.** Tooling note (recurring, same as Step 4a's inspection): the runner's structured-output tool call succeeded twice with full, substantive analysis, then a third, schema-valid-but-degenerate attempt ("test"/"a"/"b"/"c") overwrote it in `result.json`. The genuine analysis survives in attempt 1/2 of the raw transcript and is recorded here as the actual result.
+- Real findings (from the transcript): full review of `types.rs`/`codec.rs` (byte rules, worked examples spot-verified), `store.rs` (Store trait vs R5, including detach_record/apply_write_op/write_batch_checked's fail-closed default), `dispatch.rs` (Transaction's real arm, Join's exact validate_join 4-way match, confirming only the six per-connection-state variants use the Unsupported fallback), `connection.rs` in full (Hello negotiation, the 11-variant SessionOpen guard set, BeginWith flag gating/combinations, snapshot-isolation read tracking/overlay ordering, MAX_STAGED_OPS/MAX_BATCH_OPS enforcement, cross-table Link/Delete/detach ordering, the D7 relationship-mutex scope and drop timing), `query.rs`, and the D7 interleaving test traced in detail and confirmed as a genuine deterministic positive/negative-control test, not a flaky timing test. "No material unresolved correctness, spec-fidelity, or security defects."
+  - F1 (low, `connection.rs` ~219-259): the relationship lock is acquired for any `Link`/`Delete`/`WriteBatch` *before* the session-open guard check, so a session-blocked request briefly takes the shared mutex before being rejected — literally compliant with R7's wording (not a spec violation), an undocumented minor contention cost. Confirmed accurate by host source read.
+  - F2 (low, `connection.rs` ~324-338): `SESSION_VALIDATE_ON_STAGE`'s `validate_op` check runs before the `MAX_STAGED_OPS` cap check, so a validation failure exactly at the cap reports the validation error rather than `SessionFull`; the spec states no precedence for this combination and no test exercises it. Confirmed accurate by host source read.
+- Host assessment: both low, both explicitly non-required fixes per the inspector's own framing, neither a spec violation. Following the established residual-carrying pattern (Step 3's low residuals): commit as-is, carry both as documented residuals rather than spending a fix round. Budgets: fix rounds 0/2 used, inspections 1/2 used (clean close, no second round needed).
+
+## Step 4b-i closed (host commit)
+
+- Committed on `codex/merge-step4b-protocol-facade` (worktree `C:/dev/rusty_data_os-step4b`, not pushed): protocol-facade infrastructure (`uc-protocol`: codec, framing, types, dispatch, query, store, connection/Registry; 66-fixture literal-value+round-trip conformance test; the D7 interleaving test; governance amendment to `AGENTS.md` §3 and `RESEARCH-ROADMAP.md` Phase 7; EXP-0005/ADR-0005/HYP-0005; the four host proof logs as evidence), plus this BUILD-LOG entry.
+- Residuals carried: F1 relationship-lock acquired before the session-open guard (undocumented minor contention, not a spec violation); F2 validate-on-stage vs. staged-cap precedence unspecified and untested for the combined case.
+- Not started: 4b-ii (wiring Memory/Entity/Relation onto this `Store` trait via `uc-memory`/`uc-entity`/`uc-relation`, plus opening a real `TcpListener`, both explicitly deferred by D2/D4/Non-goals of this work order).
