@@ -207,14 +207,19 @@ reconstruction with both source and restore configured `core.autocrlf=true`.
 The local agreed proof passed: 30 unified, 17 shared/candidate EXP-0002 and 95 portable
 EXP-0001 tests, formatting, Clippy, links and whitespace. Full output and deviations are
 recorded in the [implementation report](EXP-0003/IMPLEMENTATION-REPORT.md).
-The host reported a D1 series on the prior snapshot; manual series on these fixed binaries
-and remote CI remain pending. Host series entries stay empty. No measurement conclusion.
+Three host series on this snapshot's binaries (1K D1, 1K D2, 10K D2; 18 trials, all valid
+against the oracle) are catalogued in the [results index](EXP-0003/results/README.md) with
+their committed evidence subsets and a verified revision-plus-patch reconstruction; one earlier
+10K D2 run on a prior snapshot is recorded there as incomplete. Remote CI remains unexecuted.
+No measurement conclusion.
 
 ## 17. Conclusion
 
 Bounded implementation and correctness validation pass for the tested injected fixtures,
 subject to the residual torn-frame ambiguity disclosed in §9.
-Independent review and manual descriptive measurements remain pending.
+Three fresh Claude CLI inspections were completed; the final verdict carried provenance and
+five low hardening items as residuals (see [host dispositions](EXP-0003/HOST-DISPOSITIONS.md)).
+Descriptive host measurements are catalogued; they are diagnostics, not a conclusion.
 Hypothesis remains Open and experiment Ready; no platform durability or performance conclusion.
 
 ## 18. Follow-on questions
