@@ -8,6 +8,8 @@ landed and inspected first; this work order builds on it.
 Target repository: `C:/dev/rusty_multimodal_db`. Same rules as part A: follow `AGENTS.md` and
 `WORKFLOW.md`; no dependency, toolchain or `rust-version` bumps; no protocol-version bump
 unless a wire shape changes (none is expected here); do not `git commit`.
+Keep the repository's LF line endings: edit files in place rather than rewriting whole files
+through tools that emit CRLF (a prior attempt did, and every touched file became a whole-file diff).
 
 ## Goal
 

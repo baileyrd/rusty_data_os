@@ -5,7 +5,10 @@ Source plan: `C:/dev/rusty_data_os/data-os-multimodal-merge-plan-2026-09-08.md`,
 rusty_multimodal_db (the legacy runner pins that reviewed revision; if part A is merged first,
 pin the merged commit instead and say which).
 
-Target repository: `C:/dev/rusty_data_os` (baseline `79d51e9404c8b35dee2662aa657b602e9061b44b`).
+Target repository: the Data OS build worktree at `C:/dev/rusty_data_os-step2`, branch
+`codex/merge-step2-convergence-memory` created from `2ca5b61` (= `main` at
+`79d51e9404c8b35dee2662aa657b602e9061b44b` plus the committed merge plan, handoff prompt and
+work orders). Resolve every path against that worktree; never edit `C:/dev/rusty_data_os`.
 Follow `AGENTS.md` (§2 measurement method before implementation, §4 benchmark-integrity
 checklist, §5 independent correctness invariants, §6 keep negative results, §7 update every
 related document in the same change, §10 authorization ledger) and `docs/experiments/README.md`
@@ -52,7 +55,7 @@ domain.
 | Path | Contents |
 |---|---|
 | `experiments/convergence-memory/` | `Cargo.toml` (workspace, edition 2024, `rust-version = "1.89"`, same lints/profile as exp-0001), `rust-toolchain.toml` (1.89.0, minimal, rustfmt+clippy; no Linux-only target pin so it builds on the Windows dev box), `Cargo.lock`, crates: `cm-trace` (versioned trace/results format + independent expected-state model), `cm-candidate` (Memory record codec over RF1 + D1 append/replay + independent row/column rebuilds, path-depending on `exp1-record-format` and `exp1-raw-append-replay`), `cm-harness` (runner binary/example: executes traces, validates, measures, writes results) |
-| `experiments/convergence-memory-legacy/` | `Cargo.toml` (own workspace, own `Cargo.lock`), `rust-toolchain.toml` (1.89.0), one crate `cm-legacy-runner` depending on `rusty_multimodal_db = { git = "https://github.com/baileyrd/rusty_multimodal_db", rev = "<pinned>", features = ["server"] }` and on `cm-trace` by path; executes the same traces through `MemoryConnectionStore` (single-shot requests and, where equivalent, protocol-22 batches) and emits results in the shared format |
+| `experiments/convergence-memory-legacy/` | `Cargo.toml` (own workspace, own `Cargo.lock`), `rust-toolchain.toml` (1.89.0), one crate `cm-legacy-runner` depending on `rusty_multimodal_db = { git = "https://github.com/baileyrd/rusty_multimodal_db", rev = "abda0a7e94a9727e410001e9724edc741f6e0d31", features = ["server"] }` (Step 1 part A as landed, inspected and pushed on branch `codex/merge-step1-batch-cross-table`; host decision 2026-09-08 — part B is not pushed yet, so it cannot be pinned) and on `cm-trace` by path; executes the same traces through `MemoryConnectionStore` (single-shot requests and, where equivalent, protocol-22 batches) and emits results in the shared format |
 
 The candidate workspace must stay external-dependency-free (lockfile with workspace/path
 crates only) so it runs `--locked --offline` like exp-0001. The legacy workspace cannot: its
@@ -151,6 +154,14 @@ python tools/validate_markdown_links.py
 git diff --check
 ```
 
-The host installs Rust 1.89.0 if absent (it is not installed on this machine yet) and runs the
-measurement command for the 1K and 10K sizes once to check the results files are produced; the
-100K run is reported as executed or not.
+Windows build-box notes (host-verified 2026-09-08): rustup's default host here is
+`x86_64-pc-windows-msvc` with no MSVC linker, and only `1.89.0-x86_64-pc-windows-gnu` is
+installed (minimal profile with rustfmt and clippy), so every `cargo +1.89.0` above must be spelled
+`cargo +1.89.0-x86_64-pc-windows-gnu` when run on this machine; CI on Linux uses the bare
+`1.89.0`. The exp-0001 crate `exp1-descriptive-d1-harness` is Linux-only by design, so on this
+machine the three exp-0001 commands take `--workspace --exclude exp1-descriptive-d1-harness`
+(verified: fmt, clippy and tests pass that way at the baseline); CI covers the full workspace.
+The two new workspaces must build and test fully on Windows (no Linux-only crates).
+
+The host runs the measurement command for the 1K and 10K sizes once to check the results
+files are produced; the 100K run is reported as executed or not.
