@@ -1,0 +1,12 @@
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine=D1 ordinary writes, no fsync, no crash-survival claim
+phase=warmup
+valid=true
+operations=13025
+operation_time_ns=705644200
+operations_per_second=18458.310859778907
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\candidate-1k\\warmup-0\\results.cmt"
+raw_sha256=77fb5ce58a08fd68839f96489523c8b710002a701f3d079e11e2587f95cf3284
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\candidate-1k\\warmup-0\\observations.cmt"
+raw_sha256=1caef7343e94b09a055ebc076c6d2f01d555a811765693fd8d715d62bddd8363

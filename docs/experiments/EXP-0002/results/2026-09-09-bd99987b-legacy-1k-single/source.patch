@@ -1,0 +1,426 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index c713491..96bffe7 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -90,6 +90,8 @@ When Rust code begins:
+ 
+ ## 10. Current constraint
+ 
++The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 2, separately authorizes EXP-0002 shared Memory trace generation, candidate and pinned legacy adapters, correctness tests, CI, and manual descriptive measurements while preserving the existing evidence and correctness requirements.
++
+ The project remains planning/readiness-first; no engine architecture is final. Slice A/A1 and Slice
+ B/B0 are closed only as bounded implementation/correctness-validation evidence. Slice A2 is closed only as bounded conformance/correctness evidence after its corrective gate; R17 implements the frozen R12/R14/R16 contracts only in the external-dependency-free conformance subset, which contains reviewed workspace path dependencies. R19 closes the R18-authorized Slice C/B1 raw D1 append and deterministic reopen/replay implementation only as bounded correctness evidence. The locally decidable R20 semantic-operation-to-physical-record mapping subset is implemented as a pure correctness component in `exp1-raw-append-replay`, with direct path dependencies on the existing record-format and workload-conformance crates and no append integration; this is bounded implementation/correctness-validation evidence only. R21 freezes the locally decidable immutable-catalog/accepted-prefix design, R22 selects strictly segment-local references, and R23 freezes a canonical closed-scope descriptor whose exact manifest-bound membership and domain-separated digest prove the complete stream set for one authorized cell. R23 closes the closed-scope governance blocker. R25 records that closed, unmerged PR #91 falsified R24’s assumption that the unchanged v1 authorities can produce a valid bootstrap-to-reference causal stream; R25 supersedes R24 for implementation authorization only, preserves every R12/R14/R16 v1 vector and byte, and freezes prospective v2 governance without authorizing code. R26 freezes the complete v2 conformance contract; PR #95 reviewed head `35f9a0f245ac488828df4f639263edb3fb50be86`, merged as `f4ed0c310fa46c6de209ea0f776c4749e31cdd34` with exact-head successful CI, implements it side by side with v1 as bounded conformance/correctness evidence. R27 closes that tranche, freezes the minimum v2 extension of R23 closed-scope proof while preserving v1 and prohibiting mixed membership, and authorizes exactly one pure v2 reference-context mapper implementation in the existing `exp1-raw-append-replay` crate. R28 closes that implementation at PR #98 reviewed head `67715b3efc4732542152ea9d935d92ebdb2ca0d6`, merged as `f5cde575cbd82bb788b9519c4efc56e4d1186131` with both exact-head workflows successful, as bounded correctness evidence. The full R20 reference-context correctness gate is closed. R29 closes the R28-authorized test-only literal SOP2-to-physical-reopen D1 correctness path at PR #101 reviewed head `b88908cb9cbba39774437e582308bab25a88482b`, merged as `2168839a70baebdea1773fc56e7b8aa0dc9a89e4` with both exact-head workflows successful, only as bounded deterministic integration/correctness evidence. The R19 semantic-to-physical mapping blocker is closed. R29 froze an external-dependency-free Linux/x86_64 clocks/resource/file/procfs preflight ABI; R30 closes its merged implementation and freezes a counter-read `perf_event_open` ABI for four events. R31 closes that implementation only as bounded deterministic ABI/lifecycle/scaling/cleanup correctness evidence and freezes the first-cell sources and orchestration contract. R32 closes PR #108 only as bounded deterministic injected orchestration/lifecycle/source-metadata/failure/cleanup correctness evidence, resolves the internal live-wrapper interface gap as design, and authorizes exactly one later non-live-tested internal adapter implementation. R34 records that closed, unmerged PR #114 at exact head `41d30f3484609b6b6ec03918bfd04b03ac56273a` is not mergeable despite green workflows because R33 cannot truthfully represent compile-target mismatch or valid-request open failure and the implementation does not meet the exhaustive synthetic gate; PR #114 is not evidence and created no public compatibility obligation. R34 preserves v1 and freezes a separate v2 schema with explicit not-acquired ownership; R35 supersedes only R34's unsupported-target runtime-artifact requirements because the crate rejects non-Linux/x86_64 compilation. R35 preserves the compile gate, freezes successful target values, and preserves every other v2 boundary and exhaustive synthetic gate. R36 closes PR #119 reviewed head `44a61290db7b9929502e630608c0fea860105e96`, merged as `dd9f8ae6c81681ea5943058b63f5e74117b234c8` after both exact-head workflows succeeded, only as bounded deterministic v2 construction, serialization, lifecycle, failure-ordering, retention, and synthetic correctness evidence. R36 authorizes exactly one immediate PR adding only the operator-only `target_preflight` example with synthetic argument/dispatch/exit tests; after that PR is reviewed and merged, one manual invocation is permitted on the intended Linux/x86_64 target with a pre-existing disposable file. That invocation is only a staged diagnostic, not R7, Fedora, benchmark, or performance evidence. Fedora-release and effective-host validation remain unresolved. Live capture, target probing or validation, record production, workload or benchmark execution, confirmatory tracefs, and performance evidence remain blocked or unauthorized. Generated workloads, workload or benchmark execution, D2/D3, `fsync` durability, faults, adapters or baselines outside the narrowly authorized internal capture adapter, production crates, and later increments remain unauthorized. Run the unchanged R9 validation
+-sequence and `git diff --check` from the repository root.
++sequence and `git diff --check` from the repository root. The Markdown link validator includes existing tracked and non-ignored untracked Markdown; CI checkouts are clean, so the untracked scan affects only local runs.
+diff --git a/README.md b/README.md
+index 2269dd9..d7e5797 100644
+--- a/README.md
++++ b/README.md
+@@ -67,8 +67,14 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
+ 
+ ## Current phase
+ 
+-The project is in **Phase 0: foundation and measurement design**. No production architecture is considered proven yet.
++The project has completed measurement-readiness documentation and contains bounded
++experimental Rust implementations and CI. No production architecture is proven.
++The existing EXP-0001 correctness and exploratory evidence remains intact.
+ 
+-No engine implementation, Cargo baseline, CI, or benchmark evidence exists yet. `EXP-0000` (Experiment 0), a documentation and measurement-readiness increment, is next. `EXP-0001` remains planned but is blocked until Experiment 0 and its prerequisites are complete.
++The owner-authored [merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md)
++authorizes [EXP-0002](docs/experiments/EXP-0002-convergence-memory.md): shared
++Memory@2 traces, an independent model, candidate/legacy runners and manual
++measurements. Candidate: D1 ordinary writes, no fsync, no crash-survival claim.
++Native legacy durability differs; operator measurement evidence is pending.
+ 
+-See `docs/PROJECT-STATUS.md` for the authoritative current state.
++See [Project Status](docs/PROJECT-STATUS.md) for the authoritative current state.
+diff --git a/crates/README.md b/crates/README.md
+index d9f2b18..0e1d4ae 100644
+--- a/crates/README.md
++++ b/crates/README.md
+@@ -2,7 +2,7 @@
+ 
+ This directory is reserved for reusable Rust components that have graduated from experiments.
+ 
+-It intentionally contains no engine implementation at project start.
++No experimental engine has graduated into this directory. Bounded implementations live under [experiments](../experiments/README.md).
+ 
+ A component should enter this directory only after the project can answer:
+ 
+diff --git a/data-os-multimodal-merge-plan-2026-09-08.md b/data-os-multimodal-merge-plan-2026-09-08.md
+deleted file mode 100644
+index 8d5ec7d..0000000
+--- a/data-os-multimodal-merge-plan-2026-09-08.md
++++ /dev/null
+@@ -1,187 +0,0 @@
+-# Data OS + Rusty Multimodal DB — updated merge plan
+-
+-Revision 2 · September 8, 2026 · Incorporates the supplied review and eight reproduced regression probes.
+-
+-**Build one general-purpose database that can replace SQLite, PostgreSQL, DuckDB and additional database workloads, with one authoritative history and multiple optimized representations.** Data OS becomes the eventual home of the combined engine. Carry forward useful multimodal features and migrate applications through a working compatibility path.
+-
+-The merge has six concrete steps. The broader database capabilities continue alongside and after that work. Memory is the first proving workload; the product must support general data and queries. An application can migrate as soon as its requirements work correctly, without waiting for full PostgreSQL or DuckDB compatibility.
+-
+-This is a complete execution roadmap for the merge, with deliverables, dependencies and observable completion conditions. Individual implementation changes will still resolve code-level interfaces and algorithms. The database implementation and competitive performance remain work to do.
+-
+-## Working approach
+-
+-Ship code, relevant tests, measurements and short notes together. Keep changes small enough to verify. Do not create a documentation-only approval ladder or reopen the owner's replacement-database goal. Briefly align active repository instructions with that goal in the first relevant implementation change while preserving existing research evidence and useful correctness requirements.
+-
+-Use the existing engines as comparison targets and migration sources. They should not become hidden production engines underneath the replacement. Performance claims must identify the workload and match correctness, durability, concurrency and retention settings. Universal superiority is an ambition, not an established result.
+-
+-## Reviewed starting point
+-
+-The source baseline below was checked on September 8, 2026. Check for intervening source changes when implementation starts; these findings refer to the pinned commits.
+-
+-| Project | Reviewed revision | Useful foundation | Immediate limitation |
+-|---|---|---|---|
+-| Data OS | [79d51e9, PR #124](https://github.com/baileyrd/rusty_data_os/commit/79d51e9404c8b35dee2662aa657b602e9061b44b) | Ordinary-write history, physical replay and independent row/column reconstruction in a bounded experiment | No complete durable, transactional database backend yet |
+-| Rusty Multimodal DB | [478eeda, PR #229](https://github.com/baileyrd/rusty_multimodal_db/commit/478eeda4544aa98c4948aebc66b5ff8fad609645) | Domains, relationships, indexes, structured queries, clients, server and protocol 22 write batches | Recovery inconsistencies and incorrect cross-table batch effects |
+-
+-At the last inspection, Data OS's two head-specific checks passed. Multimodal's MSRV check passed; stable Clippy failed at two existing sites, preventing later checks in that job. Protocol 22 batches are table-targeted and do not provide whole-batch crash recovery. [Batch semantics](https://github.com/baileyrd/rusty_multimodal_db/blob/478eeda4544aa98c4948aebc66b5ff8fad609645/docs/decisions/ADR-0060-write-batch.md), [multimodal CI](https://github.com/baileyrd/rusty_multimodal_db/actions/runs/34261113652).
+-
+-Eight targeted regression tests failed against the unmodified multimodal baseline: four recovery/isolation probes and four batch probes. They are executable evidence, not a full test-suite result. The reviewed evidence package retains the harness, lockfile, captured output and rerun instructions.
+-
+-Data OS's 10K-event physical replay result had a median of 2.502494 ms and a range of 2.275321–17.027527 ms over five trials. Those events updated only 17 entities. This measures one replay stage, without an fsync durability claim; it does not establish database throughput or tail latency. [Retained measurements](https://github.com/baileyrd/rusty_data_os/blob/79d51e9404c8b35dee2662aa657b602e9061b44b/docs/experiments/exploratory-history-views/INCREMENTAL-LIFECYCLE-VALIDATION-COMPARISON.md).
+-
+-## The six merge steps
+-
+-| Step | Main location | Delivered result | Completion evidence |
+-|---|---|---|---|
+-| 1. Repair immediate legacy defects | Multimodal | Correct batch relationships and restored CI | New regressions pass for single requests and both batch modes; supported checks pass |
+-| 2. Run the shared Memory experiment | Data OS | Candidate and legacy engines execute identical traces | Independent expected results match; repeatable measurements cover realistic live records |
+-| 3. Unify commitment and recovery | Data OS | One authoritative transaction history | Recovery, retry and atomic-publication tests pass under the declared durability contract |
+-| 4. Integrate existing features | Primarily Data OS | Existing clients and selected domains use the shared core | End-to-end application traces and compatibility fixtures pass |
+-| 5. Migrate one application | Engine and consumer | A real consumer runs on verified imported data | Data comparison, reopen, restore and rollback paths are exercised |
+-| 6. Consolidate the projects | Both repositories | One maintained runtime and a clear compatibility path | Migrated consumers depend on the shared engine; retained legacy support is explicit |
+-
+-The steps express dependencies, not six oversized PRs. Split each into working code increments where useful. Feature inventory and benchmark preparation can begin during the experiment; durable production migration depends on steps 3 and 4.
+-
+-## 1. Repair immediate legacy defects
+-
+-Fix two confirmed batch defects in both pipelined and atomic modes:
+-
+-- **Batch Link accepts a missing foreign endpoint.** The equivalent single request rejects it. Make batch relationship validation table-aware.
+-- **Batch Delete leaves cross-table edges behind.** The record disappears but another table can still return its UUID as a neighbor. Make deletion detach the same relationships as the equivalent single request.
+-
+-Include the four reproduced batch regressions with the repairs. Cover positive links, valid deletion, missing endpoints, and operations whose validity changes because of earlier operations in the batch. Atomic behavior must account for all affected tables, cross-table effects and lock ordering. Calling existing helpers in a loop does not by itself preserve atomicity. [Routing and cross-table helpers](https://github.com/baileyrd/rusty_multimodal_db/blob/478eeda4544aa98c4948aebc66b5ff8fad609645/src/server/serve.rs).
+-
+-Repair the current Clippy failures in `src/durability/mmap_store.rs` and `src/server/pem.rs` alongside this substantive change, while preserving Rust 1.88 compatibility. Check both the MSRV and supported stable toolchains.
+-
+-Keep the existing recovery/isolation probes runnable and link them from the implementation notes. Add passing regressions with the corresponding fixes. While the legacy engine remains in use, repair or prevent unsafe combinations used by its consumers; do not require a second complete transaction-engine rewrite before building the shared core. The snapshot-labeled behavior also needs an honest contract: either implement a stable snapshot or expose the weaker behavior accurately.
+-
+-**Done when:** single requests and both batch modes agree on relationship correctness, atomic rejection leaves no partial cross-table effects, and the repaired validation pipeline passes.
+-
+-## 2. Run the shared Memory experiment
+-
+-Create two standalone workspaces in Data OS:
+-
+-| Proposed path | Purpose |
+-|---|---|
+-| `experiments/convergence-memory/` | Candidate backend, independent expected results and measurement harness |
+-| `experiments/convergence-memory-legacy/` | Comparison runner pinned to the reviewed multimodal source |
+-
+-Give each its own manifest and lockfile. Select Rust 1.89 explicitly; the existing nested EXP-0001 toolchain does not configure sibling directories. Add both manifests to CI in the same change. Fetch the locked legacy dependencies before any offline validation. Exchange a small, versioned trace/results format so the runners remain comparable without merging their dependency graphs.
+-
+-Preserve the existing EXP-0001 workspace, fixtures, evidence and validation. Reuse suitable codec, replay and independent-view code. In these experiments, `Memory` means the existing application record type; it does not restrict the database to that domain.
+-
+-Execute the same operations against both engines and an independent expected-state model:
+-
+-- Insert, get, field update, whole-record replacement, guarded update, delete and reinsert, covering all current Memory fields.
+-- Equality lookup, column aggregation and ordered pagination, including duplicate ordering keys and explicit tie-breaking.
+-- Repeated mutations over 1K, 10K and 100K distinct records, plus a small deterministic trace that is easy to debug.
+-- Independent row and column reconstruction from history, compared against expected results rather than only against each other.
+-
+-Measure complete operation costs as well as append, replay, rebuild and query stages. Record memory use, disk size, dataset shape, compiler, dependency versions, hardware, warm/cold conditions and enough repetitions to characterize variability. Preserve reusable drivers from the existing external-database benchmarks where they fit; the retained Dog benchmark and separate Memory Page measurements need equivalent cases before reuse as direct comparisons.
+-
+-The first candidate may use the existing ordinary-write D1 path. Label it clearly and compare equivalent durability settings. Durable acknowledgement is step 3; this experiment must not imply that ordinary writes survive a host or power failure.
+-
+-**Done when:** both runners execute the shared traces, independent expected results agree with candidate row and column views, CI exercises both workspaces, and retained measurements show where the candidate improves or regresses. A measured regression drives the next optimization; it does not invalidate useful integration work.
+-
+-## 3. Unify commitment and recovery
+-
+-Implement a bounded local transaction core, starting with one writer and explicit transaction size limits. General multi-client concurrency follows once local commitment and recovery are correct.
+-
+-The proposed write path is: validate the complete transaction against a coherent state, including effects of its earlier operations; assign an ordered commit position; append a complete recoverable transaction; satisfy the requested durability level; publish the committed state atomically; return an outcome tied to the request identity. An error before commitment must not create a transaction that reappears after restart. Failures around the commitment boundary must distinguish rejection from an indeterminate outcome that can be resolved by request identity.
+-
+-Provide:
+-
+-- One ordered history for inserts, field changes, replacements, deletes, relationship changes and transaction boundaries.
+-- Explicit acknowledgement semantics. Durable success must wait for the required synchronization; ordinary buffered success remains a distinct contract.
+-- Integrity checks and clear handling of incomplete tails versus committed corruption, plus exclusive writer ownership of a storage directory.
+-- Retry resolution and deduplication with a stated retention scope, so losing the response does not duplicate a committed operation.
+-- Validated checkpoints tied to exact committed history positions. Rebuilds use a consistent checkpoint and subsequent committed history.
+-- Record incarnation or equivalent version semantics so delete/recreate of a UUID cannot attach old updates or relationships to a new record.
+-
+-Use the reproduced failures to drive concrete recovery tests:
+-
+-| Scenario | Required result after reopen or retry |
+-|---|---|
+-| A field transaction fails conflict validation | Its proposed value is absent |
+-| A committed field transaction is followed by deletion | Reopen succeeds and the record stays absent |
+-| An older field transaction precedes whole-record replacement and checkpointing | The replacement remains current |
+-| A UUID is deleted and recreated | Old updates and edges do not affect the new incarnation |
+-| Execution stops during a batch or checkpoint | No partial committed transaction becomes visible; recovery uses a valid checkpoint/history combination |
+-| Commitment succeeds but the response is lost | Retrying or resolving the request returns the existing outcome |
+-
+-Exercise standalone field updates, field transactions, runtime mutations, and journal-enabled and disabled legacy adapters during integration. Fault injection and process termination test specific failure windows; they are not substitutes for host/power-loss validation. State the tested failure model and the durability claim together.
+-
+-### What replaces the journal
+-
+-The shared engine's authoritative commit history replaces the separate application field journals once every supported mutation goes through it. A durable recovery log still exists; it becomes part of the database core instead of an independently replayed source that can contradict inserts, replacements or deletes.
+-
+-Correct the inventory from the supplied review: `RelationConnectionStore` already has a public `with_journal` constructor. The shipped `memory_server` uses `new` for Entity and Relation, and enables Memory's journal only when `SERVER_TXN_JOURNAL_PATH` is set. Test the shipped configuration as well as the public constructors. [Relation constructor](https://github.com/baileyrd/rusty_multimodal_db/blob/478eeda4544aa98c4948aebc66b5ff8fad609645/src/server/relation.rs#L64), [server setup](https://github.com/baileyrd/rusty_multimodal_db/blob/478eeda4544aa98c4948aebc66b5ff8fad609645/src/bin/memory_server.rs).
+-
+-A checkpoint is an acceleration structure, not automatic permission to erase historical data. Preserve authoritative history for the promised time-travel range. Future retention or compaction policies must make any reduced history explicit.
+-
+-**Done when:** acknowledged durable transactions recover under the declared failure model, rejected transactions remain absent, retries resolve correctly, and all supported mutations share the same ordering and recovery rules.
+-
+-## 4. Integrate existing features
+-
+-Port Memory, Entity and Relation first. Preserve the Reminder consumer path and inventory Dog, Order, Employee and any other adapters or consumers before claiming complete compatibility or removing code.
+-
+-Reuse suitable indexes, relationship operations, structured query execution, Rust/Python clients, and protocol fixtures. Preserve the reviewed protocol 22 behavior and its 66-fixture baseline where applicable; extend fixtures for corrected behavior and explicitly version incompatible changes. Keep networking, TLS and application domain definitions outside the storage core. A `rusty_multimodal_db` compatibility facade can retain familiar imports and APIs while delegating to the shared engine.
+-
+-The SQL parser currently lives on the client, while the server already executes structured queries. Broaden parsing, catalog, planning and execution where required. Reusing that executor does not require relocating every parser or rewriting the server first.
+-
+-Run a complete application trace through individual and batch requests: insert records, link across tables, replace fields and records, query, delete, verify detachment, checkpoint, reopen and query again. Preserve specified soft outcomes such as Duplicate, GuardFailed and NotFound. Correct batch behavior must be tested with actual cross-table effects, not only table-local mocks.
+-
+-Make read consistency executable. A read or session advertised as a snapshot must observe the claimed committed version across the trace. Derivable indexes and representations need a known applied history position; the query layer must wait, catch up or explicitly expose staleness rather than silently mix inconsistent versions.
+-
+-**Done when:** selected existing clients run their real operations through the shared core, protocol and domain compatibility tests pass, and no supported mutation bypasses authoritative commitment.
+-
+-## 5. Migrate one application
+-
+-Use `rusty_remind_me` as the initial candidate consumer, subject to checking its actual current integration when the pilot begins. The retained spike alone does not establish what it currently runs.
+-
+-1. Quiesce source writes and preserve a consistent copy of every source data file, journal and mutation log.
+-2. Export logical records and relationships using a compatible reader. Import into a new database directory, preserving IDs, timestamp units, fields and metadata.
+-3. Compare every supported field and relationship, record counts and sorted per-record digests. Exercise the application's important query results as well as raw data comparison.
+-4. Reopen and independently rebuild derived representations. Create and restore a backup into another directory and repeat the comparisons.
+-5. Point the consumer at the new engine and exercise its normal workflow and recovery path.
+-
+-Start with verified `Memory@2` input. An older layout needs a compatible old reader, a verified consumer export, or an implemented and tested legacy decoder. The current decoder must not be treated as an automatic `Memory@1` converter. Import the history that is actually recoverable; do not invent old events from a present-state export. Record that an imported snapshot begins the available history when that is all the source supplies.
+-
+-Before new writes, rollback can restore the preserved source and old runtime. After new writes, that source is stale: rollback needs a validated reverse export or recovery forward on the new engine. Establish that path before relying on a writable pilot. Do not operate two authoritative writers during cutover.
+-
+-**Done when:** the consumer works on verified imported data, reopen and restore preserve results, and the rollback procedure accounts for writes made after migration.
+-
+-## 6. Consolidate the projects
+-
+-Make Data OS the maintained runtime home after the integration and pilot work. Import useful code selectively, retaining attribution, license notices and source revision references. Preserve the original repositories' research records and Git history.
+-
+-Retain compatibility packages, legacy importers and documented supported formats as needed. Remove duplicate runtime paths only when the consumers that rely on them have migrated or have an explicitly maintained legacy release. Archive the old repository when this is true; repository tidying should follow the working merge.
+-
+-**Done when:** active consumers use one maintained engine, compatibility obligations are covered, and there is no ambiguity about which runtime owns new database development.
+-
+-## Database replacement capability roadmap
+-
+-These are continuing engine deliverables, not prerequisites for every pilot migration. Build each as a usable capability with tests and comparison workloads. The shared Memory experiment supplies evidence and reusable infrastructure; hard-coded domains must give way to a runtime catalog and general schema support.
+-
+-| Target | Capabilities to deliver | Evidence required for a replacement claim |
+-|---|---|---|
+-| SQLite workloads | Embedded API; runtime catalog; general tables, types, NULL behavior and constraints; SQL DDL/DML; schema migration; durable local transactions; dependable backup and reopen | Real embedded consumers migrate; SQL and data results match the supported contract; transaction/recovery tests pass; operation latency, file size and maintenance costs are measured |
+-| PostgreSQL workloads | Multi-table transactions; tested isolation; concurrent clients; indexes, joins and planner statistics; permissions and operational tooling; replication/failover when required by the deployment | Concurrent workload correctness, anomaly tests, contention behavior and latency under load; supported driver/protocol compatibility; restore and any claimed failover behavior |
+-| DuckDB workloads | Column execution; efficient joins, aggregation and sorting; statistics; parallel execution; compression; bounded memory and spill; CSV/Parquet access | Analytical results and performance across data sizes, including data and intermediate results larger than RAM, with peak memory and temporary disk use recorded |
+-| Additional database needs | Temporal reconstruction; document, graph, full-text and vector operators/indexes derived from the same history | Representative consumer workloads; explicit consistency/freshness behavior; reproducible rebuild and mutation correctness |
+-
+-These workload distinctions align with [SQLite's usage guide](https://www.sqlite.org/whentouse.html), [PostgreSQL's concurrency documentation](https://www.postgresql.org/docs/current/mvcc.html) and [DuckDB's memory-management design](https://duckdb.org/2024/07/09/memory-management).
+-
+-Support is declared by implemented, tested behavior. SQL syntax alone does not provide SQLite API, PostgreSQL wire-protocol or DuckDB feature compatibility. Prioritize the statements, drivers and operations used by migrating applications, then expand the executable compatibility corpus.
+-
+-Benchmark equivalent results through equivalent API boundaries, with declared durability, concurrency, data shape, cache conditions, history retention and derived-view freshness. Include ingestion, query, recovery, rebuild, checkpoint, memory and storage costs. Collect enough observations before reporting tail percentiles. Reuse existing benchmark drivers without carrying forward unmatched semantics or presenting one fast stage as whole-database superiority.
+-
+-The immediate sequence is **batch Link/Delete repair plus CI, then the shared Memory experiment, then durable unified commitment**. Further estimates should come from those working increments and the actual consumer requirements rather than an unsupported calendar promise.
+-
+-## Supporting review artifacts
+-
+-- `merge-plan-review-assessment-2026-09-08.md`: assessment of the supplied critique, factual corrections and reproduced findings.
+-- `merge-plan-review-evidence-2026-09-08.zip`: eight regression probes, locked dependencies, captured output and rerun instructions.
+-- `rusty_multimodal_db-review-2026-09-08.md` and its evidence ZIP: the earlier detailed repository review and reproductions.
+-
+-This revision changes the plan only. It does not claim that repository repairs, the shared engine or an application migration have been implemented.
+diff --git a/docs/GLOSSARY.md b/docs/GLOSSARY.md
+index db5acee..c368c8b 100644
+--- a/docs/GLOSSARY.md
++++ b/docs/GLOSSARY.md
+@@ -60,3 +60,10 @@ These terms describe approved meanings or current research vocabulary; they do n
+ - **intended placement** — an owner-selected future path or storage location; it does not assert that the path exists, is mounted, or resolves to a particular device.
+ - **evidence-pending** — a required field for which no adequate repository evidence exists; it cannot be inferred or used to support a durability claim.
+ - **platform durability contract** — the exact OS, kernel, filesystem, mount, device/controller/cache/firmware/protection, API-ordering, acknowledgement, fault, and recovery conditions under which a D2/D3 claim is evaluated; documented semantics alone are not empirical survival evidence.
++
++- **Memory** — the application record type `rusty_multimodal_db::generic::memory::Memory`,
++  `Memory@2`: a UUID and thirteen fields, used by [EXP-0002](experiments/EXP-0002-convergence-memory.md).
++  It is distinct from RAM and does not restrict the database to this application domain.
++
++- **B0** — the bounded single-owner in-memory vector baseline for EXP-0001; D0 only,
++  with no persistence or crash-survival claim. It is separate from B1 raw OS append.
+diff --git a/docs/PROJECT-STATUS.md b/docs/PROJECT-STATUS.md
+index 48383f1..ea54181 100644
+--- a/docs/PROJECT-STATUS.md
++++ b/docs/PROJECT-STATUS.md
+@@ -1,13 +1,13 @@
+ # Project Status
+ 
+ **Project:** Rusty Data OS
+-**Status:** Phase 1 planning/readiness — one owner-authorized bounded exploratory history-to-row/column run completed correctly; it is not confirmatory EXP-0001 evidence and does not lift other execution gates
++**Status:** Phase 1 research; EXP-0002 shared Memory implementation and correctness validation are separately owner-authorized, with minimal default retention and an optional forensic mode; existing EXP-0001 evidence and gates remain intact
+ **North star:** Represent once. Materialize many. Optimize always.
+ **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
+ 
+ ## 1. Current facts
+ 
+-The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. No engine, persistence, benchmark implementation/execution, benchmark evidence, or production Cargo baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.
++The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. Experimental codec, D1 append/replay, exploratory harnesses and standalone EXP-0002 workspaces exist; no production engine baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Confirmatory EXP-0001 generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.
+ 
+ The merged Slice B implementation is a bounded, single-owner in-memory vector mechanism with process-local sequence and correctness accounting. R11 closes it as implementation/correctness-validation evidence only. It remains D0-only, provisional, noncanonical, and unexecuted as a workload or benchmark. The conceptual architecture is a research direction, not a benchmark-validated design.
+ 
+@@ -70,7 +70,7 @@ The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primar
+ 
+ [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R16 are complete documentation/governance inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision and R8 is complete as documentation design. The [R9 authority](experiments/EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) now freezes the Slice A-only workspace, harness boundary, exact Rust 1.89.0 toolchain, external-dependency-free build with reviewed workspace path dependencies, tests, and CI plan. It resolves BLK-020/026 for Slice A and prospectively resolves BLK-027 when R9 is reviewed and merged. That merge authorized only Slice A implementation. The reviewed Slice A implementation and its exact-head CI are bounded correctness-validation evidence. [R11](experiments/EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged minimum, process-local, noncanonical, D0-only Slice B implementation and prospectively authorizes only a documentation freeze for BLK-006/007. BLK-006/007 are resolved as documentation design only by R12. [R14](experiments/EXP-0001/R14-CANONICAL-WORKLOAD-STREAM-DIGEST.md) resolves BLK-008 as documentation design only. [R16](experiments/EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009/UNK-019 only as documentation design; implementation, workload observations, and descriptive and confirmatory execution remain unauthorized. Kernel-crash, physical reset/power-loss, storage-error apparatus, BLK-015, later-slice harness/toolchains, effective validation, empirical equivalence, evidence, and execution remain open. Adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
+ 
+-Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and the bounded R18-authorized Slice C/B1 subset supply implementation/correctness-validation evidence only. No workload execution, benchmark, D2/D3 durability, or performance evidence exists.
++Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and the bounded R18-authorized Slice C/B1 subset supply implementation/correctness-validation evidence only. These slice closures provide no confirmatory workload, benchmark or D2/D3 evidence; the separately authorized exploratory evidence is recorded above.
+ 
+ The R18-authorized Slice C/B1 crate now supplies bounded correctness-validation evidence for
+ complete-frame validation, process-local raw D1 write submission, poison-on-terminal-write failure,
+@@ -293,3 +293,33 @@ intended Linux/x86_64 target using a pre-existing disposable measured file. It i
+ diagnostic, not an R7 environment record, Fedora proof, benchmark result, or performance evidence.
+ Every other live workload, record-production, tracefs, benchmark, durability, fault, and production
+ exclusion remains in force.
++
++## EXP-0002 — owner-authorized shared Memory convergence
++
++The [2026-09-08 merge plan, step 2](plans/data-os-multimodal-merge-plan-2026-09-08.md)
++authorizes [EXP-0002](experiments/EXP-0002-convergence-memory.md), status Ready,
++and [HYP-0002](hypotheses/HYP-0002-memory-convergence.md), status Open. Two standalone
++Rust 1.89 workspaces implement CMT1 traces/results, a per-field independent oracle,
++an RF1 candidate with independent row/column replay, and the legacy Memory adapter
++pinned to Step 1 part A `abda0a7e94a9727e410001e9724edc741f6e0d31`. Small and 1K
++correctness tests exercise all operations and single/pipelined/atomic dispatch.
++
++Candidate: **D1 ordinary writes, no fsync, no crash-survival claim**. Native legacy
++insert/replace/delete log syncs prevent equal-durability comparison; the deviation
++is documented and no winner claim is permitted. Measurement batches have width
++one; multi-write equivalence is separately tested. The
++[results index](experiments/EXP-0002/results/README.md) defines the committed
++evidence subset and the host-series template. Default runs retain metadata and
++raw results while deleting validated stores; `--retain-store` keeps stores and
++the trace copy. Observations stream per operation and declare the engine
++durability; legacy labels are shared across series artifacts. Source trees are
++not copied. 100K is not executed. Workflow added; not yet executed remotely; the legacy leg assumes anonymous
++fetch of two GitHub git sources (`baileyrd/rusty_multimodal_db` and
++`Rusty-Mill/rusty_mill`).
++Candidate replay now separates physical scan from payload decode; structural
++frames still store/verify no CRC-32C. Input hashes are computed once at load,
++RSS probes prefer pwsh, and post-load RSS baselines qualify later high waters.
++The host retains prior 1K/10K series; their snapshot and input identities belong
++in host entries, with no performance conclusion here.
++EXP-0001 code and retained artifacts are unchanged. No production graduation,
++network server, D2/D3 candidate durability, or later merge step is included.
+diff --git a/docs/RESEARCH-QUESTIONS.md b/docs/RESEARCH-QUESTIONS.md
+index c22ec8f..e46e8ff 100644
+--- a/docs/RESEARCH-QUESTIONS.md
++++ b/docs/RESEARCH-QUESTIONS.md
+@@ -2,12 +2,15 @@
+ 
+ | ID | Question | Status | Primary path |
+ |---|---|---|---|
+-| RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001 and staged experiments |
++| RQ-001 | Can one canonical information history support multiple independently optimized representations with acceptable performance and complexity? | Active; unproven | HYP-0001, [HYP-0002](hypotheses/HYP-0002-memory-convergence.md) and staged experiments |
+ | RQ-002 | What minimal semantics and measurements are required before event-ingestion implementation? | Complete as a readiness framework; all EXP-0000 outputs complete, with no implementation or evidence claim | EXP-0000 |
+ | RQ-003 | What are the cost and correctness characteristics of single-event ingestion at explicit durability boundaries? | Planned; R25 records the R12/R16/R21–R24 bootstrap contradiction and supersedes R24 implementation authorization; separate v2 conformance and later reference-context authorizations are required; descriptive D1 capture remains blocked/gated, and cost, performance, durability, execution, benchmark evidence, BLK-015, D2/D3, `fsync`, faults, adapters, production, and later increments remain open or unauthorized | EXP-0001 and its execution-readiness plan |
+-| RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Deferred | Later replay/checkpoint experiments |
++| RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Active; bounded correctness validated, cost conclusion open | [HYP-0002](hypotheses/HYP-0002-memory-convergence.md), [EXP-0002](experiments/EXP-0002-convergence-memory.md); later replay/checkpoint experiments |
+ 
+-“Acceptable” remains workload- and requirement-specific; no benchmark evidence exists yet.
++“Acceptable” remains workload- and requirement-specific. The host retains EXP-0002
++series externally; no performance conclusion follows here. Merge plan step 2
++authorizes HYP-0002 to test RQ-001/RQ-004 through independent Memory row/column
++reconstruction. Host entries will bind each series to its snapshot and trace hash.
+ 
+ RQ-002 completion records measurement readiness, not evidence. The [EXP-0001 readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) records the open decisions and gates. R1–R3 freeze requirements and lifecycle semantics; R4 accepts reviewed non-sensitive findings for conditional planning; R5 freezes framing, CRC-32C, append-only commit, and B0/B1 mappings. R5/R6 freeze all baseline profiles and mappings. [R7](experiments/EXP-0001/R7-BENCHMARK-RECORDS-ARTIFACTS-INSTRUMENTATION-FAULTS.md) freezes evidence records, artifact provenance, instrumentation/overhead design, and the available fault boundary. R8 has frozen its bounded matrix, analysis design, and prospective owner-approved thresholds and is complete as documentation design; R9 froze the Slice A workspace/toolchain/test/CI boundary; the merged implementation passed its bounded correctness gate. R11 closes process-local, noncanonical D0 Slice B code; [R16](experiments/EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009 only as documentation design. Generator and manifest implementation still block workload observations, and execution, empirical equivalence, benchmarks, and durability claims remain blocked.
+ 
+diff --git a/docs/TRACEABILITY.md b/docs/TRACEABILITY.md
+index 92f2b22..84b5c64 100644
+--- a/docs/TRACEABILITY.md
++++ b/docs/TRACEABILITY.md
+@@ -7,6 +7,8 @@ This registry links intent to planned validation without inventing evidence.
+ | Vision: represent once, materialize many | P-001, P-002, P-003, P-006, P-010; REQ-001; RQ-001 | Research direction |
+ | Vision: evidence-driven success | P-011, P-014, P-015; ADR-0001 | Accepted governance |
+ | REQ-001 through REQ-014 | ADR-0002; HYP-0001 where empirical feasibility is involved | Approved constraints; feasibility unproven |
++| [HYP-0002](hypotheses/HYP-0002-memory-convergence.md) | RQ-001, RQ-004; [EXP-0002](experiments/EXP-0002-convergence-memory.md); authority: [merge plan step 2](plans/data-os-multimodal-merge-plan-2026-09-08.md) | Ready (experiment), correctness-validated, host series retained externally, no performance conclusion; hypothesis Open |
++| [EXP-0002](experiments/EXP-0002-convergence-memory.md) | HYP-0002; [host results index](experiments/EXP-0002/results/README.md); authority: [merge plan step 2](plans/data-os-multimodal-merge-plan-2026-09-08.md) | Ready, correctness-validated, host series retained externally, no performance conclusion; entries supplied by host |
+ | HYP-0001 | RQ-001; EXP-0000; EXP-0001; later representation experiments | Active / unproven |
+ | EXP-0000 | RQ-002; EXP-0001 prerequisites; [single-event semantic envelope](experiments/EXP-0000/SEMANTIC-EVENT-ENVELOPE.md); [reproducible workload contract](experiments/EXP-0000/WORKLOADS.md); [EXP-0001 baseline contract](benchmarks/BASELINES.md); [acknowledgement, visibility, fault, and durability contract](experiments/EXP-0000/ACKNOWLEDGEMENT-VISIBILITY-DURABILITY.md); [crash/recovery correctness contract](experiments/EXP-0000/CRASH-RECOVERY-CORRECTNESS.md); [environment record](benchmarks/ENVIRONMENT-TEMPLATE.md); [raw-result record](benchmarks/RAW-RESULT-TEMPLATE.md); [interpretation and decision contract](benchmarks/INTERPRETATION-CRITERIA.md) | Complete as readiness documentation; no experimental evidence and no EXP-0001 implementation authorization |
+ | EXP-0000 semantic envelope fields and observation-side lifecycle metadata | REQ-002 through REQ-010, REQ-013, REQ-014; ADR-0002 | Approved-semantics elaboration; the original envelope is immutable after commit, provenance and integrity are conditional where applicable, and physical choices and listed semantic questions remain unresolved |
+diff --git a/docs/experiments/README.md b/docs/experiments/README.md
+index 1598d94..0570c48 100644
+--- a/docs/experiments/README.md
++++ b/docs/experiments/README.md
+@@ -44,3 +44,4 @@ Do not rewrite an experiment's original hypothesis after observing results. Add
+ |---|---|---|
+ | [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Complete as readiness documentation; no evidence | Define semantics and measurement prerequisites without implementation. All seven contracted outputs are complete. |
+ | [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; planning/readiness only | Measure single-event ingestion after the [execution-readiness plan](EXP-0001/EXECUTION-READINESS-PLAN.md) authorizes one earned implementation slice and the applicable execution gate passes. |
++| [EXP-0002](EXP-0002-convergence-memory.md) | Ready | Shared Memory@2 traces, independent oracle, D1 candidate and pinned legacy diagnostic baseline; manual measurements pending. |
+diff --git a/experiments/README.md b/experiments/README.md
+index a3fda8b..2210ea1 100644
+--- a/experiments/README.md
++++ b/experiments/README.md
+@@ -1,9 +1,9 @@
+ # Executable Experiments
+ 
+-This directory will contain code written to test hypotheses.
++This directory contains bounded experimental implementations that test hypotheses.
+ 
+ Experimental code is allowed to be narrow, disposable, duplicated, or deliberately non-general when doing so improves measurement clarity.
+ 
+ Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.
+ 
+-No implementation or Cargo project exists. `EXP-0000` must establish measurement readiness before any directory for `EXP-0001` is created.
++The existing `exp-0001` workspace provides bounded codec, conformance, ordinary-write D1 append/replay and exploratory harness implementations. The standalone [convergence-memory](convergence-memory/README.md) and [legacy](convergence-memory-legacy/README.md) workspaces implement [EXP-0002](../docs/experiments/EXP-0002-convergence-memory.md), authorized by the [merge plan](../docs/plans/data-os-multimodal-merge-plan-2026-09-08.md). Candidate: D1 ordinary writes, no fsync, no crash-survival claim. No production engine has graduated.
+diff --git a/tools/validate_markdown_links.py b/tools/validate_markdown_links.py
+index 7be0bdc..e066c9b 100644
+--- a/tools/validate_markdown_links.py
++++ b/tools/validate_markdown_links.py
+@@ -1,5 +1,9 @@
+ #!/usr/bin/env python3
+-"""Validate that local links in tracked Markdown files resolve."""
++"""Validate local links in existing tracked and untracked checkout Markdown.
++
++Untracked, non-ignored Markdown is validated along with existing tracked files.
++A CI checkout is clean, so including untracked files only affects local runs.
++"""
+ 
+ from __future__ import annotations
+ 
+@@ -16,14 +20,17 @@ REFERENCE_LINK = re.compile(r"^\s*\[[^]]+\]:\s*(?:<([^>]+)>|([^\s]+))", re.MULTI
+ IGNORED_SCHEMES = {"data", "http", "https", "mailto"}
+ 
+ 
+-def tracked_markdown_files() -> list[Path]:
++def checkout_markdown_files() -> list[Path]:
+     result = subprocess.run(
+-        ["git", "ls-files", "-z", "--", "*.md"],
++        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+         cwd=ROOT,
+         check=True,
+         capture_output=True,
+     )
+-    return [ROOT / name.decode() for name in result.stdout.split(b"\0") if name]
++    paths = {ROOT / name.decode() for name in result.stdout.split(b"\0") if name}
++    # An unstaged move leaves the old path in the index. Validate the actual
++    # checkout; references to deleted destinations still fail in main().
++    return sorted(path for path in paths if path.is_file())
+ 
+ 
+ def local_targets(markdown: str) -> list[str]:
+@@ -45,7 +52,7 @@ def resolved_path(source: Path, target: str) -> Path | None:
+ 
+ def main() -> int:
+     broken: list[str] = []
+-    for source in tracked_markdown_files():
++    for source in checkout_markdown_files():
+         markdown = source.read_text(encoding="utf-8")
+         for target in local_targets(markdown):
+             destination = resolved_path(source, target)

@@ -44,3 +44,4 @@ Do not rewrite an experiment's original hypothesis after observing results. Add 
 |---|---|---|
 | [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Complete as readiness documentation; no evidence | Define semantics and measurement prerequisites without implementation. All seven contracted outputs are complete. |
 | [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; planning/readiness only | Measure single-event ingestion after the [execution-readiness plan](EXP-0001/EXECUTION-READINESS-PLAN.md) authorizes one earned implementation slice and the applicable execution gate passes. |
+| [EXP-0002](EXP-0002-convergence-memory.md) | Ready | Shared Memory@2 traces, independent oracle, D1 candidate and pinned legacy diagnostic baseline; manual measurements pending. |

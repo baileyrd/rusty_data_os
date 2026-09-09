@@ -60,3 +60,10 @@ These terms describe approved meanings or current research vocabulary; they do n
 - **intended placement** — an owner-selected future path or storage location; it does not assert that the path exists, is mounted, or resolves to a particular device.
 - **evidence-pending** — a required field for which no adequate repository evidence exists; it cannot be inferred or used to support a durability claim.
 - **platform durability contract** — the exact OS, kernel, filesystem, mount, device/controller/cache/firmware/protection, API-ordering, acknowledgement, fault, and recovery conditions under which a D2/D3 claim is evaluated; documented semantics alone are not empirical survival evidence.
+
+- **Memory** — the application record type `rusty_multimodal_db::generic::memory::Memory`,
+  `Memory@2`: a UUID and thirteen fields, used by [EXP-0002](experiments/EXP-0002-convergence-memory.md).
+  It is distinct from RAM and does not restrict the database to this application domain.
+
+- **B0** — the bounded single-owner in-memory vector baseline for EXP-0001; D0 only,
+  with no persistence or crash-survival claim. It is separate from B1 raw OS append.

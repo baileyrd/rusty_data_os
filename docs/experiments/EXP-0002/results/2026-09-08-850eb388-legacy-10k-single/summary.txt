@@ -1,0 +1,17 @@
+CMT1-results	1
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim
+engine=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim; rev=abda0a7e94a9727e410001e9724edc741f6e0d31; mode=Single; batch_width=1
+valid=true
+legacy_internal_stages=unavailable through public adapter; no isolated append/replay/row/column timing
+quantiles=nearest-rank; warmup excluded; raw samples in results.cmt and trials.csv
+stage,count,min,p50,p90,p95,p99,max
+aggregate,115,42600,154200,203500,211100,248800,275800
+delete,100000,4721300,21428100,32229500,36822500,45228900,102482200
+equal,115,3537200,3727500,4275600,4781600,5115900,5145800
+get,115,9100,13600,16700,17700,25600,42400
+guard,200000,8100,341000,29342500,32257300,41679900,105013000
+insert,150000,1509400,14634700,31253700,34615700,43897500,103746100
+page,230,19700,22500,26500,29200,35500,51600
+replace,100000,4748600,21481100,32220600,36880800,44963200,116573200
+update,100000,2600,8000,9400,10200,13900,189600

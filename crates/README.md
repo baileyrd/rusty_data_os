@@ -2,7 +2,7 @@
 
 This directory is reserved for reusable Rust components that have graduated from experiments.
 
-It intentionally contains no engine implementation at project start.
+No experimental engine has graduated into this directory. Bounded implementations live under [experiments](../experiments/README.md).
 
 A component should enter this directory only after the project can answer:
 

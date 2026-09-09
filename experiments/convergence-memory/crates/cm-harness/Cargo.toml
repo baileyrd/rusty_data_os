@@ -1,0 +1,13 @@
+[package]
+name = "cm-harness"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+cm-trace = { path = "../cm-trace" }
+cm-candidate = { path = "../cm-candidate" }

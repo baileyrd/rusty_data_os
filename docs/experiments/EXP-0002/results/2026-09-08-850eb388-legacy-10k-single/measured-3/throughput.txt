@@ -1,0 +1,12 @@
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim
+engine=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim; rev=abda0a7e94a9727e410001e9724edc741f6e0d31; mode=Single; batch_width=1
+phase=measured
+valid=true
+operations=130115
+operation_time_ns=1749511024900
+operations_per_second=74.37220923339835
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\legacy-10k-single\\measured-3\\results.cmt"
+raw_sha256=0bca18d1a0dc5803446affa4251dc1ab531a63c7b08b3dfac9df4e65dd663fbb
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\legacy-10k-single\\measured-3\\observations.cmt"
+raw_sha256=3ece7a13fe98d2642f111723a724a576541b585ccf35ec5ed836b2de030d306e

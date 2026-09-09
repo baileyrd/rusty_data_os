@@ -1,0 +1,21 @@
+CMT1-results	1
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine=D1 ordinary writes, no fsync, no crash-survival claim
+valid=true
+legacy_internal_stages=unavailable through public adapter; no isolated append/replay/row/column timing
+quantiles=nearest-rank; warmup excluded; raw samples in results.cmt and trials.csv
+stage,count,min,p50,p90,p95,p99,max
+aggregate,25,17500,23600,32500,38700,39000,39000
+append,5,54362800,57731000,72671800,72671800,72671800,72671800
+columns,5,16856700,17810400,20614700,20614700,20614700,20614700
+delete,10000,4200,4800,6200,7300,9100,89700
+equal,25,140800,191400,260300,299800,301700,301700
+get,25,500,1400,1900,2100,2500,2500
+guard,20000,0,4200,99400,110300,155600,270100
+insert,15000,20500,74400,113600,134900,181000,3533800
+page,50,26800,44600,63400,73200,95800,95800
+replace,10000,21000,74700,110200,127800,171900,3990100
+replay,5,781846200,785018000,797602300,797602300,797602300,797602300
+rows,5,12503300,12707400,13904100,13904100,13904100,13904100
+update,10000,20100,74200,111400,125300,173400,361500

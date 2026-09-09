@@ -1,0 +1,45 @@
+name: EXP-0002 Memory convergence
+on:
+  pull_request:
+  push:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [convergence-memory, convergence-memory-legacy]
+    env:
+      CARGO_INCREMENTAL: 0
+      RUST_BACKTRACE: 1
+      RUSTFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install frozen toolchain
+        run: |
+          rustup toolchain install 1.89.0 --profile minimal --component rustfmt,clippy
+          rustup override set 1.89.0
+          rustc -Vv
+          cargo -V
+          rustfmt -V
+          cargo clippy -V
+      # Assumes Actions can reach/fetch both locked Git sources:
+      # github.com/baileyrd/rusty_multimodal_db and github.com/Rusty-Mill/rusty_mill.
+      # Visibility is unverified; this workflow has not been executed remotely.
+      # If either is private, supply a token with access to both repositories and authenticated Git
+      # credentials before fetch (e.g. CARGO_NET_GIT_FETCH_WITH_CLI=true with a
+      # GITHUB_TOKEN-authenticated credential, if that token has cross-repo access).
+      - name: Fetch locked legacy dependencies with network
+        if: matrix.workspace == 'convergence-memory-legacy'
+        run: cargo +1.89.0 fetch --locked --manifest-path experiments/convergence-memory-legacy/Cargo.toml
+      - name: Offline validation including small and 1K correctness traces
+        env:
+          CARGO_NET_OFFLINE: true
+        run: |
+          cargo +1.89.0 fmt --manifest-path experiments/${{ matrix.workspace }}/Cargo.toml --all -- --check
+          cargo +1.89.0 clippy --manifest-path experiments/${{ matrix.workspace }}/Cargo.toml --workspace --all-targets --locked --offline -- -D warnings
+          cargo +1.89.0 test --manifest-path experiments/${{ matrix.workspace }}/Cargo.toml --workspace --all-targets --locked --offline
+          python3 tools/validate_markdown_links.py
+          git diff --check

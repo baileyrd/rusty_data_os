@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Validate that local links in tracked Markdown files resolve."""
+"""Validate local links in existing tracked and untracked checkout Markdown.
+
+Untracked, non-ignored Markdown is validated along with existing tracked files.
+A CI checkout is clean, so including untracked files only affects local runs.
+"""
 
 from __future__ import annotations
 
@@ -16,14 +20,17 @@ REFERENCE_LINK = re.compile(r"^\s*\[[^]]+\]:\s*(?:<([^>]+)>|([^\s]+))", re.MULTI
 IGNORED_SCHEMES = {"data", "http", "https", "mailto"}
 
 
-def tracked_markdown_files() -> list[Path]:
+def checkout_markdown_files() -> list[Path]:
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--", "*.md"],
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
         cwd=ROOT,
         check=True,
         capture_output=True,
     )
-    return [ROOT / name.decode() for name in result.stdout.split(b"\0") if name]
+    paths = {ROOT / name.decode() for name in result.stdout.split(b"\0") if name}
+    # An unstaged move leaves the old path in the index. Validate the actual
+    # checkout; references to deleted destinations still fail in main().
+    return sorted(path for path in paths if path.is_file())
 
 
 def local_targets(markdown: str) -> list[str]:
@@ -45,7 +52,7 @@ def resolved_path(source: Path, target: str) -> Path | None:
 
 def main() -> int:
     broken: list[str] = []
-    for source in tracked_markdown_files():
+    for source in checkout_markdown_files():
         markdown = source.read_text(encoding="utf-8")
         for target in local_targets(markdown):
             destination = resolved_path(source, target)

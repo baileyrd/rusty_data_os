@@ -1,0 +1,12 @@
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine=D1 ordinary writes, no fsync, no crash-survival claim
+phase=measured
+valid=true
+operations=130115
+operation_time_ns=7280605500
+operations_per_second=17871.453136693097
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\candidate-10k\\measured-1\\results.cmt"
+raw_sha256=bfbadcc6bbf3ec7d846ef6a230598a12dfad1ae394113d31336ddcf742052887
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final2\\candidate-10k\\measured-1\\observations.cmt"
+raw_sha256=0fc5cfff3e08188235db812d5237470810307f50172f3369de9534496b7c9af6

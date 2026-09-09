@@ -1,0 +1,13 @@
+[package]
+name = "cm-legacy-runner"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+cm-trace = { path = "../../../convergence-memory/crates/cm-trace" }
+rusty_multimodal_db = { git = "https://github.com/baileyrd/rusty_multimodal_db", rev = "abda0a7e94a9727e410001e9724edc741f6e0d31", features = ["server"] }

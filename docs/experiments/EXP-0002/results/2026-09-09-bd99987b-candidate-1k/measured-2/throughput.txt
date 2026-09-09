@@ -1,0 +1,12 @@
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine=candidate RF1 full after-image; IntegrityProfile::Structural; rev=54bd1a479b1e38cda6a15955de6eef3ec1b54cd0
+phase=measured
+valid=true
+operations=15025
+operation_time_ns=818479500
+operations_per_second=18357.209924011535
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final3\\candidate-1k\\measured-2\\results.cmt"
+raw_sha256=4e2e9f084db87efb553aa54e3a4bf65cbcea4f89063402f722481bb6b3d07b69
+raw_path="\\\\?\\C:\\tools\\naner\\home\\.tmp\\claude\\C--dev-rusty-data-os\\a0e90d1e-eff7-404d-a1f1-c14358341946\\scratchpad\\exp0002-final3\\candidate-1k\\measured-2\\observations.cmt"
+raw_sha256=a4e9076e18c7ab36a7e1613f8c916f437fac86308536d9d273410749ddf68211

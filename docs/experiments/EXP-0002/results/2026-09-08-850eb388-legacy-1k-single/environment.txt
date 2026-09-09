@@ -1,0 +1,41 @@
+CMT1-results	1
+experiment=EXP-0002
+hypothesis=HYP-0002
+engine=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim; rev=abda0a7e94a9727e410001e9724edc741f6e0d31; mode=Single; batch_width=1
+candidate_durability=D1 ordinary writes, no fsync, no crash-survival claim
+engine_durability=legacy Memory@2; journal off; insert/replace/delete log sync_data; mmap access_count update without per-op flush; not equivalent to D1; no power-loss claim
+equivalence=non-equivalent native durability; no winner claim
+created_unix_ns=1788921416649692500
+revision=54bd1a479b1e38cda6a15955de6eef3ec1b54cd0
+porcelain="M AGENTS.md\n M README.md\n M crates/README.md\n D data-os-multimodal-merge-plan-2026-09-08.md\n M docs/GLOSSARY.md\n M docs/PROJECT-STATUS.md\n M docs/experiments/README.md\n M experiments/README.md\n M tools/validate_markdown_links.py\n?? .github/workflows/convergence-memory.yml\n?? docs/experiments/EXP-0002-convergence-memory.md\n?? docs/experiments/EXP-0002/IMPLEMENTATION-REPORT.md\n?? docs/experiments/EXP-0002/results/README.md\n?? docs/experiments/EXP-0002/results/proof-windows-l1-l4.txt\n?? docs/experiments/EXP-0002/results/proof-windows-m1-m6.txt\n?? docs/experiments/EXP-0002/results/proof-windows.txt\n?? docs/hypotheses/HYP-0002-memory-convergence.md\n?? docs/plans/data-os-multimodal-merge-plan-2026-09-08.md\n?? experiments/convergence-memory-legacy/.gitignore\n?? experiments/convergence-memory-legacy/Cargo.lock\n?? experiments/convergence-memory-legacy/Cargo.toml\n?? experiments/convergence-memory-legacy/README.md\n?? experiments/convergence-memory-legacy/crates/cm-legacy-runner/Cargo.toml\n?? experiments/convergence-memory-legacy/crates/cm-legacy-runner/src/lib.rs\n?? experiments/convergence-memory-legacy/crates/cm-legacy-runner/src/main.rs\n?? experiments/convergence-memory-legacy/rust-toolchain.toml\n?? experiments/convergence-memory/.gitignore\n?? experiments/convergence-memory/Cargo.lock\n?? experiments/convergence-memory/Cargo.toml\n?? experiments/convergence-memory/README.md\n?? experiments/convergence-memory/crates/cm-candidate/Cargo.toml\n?? experiments/convergence-memory/crates/cm-candidate/src/lib.rs\n?? experiments/convergence-memory/crates/cm-candidate/tests/replay.rs\n?? experiments/convergence-memory/crates/cm-harness/Cargo.toml\n?? experiments/convergence-memory/crates/cm-harness/src/lib.rs\n?? experiments/convergence-memory/crates/cm-harness/src/main.rs\n?? experiments/convergence-memory/crates/cm-trace/Cargo.toml\n?? experiments/convergence-memory/crates/cm-trace/src/format.rs\n?? experiments/convergence-memory/crates/cm-trace/src/generate.rs\n?? experiments/convergence-memory/crates/cm-trace/src/lib.rs\n?? experiments/convergence-memory/crates/cm-trace/src/results.rs\n?? experiments/convergence-memory/crates/cm-trace/src/run.rs\n?? experiments/convergence-memory/crates/cm-trace/src/sha.rs\n?? experiments/convergence-memory/crates/cm-trace/tests/conformance.rs\n?? experiments/convergence-memory/crates/cm-trace/tests/fixtures/.gitattributes\n?? experiments/convergence-memory/crates/cm-trace/tests/fixtures/SHA256SUMS\n?? experiments/convergence-memory/crates/cm-trace/tests/fixtures/reference.py\n?? experiments/convergence-memory/crates/cm-trace/tests/fixtures/small.cmt\n?? experiments/convergence-memory/crates/cm-trace/tests/fixtures/small.results.cmt\n?? experiments/convergence-memory/crates/cm-trace/tests/retention.rs\n?? experiments/convergence-memory/rust-toolchain.toml"
+command=["C:\\dev\\rusty_data_os-step2\\experiments\\convergence-memory-legacy\\target\\release\\cm-legacy-runner.exe", "run", "C:/tools/naner/home/.tmp/claude/C--dev-rusty-data-os/a0e90d1e-eff7-404d-a1f1-c14358341946/scratchpad/exp0002-final2/1k.cmt", "C:/tools/naner/home/.tmp/claude/C--dev-rusty-data-os/a0e90d1e-eff7-404d-a1f1-c14358341946/scratchpad/exp0002-final2/legacy-1k-single", "single"]
+rustc=rustc 1.98.0 (88d9e12ae 2026-08-18)
+binary: rustc
+commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea
+commit-date: 2026-08-18
+host: x86_64-pc-windows-gnu
+release: 1.98.0
+LLVM version: 22.1.8
+cargo=cargo 1.98.0 (797e8a9bc 2026-08-05)
+os=windows
+arch=x86_64
+debug_assertions=false
+RUSTFLAGS=Err(NotPresent)
+CARGO_ENCODED_RUSTFLAGS=Err(NotPresent)
+cache=uncontrolled OS/device caches; fresh file per trial; one warm-up then five measured
+concurrency=1; queue_depth=1; batch_width=1
+clock=std::time::Instant, nanoseconds; probe overhead uncalibrated
+rss_method=Linux VmHWM KiB or Windows PeakWorkingSet64 bytes, process-lifetime high water including harness/oracle
+file_size_method=sum logical lengths of store files, not allocated extents
+hardware_and_filesystem=unavailable: powershell: program not found
+uncollected=CPU microcode/topology beyond probes, firmware, RAM speed, power/thermal policy, affinity, NUMA, swap/limits, virtualization configuration, mount options, device caches/PLP, compiler linker flags beyond recorded environment; not configured or portable probes unavailable
+generator_seed=7
+trace_id=repeated-mutations-1k
+record_count=1000
+operation_count=13025
+shape=[200, 2000, 50, 500, 8]
+input_sha256=4335b5c902e859aa26c29a680b1a4cf2141f15534f530dad7e16b1e11c12dc0c
+regeneration_command=cargo +1.89.0-x86_64-pc-windows-gnu run --release --manifest-path experiments/convergence-memory/Cargo.toml -p cm-harness --locked --offline -- generate 1k regenerated-1k.cmt
+regeneration_note=run from repository root; destination must not exist; verify regenerated SHA-256 against input_sha256, including for edited named traces
+retain_store=false
+source_retention=source.sha256 and source.patch; no source tree copy

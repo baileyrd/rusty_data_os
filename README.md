@@ -67,8 +67,14 @@ Failed experiments are preserved as first-class engineering artifacts so the pro
 
 ## Current phase
 
-The project is in **Phase 0: foundation and measurement design**. No production architecture is considered proven yet.
+The project has completed measurement-readiness documentation and contains bounded
+experimental Rust implementations and CI. No production architecture is proven.
+The existing EXP-0001 correctness and exploratory evidence remains intact.
 
-No engine implementation, Cargo baseline, CI, or benchmark evidence exists yet. `EXP-0000` (Experiment 0), a documentation and measurement-readiness increment, is next. `EXP-0001` remains planned but is blocked until Experiment 0 and its prerequisites are complete.
+The owner-authored [merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md)
+authorizes [EXP-0002](docs/experiments/EXP-0002-convergence-memory.md): shared
+Memory@2 traces, an independent model, candidate/legacy runners and manual
+measurements. Candidate: D1 ordinary writes, no fsync, no crash-survival claim.
+Native legacy durability differs; operator measurement evidence is pending.
 
-See `docs/PROJECT-STATUS.md` for the authoritative current state.
+See [Project Status](docs/PROJECT-STATUS.md) for the authoritative current state.

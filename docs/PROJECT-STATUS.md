@@ -1,13 +1,13 @@
 # Project Status
 
 **Project:** Rusty Data OS
-**Status:** Phase 1 planning/readiness — one owner-authorized bounded exploratory history-to-row/column run completed correctly; it is not confirmatory EXP-0001 evidence and does not lift other execution gates
+**Status:** Phase 1 research; EXP-0002 shared Memory implementation and correctness validation are separately owner-authorized, with minimal default retention and an optional forensic mode; existing EXP-0001 evidence and gates remain intact
 **North star:** Represent once. Materialize many. Optimize always.
 **Verified R18 authority base:** `79cbd64a436b104835a4279c07ba2777fb06cddb` (PR #68 merge); final corrective A2 head `fcaf7f14c94df5a6cda1aeeb283b6726551d1844`
 
 ## 1. Current facts
 
-The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. No engine, persistence, benchmark implementation/execution, benchmark evidence, or production Cargo baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.
+The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. Experimental codec, D1 append/replay, exploratory harnesses and standalone EXP-0002 workspaces exist; no production engine baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Confirmatory EXP-0001 generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.
 
 The merged Slice B implementation is a bounded, single-owner in-memory vector mechanism with process-local sequence and correctness accounting. R11 closes it as implementation/correctness-validation evidence only. It remains D0-only, provisional, noncanonical, and unexecuted as a workload or benchmark. The conceptual architecture is a research direction, not a benchmark-validated design.
 
@@ -70,7 +70,7 @@ The baseline checkpoint selects B0 in-memory (D0 only), B1 raw OS append (primar
 
 [EXP-0001 — Immutable Event Ingestion](experiments/EXP-0001-immutable-event-ingestion.md) remains proposed and planned. Its [execution-readiness plan](experiments/EXP-0001/EXECUTION-READINESS-PLAN.md) gates every implementation slice. R1–R16 are complete documentation/governance inputs. The R8 record freezes a 40-cell candidate-primary matrix, statistical analysis design, and prospective owner-approved practical thresholds. BLK-023/UNK-008 are resolved for that threshold decision and R8 is complete as documentation design. The [R9 authority](experiments/EXP-0001/R9-WORKSPACE-HARNESS-CI-AND-SLICE-A-AUTHORIZATION.md) now freezes the Slice A-only workspace, harness boundary, exact Rust 1.89.0 toolchain, external-dependency-free build with reviewed workspace path dependencies, tests, and CI plan. It resolves BLK-020/026 for Slice A and prospectively resolves BLK-027 when R9 is reviewed and merged. That merge authorized only Slice A implementation. The reviewed Slice A implementation and its exact-head CI are bounded correctness-validation evidence. [R11](experiments/EXP-0001/R11-SLICE-B-CLOSURE-AND-NEXT-GATE.md) closes the merged minimum, process-local, noncanonical, D0-only Slice B implementation and prospectively authorizes only a documentation freeze for BLK-006/007. BLK-006/007 are resolved as documentation design only by R12. [R14](experiments/EXP-0001/R14-CANONICAL-WORKLOAD-STREAM-DIGEST.md) resolves BLK-008 as documentation design only. [R16](experiments/EXP-0001/R16-WORKLOAD-MANIFEST-SERIALIZATION-CONTRACT.md) resolves BLK-009/UNK-019 only as documentation design; implementation, workload observations, and descriptive and confirmatory execution remain unauthorized. Kernel-crash, physical reset/power-loss, storage-error apparatus, BLK-015, later-slice harness/toolchains, effective validation, empirical equivalence, evidence, and execution remain open. Adapters, capture, fault execution, benchmarks, and durability claims remain unauthorized.
 
-Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and the bounded R18-authorized Slice C/B1 subset supply implementation/correctness-validation evidence only. No workload execution, benchmark, D2/D3 durability, or performance evidence exists.
+Phase 0's documented exit criteria are satisfied by the completed EXP-0000 framework: the benchmark plan and correctness criteria exist, baseline families are identified, and environments can be recorded consistently. This records entry into **Phase 1 planning/readiness**, not experimental execution. Slices A, B/B0, A2, and the bounded R18-authorized Slice C/B1 subset supply implementation/correctness-validation evidence only. These slice closures provide no confirmatory workload, benchmark or D2/D3 evidence; the separately authorized exploratory evidence is recorded above.
 
 The R18-authorized Slice C/B1 crate now supplies bounded correctness-validation evidence for
 complete-frame validation, process-local raw D1 write submission, poison-on-terminal-write failure,
@@ -293,3 +293,33 @@ intended Linux/x86_64 target using a pre-existing disposable measured file. It i
 diagnostic, not an R7 environment record, Fedora proof, benchmark result, or performance evidence.
 Every other live workload, record-production, tracefs, benchmark, durability, fault, and production
 exclusion remains in force.
+
+## EXP-0002 — owner-authorized shared Memory convergence
+
+The [2026-09-08 merge plan, step 2](plans/data-os-multimodal-merge-plan-2026-09-08.md)
+authorizes [EXP-0002](experiments/EXP-0002-convergence-memory.md), status Ready,
+and [HYP-0002](hypotheses/HYP-0002-memory-convergence.md), status Open. Two standalone
+Rust 1.89 workspaces implement CMT1 traces/results, a per-field independent oracle,
+an RF1 candidate with independent row/column replay, and the legacy Memory adapter
+pinned to Step 1 part A `abda0a7e94a9727e410001e9724edc741f6e0d31`. Small and 1K
+correctness tests exercise all operations and single/pipelined/atomic dispatch.
+
+Candidate: **D1 ordinary writes, no fsync, no crash-survival claim**. Native legacy
+insert/replace/delete log syncs prevent equal-durability comparison; the deviation
+is documented and no winner claim is permitted. Measurement batches have width
+one; multi-write equivalence is separately tested. The
+[results index](experiments/EXP-0002/results/README.md) defines the committed
+evidence subset and the host-series template. Default runs retain metadata and
+raw results while deleting validated stores; `--retain-store` keeps stores and
+the trace copy. Observations stream per operation and declare the engine
+durability; legacy labels are shared across series artifacts. Source trees are
+not copied. 100K is not executed. Workflow added; not yet executed remotely; the legacy leg assumes anonymous
+fetch of two GitHub git sources (`baileyrd/rusty_multimodal_db` and
+`Rusty-Mill/rusty_mill`).
+Candidate replay now separates physical scan from payload decode; structural
+frames still store/verify no CRC-32C. Input hashes are computed once at load,
+RSS probes prefer pwsh, and post-load RSS baselines qualify later high waters.
+Six host 1K/10K series (four on snapshot `850eb388` binaries, two on `bd99987b`)
+are committed as evidence subsets with index entries; no performance conclusion.
+EXP-0001 code and retained artifacts are unchanged. No production graduation,
+network server, D2/D3 candidate durability, or later merge step is included.
