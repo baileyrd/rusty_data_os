@@ -143,6 +143,11 @@ Potential focus:
 
 ## Phase 7 — Server adapter
 
+EXP-0005 (2026-09-09) is a bounded, migration-driven exception to this phase ordering: the merge
+plan's Step 4 compatibility facade for existing `rusty_multimodal_db` clients is authorized now,
+scoped to protocol-22 wire compatibility for the domains the merge plan ports. It does not advance
+this roadmap's Phase 2–6 status and authorizes no other server/networking work.
+
 Only after the embedded core is sufficiently characterized:
 
 - network protocol;

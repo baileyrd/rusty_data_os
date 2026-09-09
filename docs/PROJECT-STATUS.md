@@ -37,6 +37,20 @@ The [local proof](experiments/EXP-0004/IMPLEMENTATION-REPORT.md) passed 59 unifi
 17 convergence-memory and 95 portable exp-0001 tests, formatting, Clippy, links and whitespace.
 No measurement series, performance conclusion or production graduation follows.
 
+## EXP-0005 — owner-authorized protocol facade infrastructure
+
+The frozen Step 4b-i work order identified in [EXP-0005](experiments/EXP-0005-protocol-facade.md)
+authorizes a named, bounded exception to Phase 7. uc-protocol implements the complete
+protocol-22 surface, std-only codec/framing, Store/dispatch and generic stream connection
+loop with sessions and one shared relationship mutex per Registry. All 66 host literal
+values and byte round trips pass; controlled two-connection tests include a negative
+control reproducing a dangling edge when the mutex is removed. [HYP-0005](hypotheses/HYP-0005-protocol-facade.md)
+remains Open; [ADR-0005](adr/ADR-0005-protocol-facade.md) is Proposed. The
+[implementation report](experiments/EXP-0005/IMPLEMENTATION-REPORT.md) records proof and
+limitations. No real domain is wired in; existing crates and evidence are unchanged.
+No sockets, authentication enforcement, protocol content downgrading, measurements or
+production graduation. Phase 1 remains unchanged; independent review is pending.
+
 The historical status and authorization ledger below remain intact.
 
 ## 1. Current facts

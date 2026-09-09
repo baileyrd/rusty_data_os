@@ -5,6 +5,11 @@ shared CMT1 runner. [Experiment/method](../../docs/experiments/EXP-0003-unified-
 [hypothesis](../../docs/hypotheses/HYP-0003-unified-commitment.md),
 [implementation report](../../docs/experiments/EXP-0003/IMPLEMENTATION-REPORT.md).
 
+[EXP-0005](../../docs/experiments/EXP-0005-protocol-facade.md) adds the independent
+[uc-protocol](crates/uc-protocol/README.md) facade library to this workspace. It uses only
+std and wires no real domain. Its generic stream tests do not bind sockets or establish
+core integration, durability or performance.
+
 `Log::create(directory, apply, state_decoder)` exclusively creates a new directory and
 history; the parent must exist, and an existing directory (even empty) or history is refused.
 `Log::open(directory, apply, state_decoder)` requires both directory and history.rf1;

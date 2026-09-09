@@ -15,6 +15,12 @@ Each domain has its own Log/directory, canonical payloads, incarnation and check
 scenario tests with independent models. Memory-to-Entity atomicity is
 [Deferred](../docs/roadmap/ROADMAP.md); no measurement series or production graduation.
 
+[EXP-0005](../docs/experiments/EXP-0005-protocol-facade.md), Ready, adds
+[uc-protocol](unified-commitment/crates/uc-protocol/src/lib.rs): std-only protocol-22
+codec/framing, Store/dispatch and generic stream sessions with shared registry cross-table
+coordination. Its 66-fixture oracle and in-memory duplex tests are correctness evidence
+only. No real domain adapter, live socket, authentication or benchmark series.
+
 Experimental code is allowed to be narrow, disposable, duplicated, or deliberately non-general when doing so improves measurement clarity.
 
 Code does **not** graduate into `/crates` merely because it works. Graduation requires sufficient evidence and an explicit architectural decision or specification when the change is foundational.

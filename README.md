@@ -90,4 +90,11 @@ Entity and Relation domains on the unchanged unified core, canonical payloads,
 incarnation, retained Entity labels and checkpoint/replay correctness tests with independent
 models. Memory-to-Entity cross-domain atomicity is [Deferred](docs/roadmap/ROADMAP.md).
 
+The approved Step 4b-i work order authorizes
+[EXP-0005](docs/experiments/EXP-0005-protocol-facade.md): a std-only protocol-22 codec,
+Store/dispatch, shared registry and generic stream connection loop. The 66-fixture literal/byte
+oracle and deterministic session/cross-table tests supply bounded correctness evidence.
+No domain wiring, live sockets, authentication enforcement, older-version content rewriting,
+performance claim or phase advancement. Independent review remains pending.
+
 See [Project Status](docs/PROJECT-STATUS.md) for the authoritative current state.

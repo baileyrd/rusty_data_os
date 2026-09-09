@@ -2,6 +2,9 @@
 
 These terms describe approved meanings or current research vocabulary; they do not assert implementation or performance evidence.
 
+- **protocol facade** — EXP-0005's domain-agnostic protocol-22 codec, dispatch and generic stream loop; no real domain integration or socket listener yet.
+- **relationship registry** — immutable ordered table registration whose optional shared mutex protects the complete Link/Delete/WriteBatch cross-table span across all connections. Adapter-local atomicity remains a Store obligation.
+- **tracked-read session** — protocol snapshot-isolation flag behavior: freeze up to 4096 first-read `(record, field)` values, then validate that read set atomically with commit. Absent/untracked keys and scans remain live; this is not a database-wide snapshot.
 - **canonical event** — an immutable record of an accepted fact, distinct from the command requesting change.
 - **canonical history** — the single authoritative ordered event history from which state and representations are derived.
 - **command** — requested intent. Rejection is operational/audit evidence, not a canonical event asserting the requested fact.

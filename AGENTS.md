@@ -37,6 +37,12 @@ Reusable production-oriented code belongs under `/crates/` only after the releva
 
 Do not add server/networking layers, SQL interfaces, generalized plugin systems, distributed coordination, or unrelated abstractions unless the research roadmap and current experiment require them.
 
+The Data OS + Rusty Multimodal DB merge plan's Step 4 compatibility facade
+(`docs/experiments/EXP-0005-protocol-facade.md`) is a named, bounded exception: a protocol-22
+wire-compatible facade under `/experiments/` is authorized now, without waiting for Research
+Roadmap Phase 7, scoped exactly as that experiment document states. This does not authorize any
+other server/networking work and does not change the project's current phase status.
+
 ## 4. Benchmark integrity
 
 Performance claims must follow `/docs/benchmarks/METHODOLOGY.md`.
@@ -89,6 +95,14 @@ When Rust code begins:
 - expose durability boundaries explicitly in APIs rather than implying them.
 
 ## 10. Current constraint
+
+The owner-approved frozen Step 4b-i work order identified in
+[EXP-0005](docs/experiments/EXP-0005-protocol-facade.md), under merge-plan step 4 paragraph 2,
+authorizes the bounded protocol-22 codec, Store/dispatch and in-memory-stream connection
+facade. R0's named exception above and the Research Roadmap Phase 7 exception apply only
+within EXP-0005. Existing core/domain crates, live sockets, authentication, later integration
+and all unrelated research gates remain unchanged. Local correctness proof is advisory;
+independent review remains pending.
 
 The owner-authored [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md), step 4 (first sentence), and approved Step 4a work order identified in [EXP-0004](docs/experiments/EXP-0004-entity-relation-domains.md) separately authorize EXP-0004's independent Entity and Relation adapters and bounded correctness tests on the unchanged unified core, preserving the existing evidence requirements and deferring cross-domain atomicity.
 

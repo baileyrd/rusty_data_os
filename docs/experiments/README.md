@@ -42,6 +42,7 @@ Do not rewrite an experiment's original hypothesis after observing results. Add 
 
 | Experiment | Status | Purpose |
 |---|---|---|
+| [EXP-0005](EXP-0005-protocol-facade.md) | Ready | Step 4b-i protocol-22 wire facade infrastructure; 66 literal/byte fixtures, sessions and shared-registry correctness; no real domain wiring, sockets or phase advancement. |
 | [EXP-0003](EXP-0003-unified-commitment.md) | Ready | Bounded RF1 D1/D2 transactions, incarnation, retry, checkpoints and injected-fault recovery; platform durability evidence pending. |
 | [EXP-0000](EXP-0000-measurement-and-semantics-readiness.md) | Complete as readiness documentation; no evidence | Define semantics and measurement prerequisites without implementation. All seven contracted outputs are complete. |
 | [EXP-0001](EXP-0001-immutable-event-ingestion.md) | Proposed; planning/readiness only | Measure single-event ingestion after the [execution-readiness plan](EXP-0001/EXECUTION-READINESS-PLAN.md) authorizes one earned implementation slice and the applicable execution gate passes. |

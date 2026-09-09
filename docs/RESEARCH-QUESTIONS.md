@@ -8,6 +8,7 @@
 | RQ-004 | Can derived representations be rebuilt and validated at acceptable cost? | Active; bounded correctness validated, cost conclusion open | [HYP-0002](hypotheses/HYP-0002-memory-convergence.md), [EXP-0002](experiments/EXP-0002-convergence-memory.md); later replay/checkpoint experiments |
 | RQ-005 | Can one RF1 transaction history recover the merge-plan scenarios and serve Memory with per-transaction sync? | Owner-authorized bounded implementation/correctness; manual performance and platform durability evidence pending | [HYP-0003](hypotheses/HYP-0003-unified-commitment.md), [EXP-0003](experiments/EXP-0003-unified-commitment.md) |
 | RQ-006 | Do Entity and Relation preserve their single-table semantics and recovery/incarnation guarantees on the unchanged unified core? | Open; bounded correctness, cross-domain atomicity Deferred | [HYP-0004](hypotheses/HYP-0004-entity-relation-domains.md), [EXP-0004](experiments/EXP-0004-entity-relation-domains.md) |
+| RQ-007 | Can an independent protocol facade preserve the frozen wire values and domain-agnostic connection semantics? | Open; local bounded correctness, independent review pending | [HYP-0005](hypotheses/HYP-0005-protocol-facade.md), [EXP-0005](experiments/EXP-0005-protocol-facade.md) |
 
 “Acceptable” remains workload- and requirement-specific. Six EXP-0002 host
 series are committed as evidence subsets, with raw per-operation samples retained

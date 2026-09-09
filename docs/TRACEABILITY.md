@@ -4,6 +4,7 @@ This registry links intent to planned validation without inventing evidence.
 
 | Source | Traces to | Status |
 |---|---|---|
+| [HYP-0005](hypotheses/HYP-0005-protocol-facade.md) | RQ-007; merge plan step 4 paragraph 2; [EXP-0005](experiments/EXP-0005-protocol-facade.md); [ADR-0005](adr/ADR-0005-protocol-facade.md) | Open / Ready / Proposed; 66 literal-and-byte fixture checks and deterministic duplex/session/registry correctness only; independent review pending, no phase advancement |
 | [HYP-0003](hypotheses/HYP-0003-unified-commitment.md) | REQ-001, REQ-009, REQ-011–014; RQ-005; [EXP-0003](experiments/EXP-0003-unified-commitment.md); [merge plan step 3](plans/data-os-multimodal-merge-plan-2026-09-08.md) | Open; experiment Ready, bounded implementation/correctness only, manual series pending |
 | [EXP-0003](experiments/EXP-0003-unified-commitment.md) | HYP-0003; [ADR-0003](adr/ADR-0003-unified-commitment.md); [results index](experiments/EXP-0003/results/README.md) | Injected process termination/torn-tail model only; platform durability evidence pending |
 | Vision: represent once, materialize many | P-001, P-002, P-003, P-006, P-010; REQ-001; RQ-001 | Research direction |
