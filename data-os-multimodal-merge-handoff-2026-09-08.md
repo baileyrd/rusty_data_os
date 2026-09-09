@@ -100,3 +100,18 @@ Environment facts learned this session (in addition to the list above):
 Next actions: push both feature branches when the owner says so and open PRs; move the raw
 measurement samples out of the scratchpad; then write the Step 3 work order (durable unified
 commitment) from the merge plan and run the same codex-build loop.
+
+## Addendum — state as of 2026-09-09 evening (sessions 01Tup76a…, 01VrCRP4…, 01EasZM6…)
+
+| Item | State |
+|---|---|
+| Step 3 (unify commitment and recovery, Data OS) | **Done and committed**, not pushed: `065470c` (implementation, evidence, host dispositions) and a follow-up docs commit on branch `codex/merge-step3-unified-commitment`, checked out in the worktree `C:\dev\rusty_data_os-step3` (from `e62fa69`). Work order approved by Codex review after six rounds; built by Codex over three rounds; three fresh Claude inspections; final verdict REVISE on provenance (closed by the host committing `docs/experiments/EXP-0003/HOST-DISPOSITIONS.md`) and five low items carried as residuals (UC-R2, R3, R4, R6, R7 in that record). Host evidence: 1K D1, 1K D2 and 10K D2 series on the committed snapshot, 18 trials valid; reconstruction from `e62fa69` + `source.patch` verified. Raw samples at `C:\dev\rusty_data_os-evidence\EXP-0003\`. |
+| Step 2 evidence | Raw samples relocated to `C:\dev\rusty_data_os-evidence\EXP-0002\`; index updated in `e62fa69`. |
+| Owner note | Everything will migrate to `https://github.com/Rusty-Mill/rusty_data_os.git` (currently empty). No push authorized yet; Steps 4–6 work orders must plan for the remote change. |
+| Steps 4–6 | Not started. Next: Step 4 work order (integrate existing features: port Memory/Entity/Relation onto the shared core, compatibility facade, protocol fixtures) from the merge plan; recommend the same Codex plan review before building. |
+
+Additional environment facts:
+
+- A session shutdown kills background runner and measurement processes; long series and inspections must be relaunched (the runner result stays `running` with no process). Check `Get-Process` before assuming a job is alive.
+- D2 series cost on this box: about four synchronizations per transaction, 1K in 5 minutes, 10K in 62 minutes.
+- The reconstruction verification for a series: `git worktree add --detach <tmp> <revision>`, `git -c core.autocrlf=false apply --binary <series>/source.patch`, hash every `source.sha256` entry.
