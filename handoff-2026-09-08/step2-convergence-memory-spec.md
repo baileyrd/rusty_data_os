@@ -162,6 +162,13 @@ installed (minimal profile with rustfmt and clippy), so every `cargo +1.89.0` ab
 machine the three exp-0001 commands take `--workspace --exclude exp1-descriptive-d1-harness`
 (verified: fmt, clippy and tests pass that way at the baseline); CI covers the full workspace.
 The two new workspaces must build and test fully on Windows (no Linux-only crates).
+The Codex build sandbox on this machine has no network access. The host pre-fetched
+`rusty_multimodal_db` at the pinned rev with `features = ["server"]` and its full dependency graph
+into `CARGO_HOME` with the 1.89.0 toolchain, and verified an offline lockfile resolves. Inside the
+sandbox, generate the legacy lockfile with `--offline`, run the fetch step as
+`cargo +1.89.0-x86_64-pc-windows-gnu fetch --locked --offline`, and report it as such; the host runs
+the networked `cargo fetch --locked` independently. Do not add dependencies that are not already
+in the cache; if one is genuinely required, stop and report it.
 
 The host runs the measurement command for the 1K and 10K sizes once to check the results
 files are produced; the 100K run is reported as executed or not.
