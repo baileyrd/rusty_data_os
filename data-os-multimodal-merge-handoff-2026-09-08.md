@@ -75,3 +75,28 @@ Step 2 (Data OS): install Rust 1.89.0 first, create branch `codex/merge-step2-co
 ## Reporting expectations
 
 Lead with what was verified independently. Say which tests were excluded and why. Record every runner artifact dir, session id and snapshot sha in the build log. Never present an earlier inspection as covering later edits.
+
+## Addendum — state as of 2026-09-09 (session 015iJ5WR5HBzxPMq8koUZgzw)
+
+Read `handoff-2026-09-08/BUILD-LOG.md` for every round, verdict, session id, snapshot
+hash and disposition. Summary:
+
+| Item | State |
+|---|---|
+| Step 1 part B (recovery/isolation probes, repair-or-prevent, snapshot contract, part A residuals) | **Done and committed**, not pushed: `232b16e` on `rusty_multimodal_db` branch `codex/merge-step1-batch-cross-table` (on top of `abda0a7`). Three Codex rounds, three fresh Claude inspections; final verdict REVISE on documentation only, carried as residuals R-B1–R-B5 in the build log (SERVER-002 wire-spec wording, FR-036 row text, two stale comments, ADR-0061 status convention, poisoned-gate error message). The two Windows-only test failures remain excluded by disposition. |
+| Step 2 (convergence-memory experiment, Data OS) | **Done and committed**, not pushed: `772c720` on branch `codex/merge-step2-convergence-memory`, checked out in the worktree `C:\dev\rusty_data_os-step2` (created from `54bd1a4` on `handoff/merge-2026-09-08`). Four Codex rounds, three fresh Claude inspections; final verdict REVISE with no correctness defect. Six host measurement series (1K/10K, both engines, 36 trials, all valid) are committed as evidence subsets with index entries; raw per-op samples stay in the session scratchpad by owner-accepted deviation from R7 and **must be moved to durable storage** (open). Residuals R-S2 F2–F5 in the build log. CI workflow added but never executed remotely. 100K not executed. |
+| Legacy pin | Step 2's legacy runner pins `abda0a7` (part A). Bump to `232b16e` after Part B is pushed, and rerun the legacy proof and series. |
+| Steps 3–6 | Not started. Write work orders from `docs/plans/data-os-multimodal-merge-plan-2026-09-08.md` (moved there by Step 2). |
+
+Environment facts learned this session (in addition to the list above):
+
+- The network appliance intermittently 307-redirects `api.anthropic.com` and `claude.ai` as well as the OpenAI hosts; a Claude CLI inspection then fails in seconds with API 401 "WWW Authorization Required". Probe both providers before launching and retry when the redirect clears (it cleared within 5–30 minutes each time).
+- Rust 1.89.0 is installed as `1.89.0-x86_64-pc-windows-gnu` only; spell `cargo +1.89.0-x86_64-pc-windows-gnu`. `exp1-descriptive-d1-harness` is Linux-only, so exp-0001 checks on this box use `--workspace --exclude exp1-descriptive-d1-harness`.
+- The Codex sandbox has no network. Pre-fetch git dependencies into `CARGO_HOME` from the host and tell the builder to use `--offline`.
+- This box has `pwsh` but no `powershell` on PATH; probes that shell out must try `pwsh` first.
+- Cargo `target/` directories under `experiments/` are not ignored by the repo; `.git/info/exclude` in the main checkout adds `target/` locally so build output never enters a runner snapshot.
+- The legacy 10K single series takes about three hours (73 ops/s with per-op `sync_data`); plan measurement runs accordingly.
+
+Next actions: push both feature branches when the owner says so and open PRs; move the raw
+measurement samples out of the scratchpad; then write the Step 3 work order (durable unified
+commitment) from the merge plan and run the same codex-build loop.
