@@ -1,10 +1,12 @@
-# Handoff prompt — Data OS + Rusty Multimodal DB merge, Step 4c closed, Step 5 next (2026-09-09)
+# Handoff prompt — Data OS + Rusty Multimodal DB merge, all six steps touched (2026-09-09)
 
 Paste this into a fresh Claude Code session started in `C:\dev\rusty_data_os`, or hand it to
-Codex. It describes the exact state, the workflow being used, and the next action. Updated in
-place 2026-09-09 (Step 4c's own resumption and close) — supersedes the version of this file that
-described Step 4c as "paused mid-review," and `data-os-multimodal-merge-handoff-2026-09-08.md`,
-which is now stale (Step 1 era).
+Codex. It describes the exact state, the workflow being used, and what genuinely remains open.
+Updated in place 2026-09-09 (an owner `/goal` directive drove Steps 5-6 to completion within a
+deliberately, explicitly bounded scope — see the "What genuinely remains open" section below
+before assuming "all six steps done" means the plan's original end goal is reached) — supersedes
+the version of this file that described Step 4c as "paused mid-review," and
+`data-os-multimodal-merge-handoff-2026-09-08.md`, which is now stale (Step 1 era).
 
 ## Your task
 
@@ -30,8 +32,21 @@ future `Rusty-Mill/rusty_data_os` migration target (still empty, not yet authori
 | 4b-i (protocol-22 wire facade infra, EXP-0005: `uc-protocol`) | Done, reviewed (3 rounds, 10 findings closed), inspected (2 low residuals), committed on `codex/merge-step4b-protocol-facade` (pushed). Governance note: `AGENTS.md` §3 and `docs/RESEARCH-ROADMAP.md`'s Phase 7 gate carry a named, bounded exception for this facade. |
 | 4b-ii (Memory/Entity/Relation wired to `uc-protocol::Store`, first real `TcpListener`) | Done, reviewed (3 rounds, 11 findings closed — 2 by an owner scope decision, not a patch), inspected + one fix round + re-inspected (2 low residuals), committed on `codex/merge-step4bii-memory-domain` (pushed). Real cross-table Memory↔Entity link explicitly **descoped**, not built — see next row. |
 | 4c (a real, durable Memory→Entity `mentions` edge) | Done. Resumed from a paused-mid-review handoff on a different machine (see "Environment facts" for the two machine-specific defects found and fixed there). Owner disposed both round-1 high findings toward closing the gap rather than a disclosed residual (extend the `Store` trait for P4C-001; also fix P4C-002's collision half). Reviewed 5 rounds total (11 findings across rounds 1-4, all mechanical once traced to source — no further owner escalation needed), approved round 5 with zero findings. Built by Codex, inspected (fresh Claude CLI, 0 findings, clean close no fix round needed), committed on `codex/merge-step4c-foreign-edges` (pushed). Full detail in `BUILD-LOG.md`. |
-| **5 (migrate one application)** | **Not started — next action.** Pick which application to migrate onto the unified `experiments/unified-commitment` stack (`uc-core`/`uc-memory`/`uc-entity`/`uc-relation`/`uc-protocol`/`uc-facade`) and draft a work order the same way: Codex plan review to approval, delegate build, independent proof, fresh inspection. |
-| 6 (consolidate the projects) | Not started. |
+| 5 (migrate one application) | **Deliberately bounded, not a real migration.** Owner set `/goal`: "complete the merge and migration without my interaction." Investigation (required by the plan's own text — "check its actual current integration") found `rusty_remind_me` has grown into a 24-table system (FTS5 search, ACT-R vitality, wiki, vectors, a real production multi-node sync hub) with none of it represented in `uc-*`'s 13-field schema. A literal live cutover would either regress the owner's real, daily-used personal memory system or require a large unscoped feature-parity build. Host decision: build and verify the real *mechanism* only (export/import/compare/reopen/backup-restore), against synthetic fixtures modeled on `remind_me_core`'s actual schema, never real data. Reviewed 3 rounds (8 findings, all resolved by grounding in real source), approved round 3. Built, independently verified (236 tests, 56/56 digests), inspected (1 low finding, fixed), committed on `codex/merge-step5-migration-proof` (pushed). None of the plan's five Step 5 sub-steps have been performed against real data — see `AGENTS.md` §1.1's itemized list once Step 6 lands. |
+| 6 (consolidate the projects) | **Governance slice done; the migration-dependent clauses remain unmet, honestly.** Step 6's "done when" bar depends on a real consumer migration Step 5 deliberately didn't perform. Closed the one honestly-achievable sub-goal instead: `AGENTS.md`/`docs/VISION.md`/`docs/ARCHITECTURE.md` now explicitly name `experiments/unified-commitment/` as the merge initiative's home and `rusty_multimodal_db` as the still-active, not-archived source repo — a real, disclosed gap since Step 2 (the plan's own "Working approach" section called for this alignment "in the first relevant implementation change," never done until now). Reviewed 3 rounds (4 findings, all precision/overclaim fixes in the governance prose), approved round 3. Built, independently verified, inspected (0 findings), committed on `codex/merge-step6-governance` (pushed, first push of a new branch — not previously pushed, unlike every other branch here). `rusty_multimodal_db` untouched, not archived; no code removed. |
+
+## What genuinely remains open (read this before claiming the merge is "done")
+
+**No real consumer has migrated. `rusty_multimodal_db` is not archived and has no migrated
+consumer. Step 6's "active consumers use one maintained engine" and "compatibility obligations
+are covered" clauses are unmet.** Closing them for real needs, in order: (1) an owner decision on
+whether to accept a real capability regression on `rusty_remind_me` (no FTS5 search, no vitality
+decay, no wiki, no vectors, no multi-node sync) or fund the separately-scoped feature-parity work
+those capabilities would need first; (2) only then, the plan's actual Step 5 sub-steps 1-5 against
+real data (quiesce, real export/import, real comparison including live query results, real
+reopen/backup/restore, then the actual cutover) — `AGENTS.md` §1.1 lists these as still entirely
+undone. Neither is something to attempt unsupervised against a real, live personal system; both
+are genuine owner decisions, not implementation details.
 
 Also open, not started: opening the listener beyond loopback; real authentication. Both were
 named alongside 4c as options when the owner was last asked which gap to tackle next.
