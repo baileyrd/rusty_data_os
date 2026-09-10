@@ -872,3 +872,15 @@ either (a) a real capability regression to the owner's live, daily-used personal
 (b) a large, separately-scoped feature-parity effort (FTS5 search, ACT-R vitality, wiki, vectors,
 multi-node sync) that no prior work order has ever authorized. Every step's own "Host decision"
 section documents this reasoning at the point it was made; this entry is the final rollup.
+
+## Owner decision: bounded scope confirmed as the deliverable (2026-09-10)
+
+The host paused the `/goal` autonomous loop specifically on this one blocking decision — proceed
+with a real `rusty_remind_me` cutover now (accepting the capability regression), scope a
+feature-parity project first, or stop at the bounded scope already built — since it is a real,
+consequential, hard-to-reverse decision about the owner's live personal system that no standing
+authorization covers. Asked directly via `AskUserQuestion`. **Owner chose: stop here — the bounded
+scope (Step 5's verified synthetic migration-mechanism proof, Step 6's governance consolidation)
+is the deliverable.** No live cutover is authorized. This closes out the merge-plan work for this
+session: Steps 1-6 are each done to the explicit, disclosed extent recorded in this file, and nothing
+further is pending or blocked.
