@@ -783,3 +783,46 @@ carried. **Explicitly not done, by design (see the work order's own "Host decisi
 `rusty_remind_me` consumer has migrated; no live data was touched; full feature parity (search,
 vitality, wiki, vectors, sync) remains unbuilt and unscoped. Opening the listener beyond loopback
 and real authentication remain open (carried from Step 4c).
+
+## Step 6 — Codex plan review (governance consolidation)
+
+- Owner's autonomous goal (`/goal`, still active): "complete the merge and migration without my
+  interaction." Step 6's own "done when" bar ("active consumers use one maintained engine,
+  compatibility obligations are covered, and there is no ambiguity about which runtime owns new
+  database development") is mostly gated on a real consumer migration Step 5 deliberately did not
+  perform, for the same live-system-safety reasons recorded there. Host decision (documented in
+  full in `step6-consolidation-governance-spec.md`'s own "Host decision" section): scope this work
+  order to what's honestly achievable now — the "no ambiguity about ownership" clause is a
+  documentation question, not one gated on migration. Investigation found this repository's own
+  top-level governance docs (`docs/VISION.md`, `AGENTS.md`, `docs/ARCHITECTURE.md`) were never
+  updated to reflect the merge plan at all, despite the plan's own "Working approach" section
+  instructing exactly that alignment "in the first relevant implementation change" — a real,
+  disclosed gap dating back to Step 2. Does not touch `rusty_multimodal_db`, does not remove any
+  code, does not claim migration completion.
+- Review round 1 (`step6-review1/claudex-jy8ndozz`): **REVISE**, 2 medium. S6-001: the round-1 D2
+  draft blanket-exempted all of `VISION.md` §7's non-goals from constraining the merge initiative,
+  but two of those items (no permanent encoding before measurement, no hiding durability
+  semantics) are engineering-rigor principles that should still apply, exceeding the cited Phase 7
+  precedent's actual scope. S6-002: D3/D4 cited a bare `handoff-2026-09-08/BUILD-LOG.md` path as
+  the evidence trail, but this worktree's own local copy of that directory is incomplete (each
+  step's branch only accumulates its own local notes; the full cross-step history lives only on
+  the separate `handoff/merge-2026-09-08` branch) — a real, misleadingly-incomplete link the
+  Markdown validator cannot catch. Both fixed: narrowed the superseded-items list, explicitly
+  re-affirmed the durability/encoding principles; cited the authoritative branch by name.
+- Review round 2 (`step6-review2/claudex-40582quu`): **REVISE**, 2 medium. S6-R2-001: the round-1
+  fix put cloud/marketplace/consensus/replication items inside a list titled "superseded" with a
+  caveat explaining they weren't really superseded — a literal reading of the acceptance criteria
+  could drop those exclusions. S6-R2-002: "Step 5's remaining, undone final sub-step" implied
+  sub-steps 1-4 were essentially complete; in reality none of the plan's five Step 5 sub-steps have
+  been performed against real data — Step 5 built and verified a synthetic mechanism proof only.
+  Both fixed: two cleanly separated superseded/retained lists with no item in both; the vague
+  pointer replaced with an itemized five-point list of what's actually undone.
+- Review round 3 (`step6-review3/claudex-_vm6x7wm`): **APPROVED**, zero findings. "No material
+  unresolved defects found in the bounded documentation plan. Approval covers the proposed
+  governance consolidation, not implementation correctness or completion of the original Step 6
+  migration goals" — exactly the bounded claim this work order makes for itself.
+
+Final design, approved: `step6-consolidation-governance-spec.md`, current. Three review rounds,
+four findings (all medium), every one a precision/overclaim issue in the *governance prose itself*,
+not a reason to expand scope — consistent with every prior step's pattern once real investigation
+grounds the draft. Build launching against the approved spec.
