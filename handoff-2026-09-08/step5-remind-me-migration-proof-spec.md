@@ -87,17 +87,39 @@ Id generation, verbatim:
 - `memory_entities` table: `schema_tables.sql:80-85` — a pure join table, `(memory_id, entity_id,
   created_at)`.
 
-### The existing, reusable export machinery (do not hand-roll a new exporter)
+### The existing, reusable export machinery, and its real output shape (do not hand-roll a new
+### exporter, and do not model a shape it doesn't actually produce)
 
-`remind_me_core/src/export.rs` already has a tested, production export path:
-`collect_export_records` (`export.rs:311-343`) selects every `memories` column via
-`crate::db::queries::prefixed_memory_columns`, deserializes into the real `Memory` struct, and
-serializes with `serde_json::to_value` — i.e. the JSON shape this work order's importer must read
-is exactly `Memory`'s serde output, not a hand-described approximation. `export_memories`
-(`export.rs:367+`) wraps this with path validation and format selection (`render_export`,
-`export.rts:351-360`, JSON or JSONL). This work order's fixtures are handwritten JSON modeled on
-this exact struct shape (field names, types, `Option` nullability) rather than a live invocation of
-`remind_me_core`, per D1 below — but the shape must match this real code, not a guess.
+`remind_me_core/src/export.rs` already has a tested, production export path. Its real output is a
+**flat, mixed-record JSON array**, not a clean table dump — the importer must handle exactly this:
+
+- `collect_export_records` (`export.rs:311-343`) selects every `memories` column, deserializes
+  into the real `Memory` struct, serializes each with `serde_json::to_value`, then **injects
+  `"role": "assistant"` onto every memory record** (`export.rs:330-334`) — untagged by
+  `record_type`, this is how a memory record is distinguished from a graph record in the flat
+  array. `models.rs:1021-1028`'s doc comment on `ExportInput::include_deleted` states this is
+  **deliberate and load-bearing**: exported records are stamped as live content specifically so a
+  normal re-import treats them as such, and `include_deleted` therefore defaults to `false` — "a
+  round-trip of an export that carried tombstones and superseded facts would resurrect them as
+  fresh live memories" is the documented risk of turning it on.
+- `collect_graph_records` (`export.rs:222-306`), only when `include_graph` (defaults `true`, per
+  `models.rs:1017-1020`), appends `record_type`-tagged records: `{"record_type": "entity", "id",
+  "name", "kind" (nullable), "aliases", "created_at", "updated_at"}` (**no `node_id`** —
+  `export.rs:236-253` simply never selects it); `{"record_type": "entity_relation", "id",
+  "subject_entity_id", "relation", "object_entity_id", "created_at", "updated_at"}` (**no
+  `node_id`** either, `export.rs:258-274`); `{"record_type": "memory_entity", "memory_id",
+  "entity_id", "created_at"}` (`export.rs:298-306`). Entities are emitted before the links/relations
+  that reference them (`export.rs:213-215`'s doc comment).
+- `export_memories` (`export.rs:367+`) wraps this with path validation and format selection
+  (`render_export`, `export.rs:351-360`, JSON or JSONL).
+
+This work order **reuses `ExportInput`'s own configuration knobs, deliberately set away from their
+safe production defaults, and discloses that explicitly**: `include_deleted: true` (so a fixture
+can include a tombstoned/superseded record at all — otherwise the exporter would silently exclude
+it, defeating D2's soft-delete round-trip test) and `include_graph: true` (the default). **This is
+a data-fidelity proof only, not a template for a real importer** — see "Non-goals" for why a real
+importer would need read-path filtering or an actual delete, not a bare `Put`, before ever running
+against production data with `include_deleted: true`.
 
 ### `uc-memory`/`uc-facade`'s current Memory and Entity schemas (the import target)
 
@@ -110,84 +132,138 @@ created_at_unix_ms (I64), updated_at_unix_ms (I64), memory_type (Str), status (S
 `experiments/unified-commitment/crates/uc-facade/src/entity.rs`, `EntityStore::schema()`: 4 fields
 — `label (Str), kind (Str), mention_count (I64), aliases (StrList)`.
 
+`experiments/unified-commitment/crates/uc-facade/src/relation.rs:12-26`, `RelationStore::schema()`:
+7 fields — `subject (Str), relation (Str), object (Str), created_at_unix_ms (I64),
+updated_at_unix_ms (I64), node_id (Str), deleted_at_unix_ms (I64)`. `subject`/`object` are plain
+`Str` value fields here (not `RecordId` cross-references) — `uc-relation` stores an opaque string
+on each side, matching `entity_relations.subject_entity_id`/`object_entity_id`'s own `TEXT` typing.
+
+### Relation identity is deterministic too, same pattern as Entity
+
+`remind_me_core/src/entity.rs:747-764`, `entity_relation_id`, verbatim logic:
+`sha256::digest(format!("{subject_entity_id}|{normalized_relation}|{object_entity_id}"))[..12]` —
+another 12-hex-character (6-byte) deterministic id, exactly Entity's own scheme (D3) applied to a
+different key. `entity_relations` has **no `deleted_at` column at all** (`schema_tables.sql:45-52`)
+— `uc-relation`'s `deleted_at_unix_ms` field has no source concept to map from, not merely a null
+value to carry (see D6).
+
 ## Design decisions settled by the host
 
-- **D1 — synthetic fixtures, not a live export.** No path dependency on `rusty_remind_me` is added
+- **D1 (revised, review round 1 R4) — synthetic fixtures modeling the real, flat, mixed export
+  envelope, not a hand-described table dump.** No path dependency on `rusty_remind_me` is added
   (this project's own `AGENTS.md`/`ARCHITECTURE.md` in that repo documents exactly this mistake —
   path dependencies against a sibling repo that isn't guaranteed to exist at that relative location
   — as a removed, cautionary pattern; repeating it here would tie `rusty_data_os`'s build to a
-  second repository's presence and exact layout). Fixtures are handwritten JSON files committed
-  under `experiments/unified-commitment/crates/uc-facade/tests/fixtures/remind-me/`, matching
-  `Memory`'s exact serde field names/types/nullability (cited above) and both id formats
-  (`mem_<uuid32hex>`, and entity ids as bare 12-hex-char strings). At least 20 synthetic memory
-  records and 8 synthetic entities/relations, covering: every `Option` field both present and
-  absent; `sensitive=true` and `false`; a `deleted_at`-set (tombstoned) record; a record whose
-  `memory_type`/`status` are `None` (pre-#198 rows, per the `models.rs:93-97` comment); at least one
-  entity name requiring case-fold normalization (e.g. two source aliases differing only in case,
-  both resolving to the one deterministic id per `entity.rs:44-46`).
-- **D2 — field mapping for the 13 directly-representable fields.** `content`/`category`/`tags`/
-  `source`/`sensitive`/`access_count`/`node_id` copy directly (verbatim). `metadata` (a JSON object
-  in `remind_me`) serializes to a JSON string for `metadata_json` (a `Str` field in `uc-memory`).
-  `created_at`/`updated_at` (RFC 3339 strings) parse to Unix epoch milliseconds for
-  `created_at_unix_ms`/`updated_at_unix_ms` — reject (fail the import for that record, do not
-  silently default) an unparseable timestamp. `memory_type`/`status` (both `Option<String>` in
-  `remind_me`, per the `models.rs:99-102` comment, because some legacy rows predate the columns):
-  `None` maps to `"unclassified"`/`"active"` respectively — `remind_me`'s own documented defaults
-  for those columns (`schema_tables.sql:64`'s `memory_type TEXT NOT NULL DEFAULT 'unclassified'`,
-  `status TEXT NOT NULL DEFAULT 'active'` — i.e. this reproduces what a fresh row would already
-  contain, not an invented default). `deleted_at` (`Option<String>`, a **soft-delete tombstone
-  marker** in `remind_me`'s own model, per `models.rs:112-115`'s comment — distinct from an actual
-  deleted row) maps to `deleted_at_unix_ms`: `None` → `0` (sentinel for "not deleted"; `0` is
-  guaranteed unambiguous since epoch-ms `0` is 1970 and no real memory predates this project),
-  `Some(ts)` → the parsed epoch-ms value. **Critically: a tombstoned `remind_me` record is imported
-  as a live `uc-memory` record whose `deleted_at_unix_ms` is nonzero — it is `Change::Put`, never
+  second repository's presence and exact layout). One fixture file,
+  `experiments/unified-commitment/crates/uc-facade/tests/fixtures/remind-me/export.json`, a single
+  flat JSON array matching exactly what `export_memories` with `include_deleted: true,
+  include_graph: true` produces (cited above): untagged `Memory`-shaped objects each carrying the
+  injected `"role": "assistant"`, followed by `record_type: "entity"` / `"entity_relation"` /
+  `"memory_entity"` objects, entities before the edges referencing them. At least 20 memory records
+  and 8 entities/relations/links, covering: every `Option` field both present and absent; a
+  `deleted_at`-set (tombstoned) record and a `superseded_by`-set record (only reachable in the
+  fixture because `include_deleted: true` is frozen in, per the Repository facts section); a record
+  whose `memory_type`/`status` are `None` (pre-#198 rows, per the `models.rs:93-97` comment); at
+  least one entity name requiring case-fold normalization (two source aliases differing only in
+  case, both resolving to the one deterministic id per `entity.rs:44-46`); a `created_at`/
+  `updated_at` pair with sub-millisecond precision (`Utc::now().to_rfc3339()`,
+  `queries.rs:100`, is realistic sub-millisecond input) to exercise D2's exact-fidelity requirement,
+  not just millisecond-aligned timestamps that would hide truncation.
+- **D2 (revised, review round 1 R1/R2) — the 13 `uc-memory` fields are lossy *queryable
+  projections*; exact fidelity lives entirely in D4's stash, never in the projections themselves.**
+  `content`/`category`/`tags`/`source`/`sensitive`/`access_count` copy directly (verbatim, no
+  lossiness). `metadata` (a JSON object in `remind_me`) serializes to a JSON string for
+  `metadata_json`, with D4's stash nested inside it (below) — the injected `"role": "assistant"`
+  export-envelope artifact (Repository facts) is recognized and discarded by the importer, never
+  written anywhere, since it is a `remind_me`-export-format artifact, not domain data. `node_id`
+  (`Option<String>`) and, for a fresh record, `memory_type`/`status` (`Option<String>`, per
+  `models.rs:99-102`'s comment on legacy rows predating those columns): the *projection* uses
+  `""` (empty string) for `node_id: None`, and `remind_me`'s own documented fresh-row defaults for
+  `memory_type`/`status: None` (`schema_tables.sql:64`'s `DEFAULT 'unclassified'`/`DEFAULT
+  'active'`) — but the **projection is not what Proof items 1/5 compare for exactness**; the
+  original `Option` state (including `None`) for all three fields is separately captured in D4's
+  stash, so a projection collision (e.g. a real `memory_type: Some("unclassified")` versus a
+  projected `None`) is always distinguishable from the stash, never from the projection alone.
+  `created_at`/`updated_at` (RFC 3339 strings, sub-millisecond precision possible) parse to Unix
+  epoch milliseconds for the projection fields — a **known-lossy floor to the millisecond**; the
+  original RFC 3339 strings are D4-stashed verbatim and are what Proof items 1/5 actually compare.
+  Reject (fail the import for that record, do not silently default) an unparseable timestamp.
+  `deleted_at` (`Option<String>`, a **soft-delete tombstone marker** in `remind_me`'s own model, per
+  `models.rs:112-115`'s comment — distinct from an actual deleted row) maps its projection to
+  `deleted_at_unix_ms`: `None` → `0` (sentinel; unambiguous since epoch-ms `0` is 1970), `Some(ts)`
+  → the parsed epoch-ms value; the original `Option<String>` is D4-stashed. **A tombstoned
+  `remind_me` record is imported as a live `uc-memory` record — `Change::Put`, never
   `Change::Delete`.** `uc-core`'s incarnation-tracked delete is a different concept (a real,
   no-longer-existing row) than `remind_me`'s soft-delete flag (a still-existing, filtered-out row);
   conflating them would make the imported record's history diverge from the recoverable source
-  data, and `remind_me`'s own query layer already filters on `deleted_at IS NULL` at read time
-  rather than relying on absence.
+  data. This is explicitly a fidelity proof, not a safe import default — see Non-goals.
 - **D3 — id mapping, both directions verified.** Memory: strip the `mem_` prefix (reject, do not
   silently accept, any id lacking it), parse the remaining 32 hex characters as `Uuid::simple`
-  bytes (16 bytes, exact fit for `RecordId`). Entity: the source id is 6 bytes (12 hex chars) —
-  right-pad with 10 zero bytes to fill `RecordId`'s 16 bytes (left-aligned, source bytes first, so
-  two different 6-byte source ids can never collide after padding). The original id string (for
-  both kinds) is preserved verbatim in the stash (D4) specifically so identity is round-trip
-  verifiable independent of the byte-mapping scheme chosen here.
-- **D4 — the 14 remaining `Memory` fields with no `uc-memory` counterpart are stashed losslessly,
-  never dropped.** `id` (original string, D3), `capture_id`, `subject`, `predicate`, `object`,
-  `superseded_by`, `decay_rate`, `vitality`, `base_weight`, `accessed_at`, `doc_id`, `chunk_index`,
-  `remind_at`, `client`, `source_capture_id` nest under a single reserved key,
-  `"_remind_me_migration_extra"`, inside the JSON object written to `metadata_json` (alongside the
+  bytes (16 bytes, exact fit for `RecordId`). Entity and Relation (same scheme — both are 12-hex,
+  6-byte deterministic ids, `entity.rs:44-46`/`entity.rs:747-764`): right-pad with 10 zero bytes to
+  fill `RecordId`'s 16 bytes (left-aligned, source bytes first, so two different 6-byte source ids
+  can never collide after padding). This padding applies only to a record's **own** identity
+  (its `RecordId` in the registered table); `uc-relation`'s `subject`/`object` fields are plain
+  `Str` values, not `RecordId`s (Repository facts), and carry the **original, unpadded 12-hex
+  entity id string** verbatim — padding them too would silently break any future cross-reference
+  back to the Entity table by string equality. The original id string (all three kinds) is
+  preserved verbatim in D4/D6's stash specifically so identity is round-trip verifiable independent
+  of the byte-mapping scheme chosen here.
+- **D4 (revised, review round 1 R1/R2) — every `Memory` field without an exact-fidelity home in the
+  13-field projection is stashed losslessly, under one reserved key, never dropped.** Nested under
+  `"_remind_me_migration_extra"` inside the JSON object written to `metadata_json` (alongside the
   original `metadata` object's own keys at the top level — reject the fixture/import if the
   original `metadata` already contains a colliding `"_remind_me_migration_extra"` key, rather than
-  silently overwriting it). This is what makes the round-trip in Proof item 3 exact: nothing in the
-  27-field source record is unrecoverable from the imported `uc-memory` record.
-- **D5 — Entity import: `aliases`/`kind`/`label` map directly (`name`→`label`); `mention_count` is
-  *recomputed*, not copied.** `remind_me`'s `entities` table has no `mention_count` column at all
-  (it is derived elsewhere, e.g. from `memory_entities` join counts) — `uc-entity`'s `mention_count`
-  is populated by counting the imported `memory_entities` rows referencing that entity after all
-  memories are imported, not treated as a lossy field mapping. `entities.created_at`/`updated_at`/
-  `node_id` have no `uc-entity` field to hold them; stash them the same way as D4 describes for
-  Memory, using an analogous reserved key inside... **`uc-entity` has no metadata/JSON-string field
-  at all to stash into** (its schema is exactly `label/kind/mention_count/aliases`, per the cited
-  schema above) — so these three fields are recorded in the comparison harness's own retained
-  export-fixture copy (not inside `uc-entity` itself) and the proof's comparison step verifies them
-  against that copy rather than against anything read back from `uc-entity`. Disclosed, not
-  silently dropped: `uc-entity`'s schema genuinely has no home for them today; extending it is out
-  of scope for this proof (Non-goals).
-- **D6 — `entity_relations` import uses `uc-relation`, not `uc-entity`'s own link mechanism.**
-  `remind_me`'s `entity_relations` (`subject_entity_id, relation, object_entity_id`) is a
-  Relation-domain concept, matching `uc-relation`'s existing purpose from Step 4a — reuse it
-  directly rather than inventing a new mechanism. `memory_entities` (the memory→entity mention
-  join) maps onto Step 4c's real `"mentions"` foreign edge (`uc-memory::LinkForeign`) — this is
-  exactly the mechanism Step 4c built and is the reason this proof depends on Step 4c's close
-  rather than an earlier step.
+  silently overwriting it): the id string (D3), `capture_id`, `subject`, `predicate`, `object`,
+  `superseded_by`, `decay_rate`, `vitality`, `base_weight`, `accessed_at`, `doc_id`, `chunk_index`,
+  `remind_at`, `client`, `source_capture_id` (14 fields with no projection at all), **plus** the
+  *original* `memory_type`, `status`, `node_id` (`Option<String>`, including `None` explicitly, not
+  merely their lossy projected value — D2), **plus** the *original* `created_at`, `updated_at`,
+  `deleted_at` RFC 3339 strings exactly as given (D2) — 21 fields total. This is what makes the
+  round-trip in Proof items 1 and 5 exact: nothing in the 27-field source record is unrecoverable
+  from the imported `uc-memory` record, and no projection's lossiness (millisecond flooring, a
+  `None`-vs-default collision) is mistaken for the authoritative value during comparison.
+- **D5 (revised, review round 1 R2/R4) — Entity import: `aliases`/`label` map directly
+  (`name`→`label`); `kind`'s projection uses `""` for `None`, with the original `Option<String>`
+  retained separately (below); `mention_count` is *recomputed*, not copied.** `remind_me`'s
+  `entities` table has no `mention_count` column at all (it is derived elsewhere, e.g. from
+  `memory_entities` join counts) — `uc-entity`'s `mention_count` is populated by counting the
+  imported `memory_entities` rows referencing that entity after all memories are imported, not
+  treated as a lossy field mapping. **`uc-entity` has no metadata/JSON-string field at all to stash
+  into** (its schema is exactly `label/kind/mention_count/aliases`) — so `kind`'s original
+  `Option<String>`, plus `created_at`/`updated_at` (both present in the real export's `entity`
+  record), are recorded only in the comparison harness's own retained fixture copy, not inside
+  `uc-entity` itself, and the proof's comparison step verifies them against that retained copy
+  rather than against anything read back from `uc-entity`. **`node_id` has no source data at all to
+  preserve** — the real exported `entity` record never carries it (`export.rs:236-253` simply never
+  selects the column; confirmed a genuine, pre-existing gap in `remind_me`'s own exporter, not a
+  mapping decision made here) — so `uc-entity` import always uses the `""` sentinel for it with
+  nothing to stash, disclosed as real information already absent from the export format this work
+  order reuses, not information this migration proof fails to carry forward.
+- **D6 (revised, review round 1 R3) — `entity_relations` import uses `uc-relation`, fully specified;
+  `memory_entities` import uses Step 4c's `"mentions"` foreign edge, fully specified.**
+  `entity_relation` records (`id, subject_entity_id, relation, object_entity_id, created_at,
+  updated_at` — no `node_id` in the real export, same gap as Entity, D5) map to `uc-relation` as:
+  `id` → the relation's own `RecordId` (D3's padding scheme applied to `entity_relation_id`'s
+  12-hex id); `subject_entity_id`/`object_entity_id` → `subject`/`object` (the original, unpadded
+  12-hex entity id strings, D3); `relation` → `relation` (verbatim); `created_at`/`updated_at` →
+  `created_at_unix_ms`/`updated_at_unix_ms` (parsed; the original RFC 3339 strings are retained in
+  the harness's fixture copy, same treatment as D5, since `uc-relation` has no metadata field
+  either); `node_id` → `""` (no source data, same disclosed gap as D5); `deleted_at_unix_ms` → `0`
+  unconditionally — `entity_relations` has **no `deleted_at` column at all** (Repository facts), so
+  this is a schema field with no source concept whatsoever, not a null value being defaulted.
+  `memory_entity` records (`memory_id, entity_id, created_at`) map onto `Change::LinkForeign`
+  (Step 4c): `from` = the memory's `RecordId` (D3), `to` = the entity's `RecordId` (D3's padding) —
+  this is exactly the mechanism Step 4c built and is why this proof depends on Step 4c's close
+  rather than an earlier step. The join's own `created_at` has **no field at all** in
+  `foreign_edges`' `(from, from_incarnation, to, to_incarnation)` tuple (Step 4c's design) — retained
+  in the harness's fixture copy only, disclosed, not silently dropped.
 
 ## Required changes
 
-**R1 — new test fixtures.** `experiments/unified-commitment/crates/uc-facade/tests/fixtures/
-remind-me/memories.json` and `entities.json` (D1), committed, hand-written to match the cited
-`remind_me_core` shapes exactly.
+**R1 — one new test fixture.** `experiments/unified-commitment/crates/uc-facade/tests/fixtures/
+remind-me/export.json` (D1), committed, matching the real flat mixed-record export envelope
+exactly (Repository facts).
 
 **R2 — a new integration test suite, `uc-facade/tests/remind_me_migration.rs`.** Not a standalone
 binary (D1 already ruled out any dependency on `remind_me_core`'s code, so there is no real
@@ -195,21 +271,37 @@ consumer for a general-purpose importer binary yet — a test suite proves the m
 speculatively building a tool with no second caller). Steps, all over a real socket (matching this
 project's established real-TCP testing convention, Steps 4b-ii/4c):
 
-1. Read the fixtures (R1), apply the D2-D6 mapping in test code, and submit each resulting record
-   as a real `Insert`/`Link` over the wire to a fresh `uc-facade` listener (Memory, Entity, and
-   Relation tables registered together, matching Step 4c's registry wiring).
+1. Read the fixture (R1), separate the flat array into memory records (untagged, `role` stripped)
+   and graph records (by `record_type`), apply the D2-D6 mapping in test code, and submit each
+   resulting record as a real `Insert`/`Link` over the wire to a fresh `uc-facade` listener (Memory,
+   Entity, and Relation tables registered together, matching Step 4c's registry wiring). Retain the
+   D5/D6-noted harness-only fields (Entity `kind`-nullability/`created_at`/`updated_at`; Relation
+   `created_at`/`updated_at`; the `memory_entity` join's `created_at`) as an in-memory sidecar keyed
+   by original id, for later comparison — never written into `uc-*`.
 2. Read every record back (`Get`, `Join`, `neighbors_by_relation("mentions")`) and assert the D2-D6
-   mapping round-trips exactly, including recovering every D4/D5-stashed field from
-   `metadata_json`/the retained fixture copy and confiring it matches the original.
+   mapping round-trips exactly: for Memory, reconstruct the *original* 27-field record from the 13
+   projection fields plus D4's 21-field stash (not from the projection fields alone, per D2/D4's
+   revision) and compare field-by-field against the fixture; for Entity/Relation, compare the
+   `uc-*`-held fields plus the retained sidecar (D5/D6) against the fixture.
 3. Checkpoint and reopen (matching Step 4c's own replay proof) — re-verify every comparison from
    step 2 against the reopened store.
 4. Copy the store's data files to a second directory (a file-level backup, per the plan's own
    "create and restore a backup into another directory" language) and reopen *that* copy — re-verify
    again. Confirm the original directory is untouched by this (a real restore-from-backup proof, not
    just a second read of the same files).
-5. Record counts, sorted per-record digests (SHA-256 over each record's canonical field tuple) for
-   both the fixture source and the final reopened-from-backup store, and assert they match exactly
-   — the plan's own literal "sorted per-record digests" comparison method (Step 5, sub-step 3).
+5. (New, review round 1 R5 — independent reconstruction, not a reused materialized checkpoint.)
+   From the same backup copy, delete only the checkpoint file(s) for each domain (`uc-core`'s
+   `checkpoint::write`-produced file, not the append-log) before reopening, and assert the
+   resulting `OpenReport.checkpoint` is `None` (`uc-core/src/recovery.rs:19`'s field, confirming a
+   full history replay actually happened, not a reused pre-materialized checkpoint state per
+   `uc-core/src/lib.rs:268-272`'s checkpoint-then-only-later-events restore path) — then repeat
+   every comparison from step 2 against *this* independently-rebuilt store. This is what makes the
+   restore proof match the merge plan's own Step 5.4 language ("reopen and independently rebuild
+   derived representations"), not merely a second load of an already-materialized state.
+6. Record counts, sorted per-record digests (SHA-256 over each record's canonical, *reconstructed
+   original* field tuple — not the lossy projection tuple, per D2/D4) for both the fixture source
+   and the final checkpoint-free-rebuilt store (step 5), and assert they match exactly — the plan's
+   own literal "sorted per-record digests" comparison method (Step 5, sub-step 3).
 
 ## Non-goals
 
@@ -224,6 +316,17 @@ authentication (still open from Step 4c's own handoff). No claim that this proof
 `rusty_remind_me` migration readiness beyond the narrow slice of data and mechanism it actually
 exercises — the "Host decision" section above states plainly what remains undone and why.
 
+**Explicitly not a safe real-import path yet.** This proof deliberately imports tombstoned/
+superseded records as live `Change::Put`s (D2) with `include_deleted: true` (Repository facts) —
+exactly the resurrection risk `remind_me`'s own `models.rs:1021-1028` documents and defends against
+by defaulting `include_deleted` to `false`. That is acceptable *here* because the goal is proving
+field-level fidelity end-to-end, and nothing downstream of this test suite ever reads the result as
+live data. A real importer built on this mechanism would need to either filter reads on
+`deleted_at_unix_ms != 0`/a stashed `superseded_by`, or submit an actual `Change::Delete` for a
+tombstoned source record instead of a bare `Put` — neither is implemented here, and using this
+proof's mapping code unmodified against real data would reproduce the exact hazard `remind_me`'s
+own maintainers already identified and guarded against.
+
 ## Proof
 
 Same eleven-command chain as every prior Step 4/5 increment (unified-commitment fmt/clippy/test;
@@ -232,21 +335,30 @@ convergence-memory fmt/clippy/test; exp-0001 fmt/clippy/test, harness excluded; 
 test coverage, named explicitly in the implementation report:
 
 1. Every fixture memory record round-trips through insert → real-socket read → checkpoint/reopen →
-   file-backup/restore-reopen with all 27 original fields recoverable (13 direct, 14 stashed) —
-   including the tombstoned (`deleted_at`-set) record staying a live, gettable `uc-memory` row with
-   its soft-delete marker intact (D2), and the pre-#198 record with `None` `memory_type`/`status`
-   landing exactly on `remind_me`'s own documented column defaults.
+   file-backup/restore-reopen → checkpoint-free independent rebuild (R2 step 5), with all 27
+   original fields exactly reconstructable at every stage (13 lossy projections + 21-field D4
+   stash) — including the tombstoned/superseded record staying a live, gettable `uc-memory` row
+   whose original `deleted_at`/`superseded_by` strings are recovered exactly from the stash (D2/D4,
+   not merely "some nonzero marker present"), the sub-millisecond-timestamp record's original RFC
+   3339 strings recovered byte-for-byte (not just millisecond-equal), and the pre-#198 record's
+   original `None` `memory_type`/`status` distinguished from a real `"unclassified"`/`"active"`
+   value via the stash, not conflated by the projection.
 2. Entity import: two differently-cased aliases of the same source name resolve to the one
    deterministic entity id (D3's padding scheme applied to `entity.rs:44-46`'s id), matching
    `remind_me`'s own case-fold-then-hash identity rule, not a naive per-alias id.
 3. `mention_count` after import equals the real count of imported `memory_entities` edges
    referencing that entity (D5) — not a copied, absent, or default value.
 4. `entity_relations` import produces real `uc-relation` records queryable by `subject`/`relation`/
-   `object`, and `memory_entities` import produces real `"mentions"` foreign edges (Step 4c's
-   mechanism) queryable by `Join`/`neighbors_by_relation` in both directions.
-5. Sorted per-record SHA-256 digests match exactly between the source fixtures and the final
-   reopened-from-backup store (the plan's own literal comparison method).
-6. A record whose `metadata` object already contains the reserved `"_remind_me_migration_extra"`
+   `object`, with `subject`/`object` holding the original, unpadded 12-hex entity id strings (D3),
+   and `memory_entities` import produces real `"mentions"` foreign edges (Step 4c's mechanism)
+   queryable by `Join`/`neighbors_by_relation` in both directions.
+5. The checkpoint-free rebuild (R2 step 5) reports `OpenReport.checkpoint == None` for every
+   domain, proving a genuine full-history replay rather than a reused materialized checkpoint.
+6. Sorted per-record SHA-256 digests, computed over each record's *reconstructed original* field
+   tuple (not the lossy projection tuple), match exactly between the source fixture and the final
+   checkpoint-free-rebuilt store (the plan's own literal comparison method, satisfied against
+   independently-rebuilt state per item 5).
+7. A record whose `metadata` object already contains the reserved `"_remind_me_migration_extra"`
    key is rejected by the importer (D4), not silently overwritten.
-7. A memory id fixture missing the `mem_` prefix, or an unparseable `created_at`/`updated_at`, is
+8. A memory id fixture missing the `mem_` prefix, or an unparseable `created_at`/`updated_at`, is
    rejected (D2/D3), not silently defaulted or truncated.
