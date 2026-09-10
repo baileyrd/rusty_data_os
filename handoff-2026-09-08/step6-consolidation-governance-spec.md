@@ -84,31 +84,61 @@ per-experiment notes.
   explaining the merge initiative's relationship to that document's existing content. This matches
   the project's own established pattern (Phase 7's note in `RESEARCH-ROADMAP.md`) rather than
   inventing a new convention.
-- **D2 — `docs/VISION.md` gets a new closing section, "9. A parallel, disclosed initiative
-  (2026-09-09)."** States: the merge plan (`data-os-multimodal-merge-plan-2026-09-08.md`) is a
-  separate, owner-authorized initiative to build a general-purpose database intended to replace
-  SQLite/PostgreSQL/DuckDB workloads, using this repository as "the eventual home of the combined
-  engine" (the plan's own words); it proceeds under `experiments/unified-commitment/` in parallel
-  with, not instead of, the EXP-0001 exploratory-history research this document otherwise
-  describes; §7's non-goals and §6's scope progression describe the EXP-0001 thread specifically
-  and do not constrain the merge initiative, which the owner has separately authorized to skip
-  ahead under named, bounded, per-phase exceptions (cites the Phase 7 precedent). Explicitly does
-  not change §§1-8's content, does not retract any EXP-0001 non-goal, and does not claim the merge
-  initiative has met any of §5's success criteria.
-- **D3 — `AGENTS.md` gets a new numbered section (after the existing authority-order list) naming
-  `experiments/unified-commitment/` as the merge initiative's home and `rusty_multimodal_db` as the
-  active source repository it ports from.** States plainly: `rusty_multimodal_db` is not archived
-  and not deprecated — it remains the authoritative running system for its own consumers until a
-  real migration (not a proof) actually lands per merge-plan Step 5's remaining, undone final
-  sub-step; new development *for the merge's goal specifically* happens in
-  `experiments/unified-commitment/`, not by adding capability to `rusty_multimodal_db` or by
-  starting a third, competing implementation. Cites `handoff-2026-09-08/BUILD-LOG.md` as the
-  detailed evidence trail for every step's review/build/inspection history.
-- **D4 — `docs/ARCHITECTURE.md` gets a short pointer, not a duplicate description.** A brief new
-  section noting `experiments/unified-commitment/`'s existence and pointing to
-  `docs/experiments/EXP-0005-protocol-facade.md` and the `handoff-2026-09-08/` specs for its actual
-  architecture, rather than re-describing crate boundaries already documented there (avoiding two
-  descriptions of the same system drifting apart).
+- **D2 (revised, review round 1 S6-001) — `docs/VISION.md` gets a new closing section, "9. A
+  parallel, disclosed initiative (2026-09-09)," which narrows exactly which §7 non-goals are
+  superseded and explicitly re-affirms the rest.** States: the merge plan
+  (`data-os-multimodal-merge-plan-2026-09-08.md`) is a separate, owner-authorized initiative to
+  build a general-purpose database intended to replace SQLite/PostgreSQL/DuckDB workloads, using
+  this repository as "the eventual home of the combined engine" (the plan's own words); it proceeds
+  under `experiments/unified-commitment/` in parallel with, not instead of, the EXP-0001
+  exploratory-history research this document otherwise describes. **Only the following §7 items are
+  superseded, each by a named, already-authorized exception, and only to the stated extent:**
+  "full SQL compatibility" and "replacing every existing database workload" (the plan's own stated
+  end goal, not yet achieved — Steps 1-5 have ported three domains' basic operations, nothing
+  resembling full coverage); "cloud service deployment," "generalized plugin marketplaces,"
+  "distributed consensus," "multi-node replication" (still genuinely not goals of the merge
+  initiative either — nothing in Steps 1-5 touches any of these; listed only because a future
+  reader should not assume otherwise from the "replace SQLite/PostgreSQL/DuckDB" framing alone).
+  §6's "server adapter" step is superseded specifically and only to the extent
+  `docs/RESEARCH-ROADMAP.md`'s Phase 7 note already authorizes (protocol-22 wire compatibility for
+  the ported domains) — cites that note directly, does not restate or broaden it here. **Explicitly
+  NOT superseded, restated as still fully in force for the merge initiative too:** §7's "committing
+  to a permanent event encoding before measurement" and "hiding durability semantics behind vague
+  'successful write' behavior" — these are engineering-rigor principles, not narrow EXP-0001 scope
+  boundaries, and the merge initiative has in fact already followed them throughout (the CMM2→CMM3
+  magic-byte version bump rather than silent format extension, Step 4c's BUILD-LOG; Step 5's test
+  code explicitly labeling its `Durability::D1` choice "synthetic D1 fidelity only," never
+  implying a stronger guarantee). §5's success criteria are unmet and not claimed met. No change to
+  §§1-6, 8's content.
+- **D3 (revised, review round 1 S6-002) — `AGENTS.md` gets a new numbered section (after the
+  existing authority-order list) naming `experiments/unified-commitment/` as the merge initiative's
+  home and `rusty_multimodal_db` as the active source repository it ports from, with
+  revision-pinned pointers to the *actual* authoritative evidence, not a bare directory name.**
+  States plainly: `rusty_multimodal_db` is not archived and not deprecated — it remains the
+  authoritative running system for its own consumers until a real migration (not a proof) actually
+  lands per merge-plan Step 5's remaining, undone final sub-step; new development *for the merge's
+  goal specifically* happens in `experiments/unified-commitment/`, not by adding capability to
+  `rusty_multimodal_db` or by starting a third, competing implementation. **Round 1 found that this
+  worktree's own local `handoff-2026-09-08/` copy is incomplete** (branched at Step 5's close, it
+  carries only early specs and this worktree's own append-only "local implementation" notes, not
+  the accumulating history every subsequent step adds only to the separate `handoff/merge-2026-09-08`
+  branch) — a bare `handoff-2026-09-08/BUILD-LOG.md` reference would resolve to a real but
+  misleadingly incomplete file for anyone reading this branch alone, and the markdown-link
+  validator cannot detect that (it checks existence, not completeness). Fixed: cite the
+  authoritative source explicitly as "the `handoff/merge-2026-09-08` branch's
+  `handoff-2026-09-08/BUILD-LOG.md`" (naming the branch, not just the path), and separately note
+  that each step's own worktree/branch (e.g. this repository's `codex/merge-step5-migration-proof`)
+  carries a local, partial advisory report for that step's own build only
+  (`docs/experiments/EXP-0005/STEP<N>-IMPLEMENTATION-REPORT.md`), not the full cross-step closure
+  log.
+- **D4 (revised, review round 1 S6-002) — `docs/ARCHITECTURE.md` gets a short pointer, not a
+  duplicate description, with the same branch-qualified citation as D3.** A brief new section
+  noting `experiments/unified-commitment/`'s existence and pointing to
+  `docs/experiments/EXP-0005-protocol-facade.md` (present in this checkout) for its architecture,
+  and to "the `handoff/merge-2026-09-08` branch's `handoff-2026-09-08/` specs" (named explicitly as
+  a different branch, not implied to be in the current checkout) for the full per-step work orders
+  — rather than re-describing crate boundaries already documented there (avoiding two descriptions
+  of the same system drifting apart).
 - **D5 — an explicit "not yet done, and why" list, in `AGENTS.md`'s new section.** Names, plainly:
   no real consumer has migrated (Step 5 built and verified the mechanism only); `rusty_multimodal_db`
   is not archived and has no migrated consumer; no duplicate runtime path has been removed; opening
@@ -146,7 +176,11 @@ touched). Required checks: `python tools/validate_markdown_links.py` and `git di
 exit 0. Required review, named explicitly in the implementation report: each of the three new
 sections is read back and confirmed to (1) not alter any pre-existing sentence in its file, (2)
 accurately cite the real file paths/section names referenced (`data-os-multimodal-merge-plan-2026-09-08.md`,
-`docs/RESEARCH-ROADMAP.md`'s Phase 7 section, `handoff-2026-09-08/BUILD-LOG.md`,
-`docs/experiments/EXP-0005-protocol-facade.md`), and (3) not overstate the merge initiative's
-current state beyond what Steps 1-5's actual closing commits established (no "migration complete,"
-no "consumer cutover," no claim `rusty_multimodal_db` is being phased out on any timeline).
+`docs/RESEARCH-ROADMAP.md`'s Phase 7 section, `docs/experiments/EXP-0005-protocol-facade.md` — all
+present in this checkout), (3) cite the cross-step closure log as "the `handoff/merge-2026-09-08`
+branch's `handoff-2026-09-08/BUILD-LOG.md`," explicitly naming the branch rather than a bare path
+that would resolve, misleadingly, to this checkout's own incomplete local copy (D3/D4, review round
+1 S6-002), and (4) not overstate the merge initiative's current state beyond what Steps 1-5's
+actual closing commits established (no "migration complete," no "consumer cutover," no claim
+`rusty_multimodal_db` is being phased out on any timeline, and no §7 non-goal marked superseded
+beyond the specific, named items D2 lists).
