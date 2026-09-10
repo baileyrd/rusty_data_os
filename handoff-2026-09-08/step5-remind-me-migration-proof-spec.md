@@ -165,8 +165,10 @@ value to carry (see D6).
   fixture because `include_deleted: true` is frozen in, per the Repository facts section); a record
   whose `memory_type`/`status` are `None` (pre-#198 rows, per the `models.rs:93-97` comment); at
   least one entity name requiring case-fold normalization (two source aliases differing only in
-  case, both resolving to the one deterministic id per `entity.rs:44-46`); a `created_at`/
-  `updated_at` pair with sub-millisecond precision (`Utc::now().to_rfc3339()`,
+  case, both resolving to the one deterministic id per `entity.rs:44-46`); three records whose
+  `metadata` is respectively `null`, a JSON array, and a bare scalar (review round 2 S5-002 —
+  `metadata` is `serde_json::Value`, not guaranteed to be an object) alongside the common case of a
+  real object; a `created_at`/`updated_at` pair with sub-millisecond precision (`Utc::now().to_rfc3339()`,
   `queries.rs:100`, is realistic sub-millisecond input) to exercise D2's exact-fidelity requirement,
   not just millisecond-aligned timestamps that would hide truncation.
 - **D2 (revised, review round 1 R1/R2) — the 13 `uc-memory` fields are lossy *queryable
@@ -209,20 +211,32 @@ value to carry (see D6).
   back to the Entity table by string equality. The original id string (all three kinds) is
   preserved verbatim in D4/D6's stash specifically so identity is round-trip verifiable independent
   of the byte-mapping scheme chosen here.
-- **D4 (revised, review round 1 R1/R2) — every `Memory` field without an exact-fidelity home in the
-  13-field projection is stashed losslessly, under one reserved key, never dropped.** Nested under
-  `"_remind_me_migration_extra"` inside the JSON object written to `metadata_json` (alongside the
-  original `metadata` object's own keys at the top level — reject the fixture/import if the
-  original `metadata` already contains a colliding `"_remind_me_migration_extra"` key, rather than
-  silently overwriting it): the id string (D3), `capture_id`, `subject`, `predicate`, `object`,
-  `superseded_by`, `decay_rate`, `vitality`, `base_weight`, `accessed_at`, `doc_id`, `chunk_index`,
-  `remind_at`, `client`, `source_capture_id` (14 fields with no projection at all), **plus** the
-  *original* `memory_type`, `status`, `node_id` (`Option<String>`, including `None` explicitly, not
-  merely their lossy projected value — D2), **plus** the *original* `created_at`, `updated_at`,
-  `deleted_at` RFC 3339 strings exactly as given (D2) — 21 fields total. This is what makes the
-  round-trip in Proof items 1 and 5 exact: nothing in the 27-field source record is unrecoverable
-  from the imported `uc-memory` record, and no projection's lossiness (millisecond flooring, a
-  `None`-vs-default collision) is mistaken for the authoritative value during comparison.
+- **D4 (revised, review round 1 R1/R2; revised again round 2 S5-002) — every `Memory` field
+  without an exact-fidelity home in the 13-field projection is stashed losslessly, inside a fixed
+  envelope object, never dropped, never assuming `metadata`'s shape.** `remind_me`'s `metadata` is
+  `serde_json::Value` (`models.rs:66`), not guaranteed to be a JSON object — `db/queries.rs:295-299`
+  writes whatever value is supplied without an object check, and the reader deserializes arbitrary
+  JSON, so a real exported record's `metadata` can legally be `null`, an array, or a scalar. Nesting
+  the stash *into* the original metadata's own top-level keys (the round-1 design) has no valid
+  encoding for those shapes. Instead, `metadata_json` always holds a **fixed two-key envelope
+  object**, regardless of what `metadata` originally was:
+  ```json
+  {"original_metadata": <metadata value, verbatim, whatever shape it is>,
+   "_remind_me_migration_extra": { ... }}
+  ```
+  This has no collision case to reject (unlike the round-1 design) — the original value is nested
+  as a value under `"original_metadata"`, never merged into a shared top level, so it cannot collide
+  with the stash key regardless of its own shape or contents. `"_remind_me_migration_extra"` holds:
+  the id string (D3), `capture_id`, `subject`, `predicate`, `object`, `superseded_by`, `decay_rate`,
+  `vitality`, `base_weight`, `accessed_at`, `doc_id`, `chunk_index`, `remind_at`, `client`,
+  `source_capture_id` (14 fields with no projection at all), **plus** the *original* `memory_type`,
+  `status`, `node_id` (`Option<String>`, including `None` explicitly, not merely their lossy
+  projected value — D2), **plus** the *original* `created_at`, `updated_at`, `deleted_at` RFC 3339
+  strings exactly as given (D2) — 21 fields total. This is what makes the round-trip in Proof items
+  1 and 6 exact: nothing in the 27-field source record is unrecoverable from the imported
+  `uc-memory` record (including `metadata` itself, in any shape), and no projection's lossiness
+  (millisecond flooring, a `None`-vs-default collision) is mistaken for the authoritative value
+  during comparison.
 - **D5 (revised, review round 1 R2/R4) — Entity import: `aliases`/`label` map directly
   (`name`→`label`); `kind`'s projection uses `""` for `None`, with the original `Option<String>`
   retained separately (below); `mention_count` is *recomputed*, not copied.** `remind_me`'s
@@ -280,28 +294,55 @@ project's established real-TCP testing convention, Steps 4b-ii/4c):
    by original id, for later comparison — never written into `uc-*`.
 2. Read every record back (`Get`, `Join`, `neighbors_by_relation("mentions")`) and assert the D2-D6
    mapping round-trips exactly: for Memory, reconstruct the *original* 27-field record from the 13
-   projection fields plus D4's 21-field stash (not from the projection fields alone, per D2/D4's
-   revision) and compare field-by-field against the fixture; for Entity/Relation, compare the
-   `uc-*`-held fields plus the retained sidecar (D5/D6) against the fixture.
-3. Checkpoint and reopen (matching Step 4c's own replay proof) — re-verify every comparison from
-   step 2 against the reopened store.
+   projection fields plus D4's 21-field envelope stash (not from the projection fields alone, per
+   D2/D4's revision) and compare field-by-field against the fixture; for Entity/Relation, compare
+   the `uc-*`-held fields plus the retained sidecar (D5/D6) against the fixture. **This step's
+   sidecar-dependent comparisons (D5/D6's Entity `kind`-nullability/timestamps, Relation
+   timestamps, join `created_at`) are import-time-only** — see the scope note after step 5.
+3. Checkpoint and reopen (matching Step 4c's own replay proof). Retain the checkpoint position each
+   domain's `checkpoint()` call reports (`uc-core/src/lib.rs:542-549`). Assert the reopened store's
+   `OpenReport.checkpoint == Some(<that exact position>)` and `OpenReport.rejected_checkpoints` is
+   empty for every domain (review round 2 S5-003 — proving the checkpoint was genuinely accepted
+   and used, not silently bypassed via `uc-core/src/checkpoint.rs`'s reject-and-fall-back-to-replay
+   path) — then re-verify every **`uc-*`-held-field** comparison from step 2 (D2's 13 projections,
+   D4's envelope stash, D6's `uc-relation` fields) against the reopened store.
 4. Copy the store's data files to a second directory (a file-level backup, per the plan's own
-   "create and restore a backup into another directory" language) and reopen *that* copy — re-verify
-   again. Confirm the original directory is untouched by this (a real restore-from-backup proof, not
-   just a second read of the same files).
-5. (New, review round 1 R5 — independent reconstruction, not a reused materialized checkpoint.)
-   From the same backup copy, delete only the checkpoint file(s) for each domain (`uc-core`'s
+   "create and restore a backup into another directory" language) and reopen *that* copy. Assert
+   the same checkpoint-acceptance condition as step 3 (S5-003) — a backup that silently lost or
+   corrupted its checkpoint file must be caught here, not masked by a fallback replay that happens
+   to still produce the right data. Re-verify every `uc-*`-held-field comparison again. Confirm the
+   original directory is untouched by this (a real restore-from-backup proof, not just a second
+   read of the same files).
+5. (Review round 1 R5 — independent reconstruction, not a reused materialized checkpoint.) From the
+   same backup copy, delete only the checkpoint file(s) for each domain (`uc-core`'s
    `checkpoint::write`-produced file, not the append-log) before reopening, and assert the
    resulting `OpenReport.checkpoint` is `None` (`uc-core/src/recovery.rs:19`'s field, confirming a
    full history replay actually happened, not a reused pre-materialized checkpoint state per
    `uc-core/src/lib.rs:268-272`'s checkpoint-then-only-later-events restore path) — then repeat
-   every comparison from step 2 against *this* independently-rebuilt store. This is what makes the
-   restore proof match the merge plan's own Step 5.4 language ("reopen and independently rebuild
-   derived representations"), not merely a second load of an already-materialized state.
+   every `uc-*`-held-field comparison from step 2 against *this* independently-rebuilt store. This
+   is what makes the restore proof match the merge plan's own Step 5.4 language ("reopen and
+   independently rebuild derived representations"), not merely a second load of an
+   already-materialized state.
+
+   **Scope note (review round 2 S5-001):** D5/D6's sidecar-only fields (Entity `kind`-nullability/
+   `created_at`/`updated_at`; Relation `created_at`/`updated_at`; the `memory_entity` join's
+   `created_at`) live only in the test process's own memory — they were never written into any
+   `uc-*` table (D5/D6 disclose this; `uc-entity`/`uc-relation` genuinely have no field to hold
+   them). Comparing them after a file-copy backup or a checkpoint-free rebuild would silently
+   compare the fixture against itself (the sidecar survives because the *test process* is still
+   running, not because the data survived the backup) — that would prove nothing about backup
+   fidelity and must not be reported as if it did. Steps 3-5 therefore compare **only** the fields
+   actually persisted inside `uc-*` (D2's 13 projections + D4's 21-field envelope stash for Memory;
+   `uc-relation`'s 7 real fields; `uc-entity`'s `label`/`aliases`/recomputed `mention_count`, plus
+   its projected `kind`). The sidecar-only fields are verified once, at step 2 (immediately after
+   import, still within the same process) — their fidelity claim is scoped to "the import code read
+   them correctly from the fixture," not "they survive a backup or replay," and the implementation
+   report must state this distinction explicitly rather than imply broader coverage.
 6. Record counts, sorted per-record digests (SHA-256 over each record's canonical, *reconstructed
-   original* field tuple — not the lossy projection tuple, per D2/D4) for both the fixture source
-   and the final checkpoint-free-rebuilt store (step 5), and assert they match exactly — the plan's
-   own literal "sorted per-record digests" comparison method (Step 5, sub-step 3).
+   original* field tuple, restricted to the `uc-*`-persisted fields per the scope note above — not
+   the lossy projection tuple, and not the sidecar-only fields) for both the fixture source and the
+   final checkpoint-free-rebuilt store (step 5), and assert they match exactly — the plan's own
+   literal "sorted per-record digests" comparison method (Step 5, sub-step 3).
 
 ## Non-goals
 
@@ -335,14 +376,16 @@ convergence-memory fmt/clippy/test; exp-0001 fmt/clippy/test, harness excluded; 
 test coverage, named explicitly in the implementation report:
 
 1. Every fixture memory record round-trips through insert → real-socket read → checkpoint/reopen →
-   file-backup/restore-reopen → checkpoint-free independent rebuild (R2 step 5), with all 27
-   original fields exactly reconstructable at every stage (13 lossy projections + 21-field D4
-   stash) — including the tombstoned/superseded record staying a live, gettable `uc-memory` row
-   whose original `deleted_at`/`superseded_by` strings are recovered exactly from the stash (D2/D4,
-   not merely "some nonzero marker present"), the sub-millisecond-timestamp record's original RFC
-   3339 strings recovered byte-for-byte (not just millisecond-equal), and the pre-#198 record's
-   original `None` `memory_type`/`status` distinguished from a real `"unclassified"`/`"active"`
-   value via the stash, not conflated by the projection.
+   file-backup/restore-reopen → checkpoint-free independent rebuild (R2 step 5), with all
+   `uc-*`-persisted fields (13 lossy projections + D4's 21-field envelope stash) exactly
+   reconstructable at every stage — including the tombstoned/superseded record staying a live,
+   gettable `uc-memory` row whose original `deleted_at`/`superseded_by` strings are recovered
+   exactly from the stash (D2/D4, not merely "some nonzero marker present"), the
+   sub-millisecond-timestamp record's original RFC 3339 strings recovered byte-for-byte (not just
+   millisecond-equal), and the pre-#198 record's original `None` `memory_type`/`status`
+   distinguished from a real `"unclassified"`/`"active"` value via the stash, not conflated by the
+   projection. Sidecar-only Entity/Relation fields (D5/D6) are verified once, at step 2 only, per
+   R2's scope note — not claimed to survive backup/restore/rebuild.
 2. Entity import: two differently-cased aliases of the same source name resolve to the one
    deterministic entity id (D3's padding scheme applied to `entity.rs:44-46`'s id), matching
    `remind_me`'s own case-fold-then-hash identity rule, not a naive per-alias id.
@@ -352,13 +395,22 @@ test coverage, named explicitly in the implementation report:
    `object`, with `subject`/`object` holding the original, unpadded 12-hex entity id strings (D3),
    and `memory_entities` import produces real `"mentions"` foreign edges (Step 4c's mechanism)
    queryable by `Join`/`neighbors_by_relation` in both directions.
-5. The checkpoint-free rebuild (R2 step 5) reports `OpenReport.checkpoint == None` for every
-   domain, proving a genuine full-history replay rather than a reused materialized checkpoint.
+5. (Revised, review round 2 S5-003.) Both the checkpoint/reopen (R2 step 3) and backup/reopen (R2
+   step 4) stages report `OpenReport.checkpoint == Some(<the exact position `checkpoint()`
+   returned>)` and empty `rejected_checkpoints`, for every domain — a checkpoint that was silently
+   rejected or corrupted in the backup must fail this assertion even if a fallback replay happens
+   to still produce correct data. The independent rebuild (R2 step 5) separately reports
+   `OpenReport.checkpoint == None` for every domain, proving that stage is a genuine full-history
+   replay, not a reused materialized checkpoint.
 6. Sorted per-record SHA-256 digests, computed over each record's *reconstructed original* field
-   tuple (not the lossy projection tuple), match exactly between the source fixture and the final
+   tuple restricted to `uc-*`-persisted fields (not the lossy projection tuple, not the sidecar-only
+   fields — R2's scope note), match exactly between the source fixture and the final
    checkpoint-free-rebuilt store (the plan's own literal comparison method, satisfied against
    independently-rebuilt state per item 5).
-7. A record whose `metadata` object already contains the reserved `"_remind_me_migration_extra"`
-   key is rejected by the importer (D4), not silently overwritten.
+7. (Revised, review round 2 S5-002.) A fixture memory record whose `metadata` is `null`, a JSON
+   array, and a bare scalar (three separate cases, not just an object) each round-trip exactly
+   through the `{"original_metadata": ..., "_remind_me_migration_extra": {...}}` envelope (D4) —
+   the envelope design has no collision case to test, since the original value is always nested as
+   a value, never merged into a shared top level.
 8. A memory id fixture missing the `mem_` prefix, or an unparseable `created_at`/`updated_at`, is
    rejected (D2/D3), not silently defaulted or truncated.
