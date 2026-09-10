@@ -449,12 +449,15 @@ to the new variants too.
   called to build the registered tables) passes the already-constructed Entity `Store` in.
 - `describe_relations()`: overridden per D12 — only the named `"mentions"` descriptor,
   `target_table: Some("entity")`, no wildcard.
-- `link_records(left, right, relation)`: when `relation == "mentions"`: reject `left.0 ==
-  right.0` as `Malformed` first (D11); verify `left`'s current incarnation in Memory's own state
-  (`Self::current`, unchanged); resolve `to_incarnation = self.entity.incarnation(right)`,
-  `RecordNotFound` if `None` (D8/D9 — this is the live existence+incarnation check, replacing the
-  registry-only boolean check as the value source for what gets recorded, though the registry's
-  own `check_link` still runs first and unchanged); check `AlreadyLinked` against `foreign_edges`
+- `link_records(left, right, relation)`: when `relation == "mentions"`: verify `left`'s current
+  incarnation in Memory's own state first (`Self::current`, unchanged; `RecordNotFound` if it does
+  not resolve — this must run *before* the self-loop check, per D11/legacy's own precedence: a
+  `left` that doesn't exist locally is `RecordNotFound` even when `left.0 == right.0` and `right`
+  independently exists in Entity); *then* reject `left.0 == right.0` as `Malformed` (D11); *then*
+  resolve `to_incarnation = self.entity.incarnation(right)`, `RecordNotFound` if `None` (D8/D9 —
+  this is the live existence+incarnation check, replacing the registry-only boolean check as the
+  value source for what gets recorded, though the registry's own `check_link` still runs first and
+  unchanged); check `AlreadyLinked` against `foreign_edges`
   using the full single-direction tuple `(left.0, from_incarnation, right.0, to_incarnation)`
   (D10, revised round 2 — includes `to_incarnation`, never the swapped tuple); submit
   `Change::LinkForeign { from: left.0, from_incarnation, to: right.0, to_incarnation }` (a stale
@@ -497,16 +500,20 @@ required test coverage, named explicitly in the implementation report:
 1. A real cross-table `Link(memory_id, entity_id, "mentions")` over a real socket succeeds when
    the Entity table is registered and the id exists; `Malformed`/`Unsupported`/`RecordNotFound` in
    the same shapes Step 4b-i's synthetic-double tests already established for the unregistered/
-   missing-endpoint cases, now against real adapters. (Revised, P4C-R2-004 — the registry's own
-   existence check runs *before* `link_records` is ever reached, so a self-loop's wire outcome
-   depends on what the registry sees first, not on D11 alone; D11's `Malformed` fires only once
-   the registry's own check would otherwise pass.) Test all three distinct self-loop outcomes
-   explicitly, in registry-first precedence order: `Link(q, q, "mentions")` where `q` exists as a
-   live Entity id → `Malformed` (D11, registry's existence check passes, self-loop check fires);
-   where `q` does not exist as any live Entity id → `RecordNotFound` (registry's own check fails
-   first, D11 never reached); where the Entity table is unregistered → `Unsupported` (registry
-   fails first for a different reason). No claim that self-loop rejection universally precedes
-   every other error shape.
+   missing-endpoint cases, now against real adapters. (Revised, P4C-R2-004; corrected round 4
+   P4C-R3-001 — the full precedence chain is: registry's far-endpoint check, then the adapter's own
+   local-`left`-existence check, then the self-loop check; `Malformed` for self-loop requires `q`
+   to exist in *both* tables, not just Entity.) Test all four distinct outcomes explicitly, in
+   this exact precedence order: `Link(q, q, "mentions")` where `q` exists as a live id in *both*
+   Memory and Entity → `Malformed` (registry's far-endpoint check passes, local `left` exists,
+   self-loop check fires); where `q` exists in Entity but **not** in Memory →
+   `RecordNotFound` (registry's far-endpoint check passes, but the adapter's own local existence
+   check on `left` fails *before* the self-loop check ever runs — legacy's own precedence, D11);
+   where `q` does not exist as any live Entity id at all → `RecordNotFound` (registry's own check
+   fails first, `left_records` never reached); where the Entity table is unregistered →
+   `Unsupported` (registry fails first for a different reason). No claim that self-loop rejection
+   universally precedes every other error shape — it precedes only the local-`left`-existence
+   check's opposite outcome, never substitutes for it.
 2. `neighbors`/`neighbors_by_relation("mentions")` against the Memory table finds the Entity id
    after linking, **and** the same query given the Entity id as input finds the Memory id back
    (D5's dual-direction, live-membership-resolved lookup).
