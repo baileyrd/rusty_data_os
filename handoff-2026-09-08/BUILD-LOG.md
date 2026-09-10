@@ -253,3 +253,29 @@ order (no functional effect, since the test classifies records independently by 
 Fixed directly by the host (pure JSON reorder); full `uc-facade` suite and a targeted
 fmt/clippy/diff-check recheck confirm no regression. Clean close within budget: fix round 1 of 2
 used, inspection round 1 of 2 used.
+
+## Step 6 local implementation, 2026-09-09
+
+Frozen work order SHA-256 (see `handoff/merge-2026-09-08`'s copy of this file for the full
+3-round plan-review history). Purely additive documentation: one new section each in `AGENTS.md`
+(§1.1), `docs/VISION.md` (§9), and `docs/ARCHITECTURE.md` (§9) — 115 lines added, zero deletions,
+no pre-existing sentence altered. No code, test, or manifest change.
+
+Names `experiments/unified-commitment/` as the merge initiative's home and `rusty_multimodal_db`
+as the still-active, not-archived source repository. Cleanly separates which `VISION.md` §7
+non-goals are superseded (2, both named exceptions) from which remain fully in force (7,
+explicitly re-affirmed). Itemizes all five of the merge plan's Step 5 sub-steps as still undone
+against real data, quoting `EXP-0005-protocol-facade.md` §23's "not a safe production importer"
+disclosure verbatim. Cites the cross-step closure log as `handoff/merge-2026-09-08`'s
+`handoff-2026-09-08/BUILD-LOG.md`, pinned by commit hash, as inline code rather than a markdown
+link — deliberately avoiding a validator-invisible resolution to this checkout's own incomplete
+local copy.
+
+Host proof: `python tools/validate_markdown_links.py` and `git diff --check` both independently
+re-run, exit 0. Host review confirmed every cited path/anchor resolves and every quoted/paraphrased
+claim (the two non-goal lists partitioning §7's nine items exactly; the sidecar-transience and
+tombstone-import behavior in `remind_me_migration.rs`; the EXP-0005 §23 quote) matches the real
+source verbatim. Inspection 1 (fresh Claude CLI): **APPROVED, zero findings** — independently
+confirmed the same partition-exactness and citation-accuracy, plus that the branch-qualified
+citations are written as code spans specifically to avoid the validator-invisible/human-misleading
+resolution risk. Clean close within budget: no fix round needed, inspection round 1 of 2 used.

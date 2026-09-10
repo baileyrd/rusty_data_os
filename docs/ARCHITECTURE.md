@@ -220,3 +220,21 @@ Major unresolved questions include:
 These are intentionally unresolved. The roadmap exists to resolve them with evidence.
 
 Ordinary compaction may reorganize, compress, or archive canonical history but cannot silently discard its meaning. Destructive retention requires a future explicit, auditable decision.
+
+## 9. Parallel multimodal-merge initiative (2026-09-09)
+
+The owner-authorized [merge plan](plans/data-os-multimodal-merge-plan-2026-09-08.md) places new
+database-engine development for its SQLite/PostgreSQL/DuckDB replacement goal in
+`experiments/unified-commitment/`, alongside the independent EXP-0001 research described above.
+For that initiative's architecture and bounded implementation contracts, see
+[EXP-0005 — protocol facade](experiments/EXP-0005-protocol-facade.md), including its Step 4c
+and Step 5 sections. `rusty_multimodal_db` remains the active source repository with no migrated
+consumer; this pointer claims neither production graduation nor a completed consolidation.
+
+The full per-step work orders are the `handoff/merge-2026-09-08` branch's
+`handoff-2026-09-08/` specs. The cross-step closure record is the `handoff/merge-2026-09-08`
+branch's `handoff-2026-09-08/BUILD-LOG.md`, at revision
+`fecd62c2aeeef0c203bc21a22c03b5422bb8045e`. These refer explicitly to a different branch;
+this checkout's incomplete local handoff copy and per-step advisory reports do not substitute
+for that record. This additive pointer preserves the existing exploratory architecture and
+research gates and authorizes no additional implementation or networking work.

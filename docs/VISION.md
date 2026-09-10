@@ -117,3 +117,42 @@ Feelings, familiarity, elegance, and intuition are useful for generating candida
 The governing principle is:
 
 > **Intuition proposes. Measurement challenges. Evidence decides.**
+
+## 9. A parallel, disclosed initiative (2026-09-09)
+
+The owner-authorized [2026-09-08 merge plan](plans/data-os-multimodal-merge-plan-2026-09-08.md)
+is a separate initiative to build a general-purpose database intended to replace SQLite,
+PostgreSQL and DuckDB workloads, with this repository as "the eventual home of the combined
+engine." New database-engine development for that goal happens under
+`experiments/unified-commitment/`, in parallel with, not instead of, the independent EXP-0001
+exploratory-history research otherwise described here. `rusty_multimodal_db` remains the active
+source repository; its consumers have not migrated, and it is neither archived nor deprecated.
+
+**Superseded only for this initiative, by the named authorizations and to the stated extent:**
+
+- §7's "full SQL compatibility" and "replacing every existing database workload" non-goals yield
+  to the merge plan's stated replacement-database end goal. This changes direction, not the
+  completion claim: Steps 1–5 have ported basic operations for three domains, not full coverage.
+- §6's "server adapter" ordering yields only to the existing EXP-0005 exception in
+  [Research Roadmap, "Phase 7 — Server adapter"](RESEARCH-ROADMAP.md#phase-7--server-adapter).
+  That note defines the authorization's extent; this section does not broaden it.
+
+**Retained unchanged and fully in force for the merge initiative:**
+
+- "cloud service deployment";
+- "generalized plugin marketplaces";
+- "distributed consensus";
+- "multi-node replication";
+- "immediately supporting every data model";
+- "committing to a permanent event encoding before measurement";
+- "hiding durability semantics behind vague 'successful write' behavior."
+
+No prior merge step or this work order lifts those retained exclusions. The encoding and
+durability items remain engineering-rigor principles: Step 4c explicitly versioned CMM2→CMM3,
+and Step 5 labels its `Durability::D1` choice "synthetic D1 fidelity only." See
+[EXP-0005 §§22–23](experiments/EXP-0005-protocol-facade.md#22-step-4c-frozen-method-and-local-implementation)
+and the [Step 5 test](../experiments/unified-commitment/crates/uc-facade/tests/remind_me_migration.rs).
+§5's success criteria remain unmet and are not claimed met. Sections 1–8 retain their content,
+research culture and evidence requirements; only the scoped exceptions listed above apply to
+the parallel initiative. No real consumer cutover, production graduation or full consolidation
+is claimed.

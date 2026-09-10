@@ -17,6 +17,64 @@ Before proposing or implementing work, read these files in order:
 
 Repository state on `main` is authoritative over chat history or unstaged ideas.
 
+## 1.1. The multimodal-merge initiative (2026-09-09)
+
+The owner-authorized [2026-09-08 merge plan](docs/plans/data-os-multimodal-merge-plan-2026-09-08.md)
+names this repository as the eventual home of a combined, general-purpose database intended to
+replace SQLite/PostgreSQL/DuckDB workloads. New database-engine development for that merge goal
+happens in `experiments/unified-commitment/`, not by adding capability to `rusty_multimodal_db`
+or starting a third competing implementation. This parallel initiative preserves the independent
+EXP-0001 exploratory-history research, its evidence and its gates; it does not graduate an engine
+architecture or authorize work beyond the named, bounded work orders.
+
+`rusty_multimodal_db` is the still-active source repository being ported. It is neither archived
+nor deprecated and remains the authoritative running system for its own consumers until a real
+migration actually lands. No consumer has migrated and no duplicate runtime path has been removed.
+This section clarifies development ownership; it does not claim the merge plan's full Step 6
+completion bar is met or set a timeline for retiring the source repository.
+
+The authoritative cross-step closure record is the `handoff/merge-2026-09-08` branch's
+`handoff-2026-09-08/BUILD-LOG.md`, pinned here at revision
+`fecd62c2aeeef0c203bc21a22c03b5422bb8045e`; that branch's `handoff-2026-09-08/` specs contain
+the full per-step work orders. This checkout's local handoff copy is incomplete, not the full
+closure log. Each step's own worktree/branch carries a local, partial advisory implementation
+report for its own build only, under `docs/experiments/EXP-0005/STEP<N>-IMPLEMENTATION-REPORT.md`.
+For example, `codex/merge-step5-migration-proof` at closing revision
+`7111bba8c162152f6162b09f1bb0f93d6be9fe6a` carries the
+[Step 5 report](docs/experiments/EXP-0005/STEP5-IMPLEMENTATION-REPORT.md), also present here.
+Those reports do not replace the branch-qualified cross-step closure record.
+
+Step 5 built and verified a synthetic proof of mechanism only.
+[EXP-0005 §23, "Step 5 synthetic migration proof"](docs/experiments/EXP-0005-protocol-facade.md#23-step-5-synthetic-migration-proof)
+states: "Tombstones remain live Put records for fidelity testing only, so this is not a safe
+production importer." The
+[migration test](experiments/unified-commitment/crates/uc-facade/tests/remind_me_migration.rs)
+keeps sidecar-only Entity/Relation graph metadata in transient memory, consumed and destroyed
+before checkpoint/backup and process exit; those fields have no recovery guarantee. It deliberately
+imports tombstoned/superseded rows as live records, reproducing the known resurrection hazard.
+None of the merge plan's Step 5 sub-steps has been performed against real data:
+
+1. No real source-write quiesce or preservation of a consistent copy of every source data file,
+   journal and mutation log has been performed (sub-step 1).
+2. No export/import of actual `rusty_remind_me` records has been performed; only synthetic fixtures
+   have been imported (sub-step 2).
+3. No comparison of every supported real field/relationship, record counts, sorted per-record
+   digests or the application's actual query results has been performed (sub-step 3). Before a
+   safe live import, soft-deleted/superseded rows need read-path filtering or real deletion,
+   rather than the proof's bare `Put`.
+4. No reopen, independent rebuild, backup or restore with repeated comparisons against real data
+   has been performed; these checks cover only synthetic fixtures (sub-step 4).
+5. No consumer has been pointed at the new engine or exercised its normal workflow and recovery
+   path there (sub-step 5).
+
+The real `rusty_remind_me` application's FTS5 search, ACT-R vitality scoring, wiki, vector search
+and multi-node sync still lack equivalent uc-* capabilities; a live cutover would require
+separately scoped parity work to avoid regressions. Opening the listener beyond loopback and
+real authentication remain open, as carried from Step 4c. Archiving the source repository or
+removing duplicate runtime paths remains gated on the merge plan's consumer-migration or
+explicitly maintained legacy-release conditions. This work order removes or deprecates nothing
+and changes no runtime, consumer configuration or prior research decision.
+
 ## 2. Research before architecture
 
 Do not promote an architectural idea because it sounds elegant or familiar.
