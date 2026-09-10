@@ -67,6 +67,14 @@ independent review is pending. No phase or production promotion follows.
 
 The historical status and authorization ledger below remain intact.
 
+Step 5's separately frozen order authorizes only a synthetic core-memory migration
+proof: 20 memories, 8 entities, 8 relations and 20 mentions over real loopback TCP,
+exact accepted checkpoints, file-copy restore and checkpoint-free replay. The
+[advisory report](experiments/EXP-0005/STEP5-IMPLEMENTATION-REPORT.md) records coverage,
+proof output and explicit deviations. Sidecar-only graph fields have import-time
+coverage only. No live data or consumer cutover; full migration readiness is not
+established. Phase 1 and independent-review requirements remain unchanged.
+
 ## 1. Current facts
 
 The repository contains the reviewed Slice A implementation: one experiment-local Rust workspace/package, authority-derived physical-record fixtures, deterministic record codec and bounded multi-record artifact scanner, executable V1–V10 dispositions, deterministic tests, and a least-privilege CI workflow. [R10](experiments/EXP-0001/R10-SLICE-A-CLOSURE-AND-SLICE-B-AUTHORIZATION.md) records that Slice A passed its continuation gate as implementation/correctness-validation evidence only. Experimental codec, D1 append/replay, exploratory harnesses and standalone EXP-0002 workspaces exist; no production engine baseline exists. R3 selects typed UUIDv4 live identities, signed 64-bit Unix-epoch-nanosecond canonical times (including durability time), OS-realtime clock classes for engine-assigned canonical times, and run-relative monotonic nanoseconds for lifecycle measurements. R4 records a 1 ns implementation-resolution observation for the relevant clocks while distinguishing resolution from accuracy. R5 selects B1 framing, CRC-32C, immutable final/commit records, and exact append/finalization mechanics as documentation design. R6 selects exact SQLite/RocksDB sources, build/API profiles, mappings, effective-setting obligations, and D-mode classifications as documentation design. R12 freezes experiment-local deterministic payload/identity/reference/logical-time generation and documentation vectors, and the external-dependency-free generator/manifest conformance implementation exists with reviewed workspace path dependencies. Confirmatory EXP-0001 generated workload and benchmark execution remain absent. Concrete normalized-request equality, final event encoding, exact target clock API selection and retained API-specific evidence, clock synchronization/accuracy evidence, concurrency model, checkpoint format, generalized transaction model, query language, and distributed design remain unselected; benchmark implementation and physical execution evidence for the selected designs remain absent.

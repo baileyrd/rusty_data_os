@@ -1,0 +1,60 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src\lib.rs (experiments\convergence-memory\target\debug\deps\cm_candidate-665999a0f9cda3bf.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\replay.rs (experiments\convergence-memory\target\debug\deps\replay-36fd400f3656fe9e.exe)
+
+running 2 tests
+test independent_columns_remove_deleted_incarnation_and_replace_all_fields ... ok
+test physical_replay_rejects_truncation_and_corrupt_magic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (experiments\convergence-memory\target\debug\deps\cm_harness-f5522abae7a3f95f.exe)
+
+running 2 tests
+test tests::series_metadata_and_summary_keep_candidate_identity_and_split_stages ... ok
+test tests::small_and_1k_match_oracle_and_both_reconstructions ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.77s
+
+     Running unittests src\main.rs (experiments\convergence-memory\target\debug\deps\cm_harness-f81cb5db13063fa0.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (experiments\convergence-memory\target\debug\deps\cm_trace-e1e5503f5a889792.exe)
+
+running 4 tests
+test run::tests::default_metadata_header_is_byte_identical_to_exp0002 ... ok
+test run::tests::load_captures_original_bytes_and_baseline_before_trials ... ok
+test run::tests::rss_probe_is_positive_bytes_or_explicitly_unavailable ... ok
+test run::tests::retained_binary_patch_reconstructs_every_manifest_hash_in_fresh_worktree ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.45s
+
+     Running tests\conformance.rs (experiments\convergence-memory\target\debug\deps\conformance-0c6624b3899eb565.exe)
+
+running 5 tests
+test small_hand_checked_semantics ... ok
+test malformed_and_noncanonical_inputs_fail_closed ... ok
+test golden_trace_results_and_independent_python_sha256 ... ok
+test streaming_observations_match_canonical_bytes_and_actual_record_counts ... ok
+test seeded_1k_roundtrip_shape_and_every_identity_repeated ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.43s
+
+     Running tests\retention.rs (experiments\convergence-memory\target\debug\deps\retention-f60dd142aeb7a3c0.exe)
+
+running 4 tests
+test forensic_flag_is_only_accepted_in_trailing_position ... ok
+test retains_every_operation_and_final_failure_without_overwriting ... ok
+test invalid_series_keeps_diagnostics_but_removes_stores ... ok
+test series_defaults_to_minimal_retention_with_forensic_opt_in ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.67s
+

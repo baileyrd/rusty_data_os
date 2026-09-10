@@ -1,0 +1,4 @@
+    Checking exp1-workload-conformance v0.0.0 (C:\dev\rusty_data_os-step5\experiments\exp-0001\crates\exp1-workload-conformance)
+    Checking exp1-record-format v0.0.0 (C:\dev\rusty_data_os-step5\experiments\exp-0001\crates\exp1-record-format)
+    Checking exp1-raw-append-replay v0.0.0 (C:\dev\rusty_data_os-step5\experiments\exp-0001\crates\exp1-raw-append-replay)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.25s

@@ -1,0 +1,1047 @@
+[
+  {
+    "id": "mem_0000000112344abc8def000000000001",
+    "content": "Synthetic memory 0 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-0"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 0,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:34:56.123456789+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": "mem_0000000212344abc8def000000000002",
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 0,
+    "accessed_at": "2026-09-09T12:34:56.123456789+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 0,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": "2026-09-09T13:00:00.987654321+00:00",
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000212344abc8def000000000002",
+    "content": "Synthetic memory 1 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-1"
+    ],
+    "source": "step5-fixture",
+    "metadata": null,
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 1,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": null,
+    "status": null,
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000312344abc8def000000000003",
+    "content": "Synthetic memory 2 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-2"
+    ],
+    "source": "step5-fixture",
+    "metadata": [
+      "array",
+      7,
+      null,
+      {
+        "nested": true
+      }
+    ],
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 2,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 2,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000412344abc8def000000000004",
+    "content": "Synthetic memory 3 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-3"
+    ],
+    "source": "step5-fixture",
+    "metadata": 42,
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 3,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "unclassified",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000512344abc8def000000000005",
+    "content": "Synthetic memory 4 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-4"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "original_metadata": [
+        1,
+        2
+      ],
+      "_remind_me_migration_extra": "original key is harmless"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 4,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 4,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000612344abc8def000000000006",
+    "content": "Synthetic memory 5 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-5"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 5,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 5,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000712344abc8def000000000007",
+    "content": "Synthetic memory 6 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-6"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 6,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 6,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 6,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000812344abc8def000000000008",
+    "content": "Synthetic memory 7 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-7"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 7,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 7,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000912344abc8def000000000009",
+    "content": "Synthetic memory 8 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-8"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 8,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 8,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 8,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000a12344abc8def00000000000a",
+    "content": "Synthetic memory 9 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-9"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 9,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 9,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000b12344abc8def00000000000b",
+    "content": "Synthetic memory 10 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-10"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 10,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 10,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 10,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000c12344abc8def00000000000c",
+    "content": "Synthetic memory 11 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-11"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 11,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 11,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000d12344abc8def00000000000d",
+    "content": "Synthetic memory 12 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-12"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 12,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 12,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 12,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000e12344abc8def00000000000e",
+    "content": "Synthetic memory 13 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-13"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 13,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 13,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000000f12344abc8def00000000000f",
+    "content": "Synthetic memory 14 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-14"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 14,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 14,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 14,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000001012344abc8def000000000010",
+    "content": "Synthetic memory 15 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-15"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 15,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 15,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000001112344abc8def000000000011",
+    "content": "Synthetic memory 16 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-16"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 16,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 16,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 16,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000001212344abc8def000000000012",
+    "content": "Synthetic memory 17 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-17"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 17,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 17,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000001312344abc8def000000000013",
+    "content": "Synthetic memory 18 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-18"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 18,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": "capture-01",
+    "subject": "Ada Lovelace",
+    "predicate": "works with",
+    "object": "Analytical Engine",
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 18,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": "doc-01",
+    "chunk_index": 18,
+    "remind_at": "2026-10-01T08:00:00+00:00",
+    "sensitive": true,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": "synthetic-node",
+    "client": "fixture",
+    "source_capture_id": "capture-source",
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "id": "mem_0000001412344abc8def000000000014",
+    "content": "Synthetic memory 19 — line one\nline two",
+    "category": "fact",
+    "tags": [
+      "synthetic",
+      "tag-19"
+    ],
+    "source": "step5-fixture",
+    "metadata": {
+      "flag": true,
+      "fixture": 19,
+      "note": "Unicode 二 and café"
+    },
+    "created_at": "2026-09-09T12:34:56.123+00:00",
+    "updated_at": "2026-09-09T12:34:56.123+00:00",
+    "capture_id": null,
+    "subject": null,
+    "predicate": null,
+    "object": null,
+    "superseded_by": null,
+    "decay_rate": 0.05,
+    "vitality": 0.875,
+    "base_weight": 1.25,
+    "access_count": 19,
+    "accessed_at": "2026-09-09T12:34:56.123+00:00",
+    "doc_id": null,
+    "chunk_index": null,
+    "remind_at": null,
+    "sensitive": false,
+    "memory_type": "fact",
+    "status": "active",
+    "node_id": null,
+    "client": null,
+    "source_capture_id": null,
+    "deleted_at": null,
+    "role": "assistant"
+  },
+  {
+    "record_type": "entity",
+    "id": "177f85df57ad",
+    "name": "Ada Lovelace",
+    "kind": "concept",
+    "aliases": [
+      "ADA LOVELACE",
+      "ada lovelace"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "9ae82d97eba6",
+    "name": "Analytical Engine",
+    "kind": null,
+    "aliases": [
+      "ANALYTICAL ENGINE",
+      "analytical engine"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "e71d025a0b49",
+    "name": "Grace Hopper",
+    "kind": "concept",
+    "aliases": [
+      "GRACE HOPPER",
+      "grace hopper"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "e996bb0ea465",
+    "name": "Compiler",
+    "kind": null,
+    "aliases": [
+      "COMPILER",
+      "compiler"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "521fe5c9ece1",
+    "name": "Rust",
+    "kind": "concept",
+    "aliases": [
+      "RUST",
+      "rust"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "c064fbca9d9d",
+    "name": "Memory",
+    "kind": null,
+    "aliases": [
+      "MEMORY",
+      "memory"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "bca3685fea8a",
+    "name": "Entity",
+    "kind": "concept",
+    "aliases": [
+      "ENTITY",
+      "entity"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity",
+    "id": "fc8fbb48a3a1",
+    "name": "Relation",
+    "kind": null,
+    "aliases": [
+      "RELATION",
+      "relation"
+    ],
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000112344abc8def000000000001",
+    "entity_id": "177f85df57ad",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000212344abc8def000000000002",
+    "entity_id": "9ae82d97eba6",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000312344abc8def000000000003",
+    "entity_id": "e71d025a0b49",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000412344abc8def000000000004",
+    "entity_id": "e996bb0ea465",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000512344abc8def000000000005",
+    "entity_id": "521fe5c9ece1",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000612344abc8def000000000006",
+    "entity_id": "c064fbca9d9d",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000712344abc8def000000000007",
+    "entity_id": "bca3685fea8a",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000812344abc8def000000000008",
+    "entity_id": "fc8fbb48a3a1",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000912344abc8def000000000009",
+    "entity_id": "177f85df57ad",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000a12344abc8def00000000000a",
+    "entity_id": "9ae82d97eba6",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000b12344abc8def00000000000b",
+    "entity_id": "e71d025a0b49",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000c12344abc8def00000000000c",
+    "entity_id": "e996bb0ea465",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000d12344abc8def00000000000d",
+    "entity_id": "521fe5c9ece1",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000e12344abc8def00000000000e",
+    "entity_id": "c064fbca9d9d",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000000f12344abc8def00000000000f",
+    "entity_id": "bca3685fea8a",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000001012344abc8def000000000010",
+    "entity_id": "fc8fbb48a3a1",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000001112344abc8def000000000011",
+    "entity_id": "177f85df57ad",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000001212344abc8def000000000012",
+    "entity_id": "9ae82d97eba6",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000001312344abc8def000000000013",
+    "entity_id": "e71d025a0b49",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "memory_entity",
+    "memory_id": "mem_0000001412344abc8def000000000014",
+    "entity_id": "e996bb0ea465",
+    "created_at": "2026-09-09T12:36:56.123456789+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "30aa7bbec2ad",
+    "subject_entity_id": "177f85df57ad",
+    "relation": "relates to",
+    "object_entity_id": "9ae82d97eba6",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "a0b9cf36b430",
+    "subject_entity_id": "9ae82d97eba6",
+    "relation": "relates to",
+    "object_entity_id": "e71d025a0b49",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "f953f0ec4021",
+    "subject_entity_id": "e71d025a0b49",
+    "relation": "relates to",
+    "object_entity_id": "e996bb0ea465",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "6c6da88b69ed",
+    "subject_entity_id": "e996bb0ea465",
+    "relation": "relates to",
+    "object_entity_id": "521fe5c9ece1",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "e977378764af",
+    "subject_entity_id": "521fe5c9ece1",
+    "relation": "relates to",
+    "object_entity_id": "c064fbca9d9d",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "493395b0af7c",
+    "subject_entity_id": "c064fbca9d9d",
+    "relation": "relates to",
+    "object_entity_id": "bca3685fea8a",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "0fe8894eb963",
+    "subject_entity_id": "bca3685fea8a",
+    "relation": "relates to",
+    "object_entity_id": "fc8fbb48a3a1",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  },
+  {
+    "record_type": "entity_relation",
+    "id": "5246d91a32f3",
+    "subject_entity_id": "fc8fbb48a3a1",
+    "relation": "relates to",
+    "object_entity_id": "177f85df57ad",
+    "created_at": "2026-09-09T12:34:56.123456789+00:00",
+    "updated_at": "2026-09-09T12:35:56.987654321+00:00"
+  }
+]

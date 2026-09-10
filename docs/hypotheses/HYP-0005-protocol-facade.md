@@ -27,3 +27,11 @@ incarnations and resolve raw-id collisions by local membership. Channel-controll
 locking must exclude Delete/reinsert through the row fetch. This supersedes the earlier
 Memory-specific wildcard and no-foreign-edge scope only. Atomic cross-log cleanup,
 production, performance and stronger durability remain unestablished; status stays Open.
+
+Step 5 adds the separately frozen synthetic migration fidelity method in
+[EXP-0005 §23](../experiments/EXP-0005-protocol-facade.md#23-step-5-synthetic-migration-proof).
+Exact Memory reconstruction, projected graph fields, foreign edges, accepted
+checkpoints and independent replay must agree. Sidecar-only graph data proves only
+import-time reading. The [advisory report](../experiments/EXP-0005/STEP5-IMPLEMENTATION-REPORT.md)
+discloses scope and deviations; no live consumer migration, capability parity or
+production-readiness claim follows. Status remains Open, independent review pending.

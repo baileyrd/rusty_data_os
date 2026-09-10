@@ -225,3 +225,31 @@ D1-D14 mechanism line-by-line against the new tests; its only limitations were e
 host's independent proof run closed (test execution, the external `rusty_multimodal_db`
 citations already re-verified during plan review). Clean close within budget: build round 0,
 inspection round 1 of 2 available, no fix round needed.
+
+## Step 5 local implementation, 2026-09-09
+
+Frozen work order SHA-256 `4edd5ecdbdcc3fedd113b418d93bf3aeac40fdc8bf24bc745b76a220d94baa49`,
+approved after 3 plan-review rounds (8 findings, 2 high + 6 medium, all resolved by grounding in
+real `remind_me_core` source rather than assumption — full detail in `handoff/merge-2026-09-08`'s
+copy of this file). Purely additive: one `uc-facade` integration test
+(`tests/remind_me_migration.rs`) and one JSON fixture (`tests/fixtures/remind-me/export.json`)
+modeling `remind_me_core`'s real flat mixed export envelope. No change to any production crate.
+
+A synthetic, non-destructive core-memory migration proof only — never real `rusty_remind_me` data,
+never a live cutover. 20 memories, 8 entities, 8 relations, 20 mentions round-trip through real
+loopback TCP insert → checkpoint/reopen (exact accepted-checkpoint assertions) →
+file-backup/restore-reopen → checkpoint-free independent rebuild, with all 56 sorted per-record
+digests matching source and rebuilt state exactly.
+
+Host proof (`proof-S5-1..11.log` + `proof-S5-fix1-1..3.log`, this worktree): all eleven commands
+independently re-run and exit 0, matching Codex's reported counts exactly — 124 unified-commitment
+(119 prior + 5 new), 17 convergence-memory, 95 portable exp-0001 (236 total); all 56 digests
+independently confirmed. Host source review traced the id-mapping (`mapped_id`/`original_id`/
+`entity_identity`), the two-key envelope (`memory_fields`/`reconstruct_memory`), and the
+`check_report` checkpoint-acceptance assertions directly against the approved spec's D2-D6 and
+found them faithful. Inspection 1 (fresh Claude CLI): **APPROVED, one low finding** — the
+fixture's `entity_relation`/`memory_entity` block order didn't match `export.rs`'s real emission
+order (no functional effect, since the test classifies records independently by `record_type`).
+Fixed directly by the host (pure JSON reorder); full `uc-facade` suite and a targeted
+fmt/clippy/diff-check recheck confirm no regression. Clean close within budget: fix round 1 of 2
+used, inspection round 1 of 2 used.

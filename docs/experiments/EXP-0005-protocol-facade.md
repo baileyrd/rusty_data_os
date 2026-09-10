@@ -163,3 +163,19 @@ The Step 4c eleven-check proof passed: 119 unified-commitment, 17 convergence-me
 95 portable EXP-0001 tests; formatting, warnings-denied Clippy, links and whitespace
 all succeeded. The exact agreed workspace test records exit 0. This is local bounded
 correctness evidence only, pending independent review.
+
+## 23. Step 5 synthetic migration proof
+
+The separately frozen work order, SHA-256
+`4edd5ecdbdcc3fedd113b418d93bf3aeac40fdc8bf24bc745b76a220d94baa49`, predeclares
+the synthetic mixed-export import, exact field/edge comparisons over TCP, accepted
+checkpoint/reopen, file backup/restore and checkpoint-free independent replay method.
+Counts and sorted SHA-256 original-field tuples must agree; any rejected checkpoint,
+lost field/edge or change to original files fails. No live export or consumer cutover.
+
+The [Step 5 advisory report](EXP-0005/STEP5-IMPLEMENTATION-REPORT.md) records the
+additive uc-facade test/fixture, proof and deviations. Memory reconstruction includes
+all 28 explicitly named fields. Graph sidecar-only fields prove import-time reading
+only; no backup/replay claim applies to them. Tombstones remain live Put records for
+fidelity testing only, so this is not a safe production importer. Hypothesis Open,
+experiment Ready; independent review remains required and no architecture graduates.
