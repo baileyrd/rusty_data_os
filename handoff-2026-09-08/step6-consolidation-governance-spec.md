@@ -91,34 +91,48 @@ per-experiment notes.
   build a general-purpose database intended to replace SQLite/PostgreSQL/DuckDB workloads, using
   this repository as "the eventual home of the combined engine" (the plan's own words); it proceeds
   under `experiments/unified-commitment/` in parallel with, not instead of, the EXP-0001
-  exploratory-history research this document otherwise describes. **Only the following §7 items are
-  superseded, each by a named, already-authorized exception, and only to the stated extent:**
-  "full SQL compatibility" and "replacing every existing database workload" (the plan's own stated
-  end goal, not yet achieved — Steps 1-5 have ported three domains' basic operations, nothing
-  resembling full coverage); "cloud service deployment," "generalized plugin marketplaces,"
-  "distributed consensus," "multi-node replication" (still genuinely not goals of the merge
-  initiative either — nothing in Steps 1-5 touches any of these; listed only because a future
-  reader should not assume otherwise from the "replace SQLite/PostgreSQL/DuckDB" framing alone).
-  §6's "server adapter" step is superseded specifically and only to the extent
-  `docs/RESEARCH-ROADMAP.md`'s Phase 7 note already authorizes (protocol-22 wire compatibility for
-  the ported domains) — cites that note directly, does not restate or broaden it here. **Explicitly
-  NOT superseded, restated as still fully in force for the merge initiative too:** §7's "committing
-  to a permanent event encoding before measurement" and "hiding durability semantics behind vague
-  'successful write' behavior" — these are engineering-rigor principles, not narrow EXP-0001 scope
-  boundaries, and the merge initiative has in fact already followed them throughout (the CMM2→CMM3
-  magic-byte version bump rather than silent format extension, Step 4c's BUILD-LOG; Step 5's test
-  code explicitly labeling its `Durability::D1` choice "synthetic D1 fidelity only," never
-  implying a stronger guarantee). §5's success criteria are unmet and not claimed met. No change to
-  §§1-6, 8's content.
+  exploratory-history research this document otherwise describes. **Two clearly separated lists —
+  review round 2 (S6-R2-001) found the round-1 wording put items in the "superseded" list with a
+  caveat explaining they weren't really superseded, which a literal implementation could read as
+  authorization to drop those exclusions:**
+
+  **Superseded, each by a named, already-authorized exception, only to the stated extent:** "full
+  SQL compatibility" and "replacing every existing database workload" — the plan's own stated end
+  goal, not yet achieved (Steps 1-5 have ported three domains' basic operations, nothing resembling
+  full coverage, so this changes the *direction*, not a completion claim). §6's "server adapter"
+  step is superseded specifically and only to the extent `docs/RESEARCH-ROADMAP.md`'s Phase 7 note
+  already authorizes (protocol-22 wire compatibility for the ported domains) — cites that note
+  directly, does not restate or broaden it here.
+
+  **Explicitly retained, unchanged, still fully in force for the merge initiative — not superseded
+  by anything in this work order or any prior step:** "cloud service deployment," "generalized
+  plugin marketplaces," "distributed consensus," "multi-node replication" (nothing in Steps 1-5
+  touches any of these — restated here only so a reader doesn't wrongly infer otherwise from the
+  "replace SQLite/PostgreSQL/DuckDB" framing above); "committing to a permanent event encoding
+  before measurement" and "hiding durability semantics behind vague 'successful write' behavior" —
+  these are engineering-rigor principles, not narrow EXP-0001 scope boundaries, and the merge
+  initiative has in fact already followed them throughout (the CMM2→CMM3 magic-byte version bump
+  rather than silent format extension, Step 4c's BUILD-LOG; Step 5's test code explicitly labeling
+  its `Durability::D1` choice "synthetic D1 fidelity only," never implying a stronger guarantee).
+
+  §5's success criteria are unmet and not claimed met. No change to §§1-6, 8's content.
 - **D3 (revised, review round 1 S6-002) — `AGENTS.md` gets a new numbered section (after the
   existing authority-order list) naming `experiments/unified-commitment/` as the merge initiative's
   home and `rusty_multimodal_db` as the active source repository it ports from, with
   revision-pinned pointers to the *actual* authoritative evidence, not a bare directory name.**
   States plainly: `rusty_multimodal_db` is not archived and not deprecated — it remains the
   authoritative running system for its own consumers until a real migration (not a proof) actually
-  lands per merge-plan Step 5's remaining, undone final sub-step; new development *for the merge's
-  goal specifically* happens in `experiments/unified-commitment/`, not by adding capability to
-  `rusty_multimodal_db` or by starting a third, competing implementation. **Round 1 found that this
+  lands. **Round 2 (S6-R2-002) found the round-1 wording — "Step 5's remaining, undone final
+  sub-step" — implied sub-steps 1-4 were essentially complete and only the cutover (sub-step 5)
+  remained; this overstates Step 5's actual result.** Step 5 built and verified a *synthetic proof
+  of mechanism* only — the merge plan's own sub-steps 1-4 (quiesce real source writes and preserve
+  a consistent copy; export/import *real* records; compare *every* supported field/relationship,
+  record counts and the application's actual query results; reopen, independently rebuild, and
+  restore a backup, repeated on real data) remain entirely undone against real data, not merely
+  "step 5" of five. Fixed: D5 below lists the full, specific remainder, not a single vague
+  "sub-step 5" pointer. New development *for the merge's goal specifically* happens in
+  `experiments/unified-commitment/`, not by adding capability to `rusty_multimodal_db` or by
+  starting a third, competing implementation. **Round 1 found that this
   worktree's own local `handoff-2026-09-08/` copy is incomplete** (branched at Step 5's close, it
   carries only early specs and this worktree's own append-only "local implementation" notes, not
   the accumulating history every subsequent step adds only to the separate `handoff/merge-2026-09-08`
@@ -139,12 +153,32 @@ per-experiment notes.
   a different branch, not implied to be in the current checkout) for the full per-step work orders
   — rather than re-describing crate boundaries already documented there (avoiding two descriptions
   of the same system drifting apart).
-- **D5 — an explicit "not yet done, and why" list, in `AGENTS.md`'s new section.** Names, plainly:
-  no real consumer has migrated (Step 5 built and verified the mechanism only); `rusty_multimodal_db`
-  is not archived and has no migrated consumer; no duplicate runtime path has been removed; opening
-  the listener beyond loopback and real authentication remain open (carried from Step 4c's own
-  handoff). This is what actually satisfies Step 6's "no ambiguity" clause honestly — ambiguity is
-  removed by stating the true state precisely, not by overclaiming completion.
+- **D5 (revised, review round 2 S6-R2-002) — an explicit, itemized "not yet done, and why" list in
+  `AGENTS.md`'s new section, naming every real migration sub-step still outstanding, not a single
+  vague pointer.** Names, plainly, that **none** of the merge plan's Step 5 sub-steps have been
+  performed against real data — `docs/experiments/EXP-0005-protocol-facade.md` §23 ("Step 5
+  synthetic migration proof") states plainly this is "fidelity testing only, so this is not a safe
+  production importer"; its test code stores Entity/Relation graph
+  metadata only in a transient in-memory sidecar, destroyed before the process exits
+  (`remind_me_migration.rs`), and deliberately imports tombstoned/superseded rows as live records
+  (documented there as reproducing, not fixing, a known resurrection hazard):
+  1. No real source quiesce or consistent-copy preservation has been performed (sub-step 1).
+  2. No real export/import of actual `rusty_remind_me` records has been performed — only synthetic
+     fixtures (sub-step 2).
+  3. No comparison against real field/relationship data, record counts, or the application's own
+     actual query results has been performed (sub-step 3) — and the current mapping's handling of
+     soft-deleted/superseded rows would need to change before it could safely run against real data
+     at all (a live importer needs read-path filtering or a real delete, not the proof's bare
+     `Put`, per Step 5's own disclosed non-goal).
+  4. No real reopen/independent-rebuild/backup/restore against real data has been performed
+     (sub-step 4) — only against synthetic fixtures.
+  5. No consumer has been pointed at the new engine (sub-step 5).
+
+  Also: `rusty_multimodal_db` is not archived and has no migrated consumer; no duplicate runtime
+  path has been removed; opening the listener beyond loopback and real authentication remain open
+  (carried from Step 4c's own handoff). This itemized list is what actually satisfies Step 6's "no
+  ambiguity" clause honestly — ambiguity is removed by stating the true state precisely, not by
+  overclaiming completion or compressing five distinct undone things into one vague reference.
 
 ## Required changes
 
@@ -180,7 +214,11 @@ accurately cite the real file paths/section names referenced (`data-os-multimoda
 present in this checkout), (3) cite the cross-step closure log as "the `handoff/merge-2026-09-08`
 branch's `handoff-2026-09-08/BUILD-LOG.md`," explicitly naming the branch rather than a bare path
 that would resolve, misleadingly, to this checkout's own incomplete local copy (D3/D4, review round
-1 S6-002), and (4) not overstate the merge initiative's current state beyond what Steps 1-5's
-actual closing commits established (no "migration complete," no "consumer cutover," no claim
-`rusty_multimodal_db` is being phased out on any timeline, and no §7 non-goal marked superseded
-beyond the specific, named items D2 lists).
+1 S6-002), (4) not overstate the merge initiative's current state beyond what Steps 1-5's actual
+closing commits established (no "migration complete," no "consumer cutover," no claim
+`rusty_multimodal_db` is being phased out on any timeline), (5) present D2's superseded and
+retained §7 items as two visibly separate lists with no item appearing in both, and no retained
+item's exclusion described as lifted (review round 2 S6-R2-001), and (6) present D5's five-item
+undone-migration-work list individually, not compressed into a single "sub-step 5" or "cutover"
+pointer, and cite `docs/experiments/EXP-0005-protocol-facade.md` §23's "not a safe production
+importer" language accurately (review round 2 S6-R2-002).
