@@ -640,3 +640,41 @@ its exact source location.
 Build launching against the approved spec (plan sha256 `af142bbf…4a36891794`,
 `runs/step4c-review5/claudex-6837z2qf/result.json` as `--approval`). Budgets: MAX_FIX_ROUNDS=2,
 MAX_INSPECTION_ROUNDS=2, matching every prior Step 4 increment.
+
+## Step 4c build, inspection and close (2026-09-09)
+
+- Build (`runs/step4c-build/claudex-do4hemkf/`, exit 0): Codex-reported 231 tests passing (119
+  unified-commitment, 17 convergence-memory, 95 exp-0001 harness-excluded), all eleven proof
+  commands exit 0. 34 files: new `experiments/unified-commitment/crates/uc-memory/tests/foreign.rs`;
+  `uc-memory/src/lib.rs` (CMM3/CMS3, `LinkForeign`/`DetachForeign`, extended `Delete` cascade);
+  `uc-facade/src/memory.rs` (constructor, `describe_relations`, `link_records`,
+  `neighbors`/`neighbors_by_relation`/`count_edges`, `detach_record`) and `src/entity.rs`
+  (`Store::incarnation` override); `uc-protocol/src/store.rs` (the trait method) and
+  `src/connection.rs` (the `Request::Join` lock-arm addition); a new deterministic two-connection
+  interleaving test proving the lock — not timing — prevents the Join/Delete race; disclosed
+  deviation: rustfmt wraps the now-four-arm lock-list match, a formatting-only change.
+- Host review (source read directly): `store.rs`/`connection.rs`/`entity.rs` match D8/D13 exactly
+  (four-line override, one match arm). `memory.rs`'s `link_records` precedence — local existence →
+  self-loop → Entity incarnation resolution → full-tuple `AlreadyLinked` — matches the
+  round-4/5-corrected D11/D10 exactly. `neighbors_by_relation`/`count_edges` apply both the D5
+  live-membership direction rule and D9's freshness filter, reading `foreign_edges` only (D14).
+- Host proof (`proof-S4C-1..11.log`, snapshot after Codex's build): independently re-run, all
+  eleven commands exit 0, 231 tests (119+17+95) — matches Codex's reported count exactly.
+- Inspection 1 (fresh Claude CLI, session `7c3cdf22-66d4-4892-a72a-9efc03009e4b`): **APPROVED**,
+  zero findings. Traced every D1-D14 mechanism line-by-line against the new tests; confirmed no
+  deadlock in the Memory-mutex → Entity-mutex → relationship-lock ordering; its only limitations
+  (couldn't execute tests, couldn't independently check the external `rusty_multimodal_db`
+  citations) are exactly what the host's own proof run and round-3/4 citation correction already
+  closed. Clean close within budget: build round 0, fix rounds 0/2 used, inspection 1/2 used.
+
+## Step 4c closed (host commit)
+
+Committed on `codex/merge-step4c-foreign-edges` (worktree `C:/dev/rusty_data_os-step4c`, pushed —
+commit `cb754c1`): the `uc-memory` foreign-edge mechanism (`LinkForeign`/`DetachForeign`,
+CMM3/CMS3), `uc-facade::MemoryStore`'s full rewiring to it, the two disclosed `uc-protocol`
+exceptions (`Store::incarnation` D8, the `Request::Join` lock-scope extension D13), the new
+deterministic interleaving test, and all host proof/inspection evidence.
+
+Residuals: none disclosed as open — inspection round 1/2 closed clean, no findings to carry.
+Not started: opening the listener beyond loopback; real authentication (both named alongside 4c
+as options when the owner was last asked which gap to tackle next, still open).
