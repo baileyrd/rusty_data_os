@@ -826,3 +826,49 @@ Final design, approved: `step6-consolidation-governance-spec.md`, current. Three
 four findings (all medium), every one a precision/overclaim issue in the *governance prose itself*,
 not a reason to expand scope — consistent with every prior step's pattern once real investigation
 grounds the draft. Build launching against the approved spec.
+
+## Step 6 build, inspection and close (2026-09-09)
+
+- Build (`step6-build/claudex-4l80q9st`, exit 0): 115 lines added across `AGENTS.md` (§1.1),
+  `docs/VISION.md` (§9), `docs/ARCHITECTURE.md` (§9), zero deletions, no deviations reported.
+  Cites the cross-step closure log as `handoff/merge-2026-09-08`'s `handoff-2026-09-08/BUILD-LOG.md`
+  pinned by commit hash, as inline code rather than a markdown link — avoiding a
+  validator-invisible resolution to this checkout's own incomplete local copy.
+- Host review (source read directly): `VISION.md`'s superseded/retained lists partition §7's nine
+  original non-goals exactly (2 + 7, no overlap, no omission); `AGENTS.md`'s five-item undone list
+  matches the merge plan's literal Step 5 sub-steps; the EXP-0005 §23 quote ("not a safe production
+  importer") is verbatim; every cited path/anchor resolves.
+- Host proof: `python tools/validate_markdown_links.py` and `git diff --check` both independently
+  re-run, exit 0.
+- Inspection 1 (fresh Claude CLI): **APPROVED, zero findings.** Independently confirmed the same
+  partition-exactness, citation accuracy, and the deliberate code-span (not markdown-link) choice
+  for the branch-qualified citations. Its only limitations were the two things unverifiable from
+  a single-repo checkout (the out-of-branch commit pin, the sibling worktree's branch name) — both
+  independently confirmed by the host (`git log -1 handoff/merge-2026-09-08` matches the pinned
+  hash exactly). Clean close within budget: no fix round needed, inspection round 1 of 2 used.
+
+## Step 6 closed (host commit)
+
+Committed on `codex/merge-step6-governance` (worktree `C:/dev/rusty_data_os-step6`, pushed —
+commit `0036f60`): the three governance-doc additions and the local BUILD-LOG note.
+
+Residuals: none — clean approval both rounds, no findings to carry. **Explicitly not done, by
+design (see the work order's own "Host decision"):** no real consumer migration; `rusty_multimodal_db`
+not archived, no duplicate runtime path removed; Step 6's own "active consumers on one engine" and
+"compatibility obligations covered" clauses remain unmet, honestly disclosed as such in the new
+`AGENTS.md` section rather than overclaimed. Opening the listener beyond loopback and real
+authentication remain open (carried from Step 4c).
+
+## Overall state after Steps 1-6 (2026-09-09)
+
+All six merge-plan steps have now been touched. Steps 1-4c are fully done. Step 5 built and
+verified the real migration *mechanism* (export/import/compare/reopen/backup-restore) against
+synthetic fixtures, explicitly not a live cutover. Step 6 honestly closed the one sub-goal that
+was actually achievable without a real migration (governance clarity on runtime ownership) and
+explicitly, precisely documented what remains open rather than overclaiming. The two items genuinely
+blocking a *complete, literal* reading of "the merge and migration" — a real `rusty_remind_me`
+consumer cutover, and Step 6's consumer-dependent "done when" clauses — are not close-able without
+either (a) a real capability regression to the owner's live, daily-used personal memory system, or
+(b) a large, separately-scoped feature-parity effort (FTS5 search, ACT-R vitality, wiki, vectors,
+multi-node sync) that no prior work order has ever authorized. Every step's own "Host decision"
+section documents this reasoning at the point it was made; this entry is the final rollup.
