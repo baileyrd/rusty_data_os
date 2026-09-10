@@ -103,19 +103,76 @@ Entity id can never satisfy `state.current(to, ..)` here. This is the exact stru
 
 ### Legacy's own crash-window tolerance — the bar this design must match, not exceed
 
-`rusty_multimodal_db/src/server/serve.rs:3040-3050`, `delete_across`'s doc comment, verbatim:
+**Re-verified 2026-09-09 against the current `rusty_multimodal_db` `main` (`478eeda`); the
+originally-cited line range had drifted (this repo gained ~400 commits since the citation was
+first written) and the doc comment's wording has since been condensed. Corrected below, with the
+underlying generic-store implementation also traced directly (not just the doc comment) so this
+work order's fidelity claim doesn't depend on a citation the reviewer cannot independently see.**
 
-> the table's own `delete_record` (which drops the record's edges within that table), then, only
-> on `Ok`, every *other* table's `detach_record` for each of its relations whose `target_table` is
-> this one... An adapter answering `Unsupported`/`Malformed` for the detach has nothing to drop
-> and is skipped; a `Storage` failure there is reported in the delete's place, the record itself
-> already gone (the one partial state, named in the design). **A crash between the two steps
-> leaves edges to a record no table holds: Join skips missing rows (`evaluate_join`'s `get` miss),
-> but adjacency and CountEdges can still report those edges until they are detached.**
+`rusty_multimodal_db/src/server/serve.rs:2920-2930`, `delete_across`'s doc comment
+(`DEL-FR-007`/ADR-0051), verbatim, current text:
 
-Legacy does not promise atomic cross-table cleanup. A design that tolerates the identical
+> `DEL-FR-007` (ADR-0051): [`Request::Delete`] on a `serve_tables` server — the table's own
+> `delete_record` (which drops the record's edges within that table), then, only on `Ok`, every
+> *other* table's `detach_record` for each of its relations whose `target_table` is this one: the
+> consumer's `DELETE FROM memory_entities WHERE entity_id = ?`. An adapter answering
+> `Unsupported`/`Malformed` for the detach has nothing to drop and is skipped; a `Storage` failure
+> there is reported in the delete's place, the record itself already gone (the one partial state,
+> named in the design). A crash between the two steps leaves edges to a record no table holds,
+> which every read already skips (`evaluate_join`'s `get` miss).
+
+The condensed "every read already skips" reads more sweepingly than the actual implementation:
+`generic/store.rs`'s `MultiSymmetric::neighbors_by_relation`/`all_neighbors`/`count_edges` (the
+functions `server/memory.rs`'s adjacency methods delegate to) read the local `adjacency: HashMap`
+directly with no live existence check against the far table at all — only `evaluate_join`'s `get`
+re-fetches the far row and can miss. So the doc comment's own citation (`evaluate_join`'s `get`
+miss) is the actual mechanism; "every read" is loose paraphrase, not a broader guarantee that
+adjacency/`CountEdges` also re-verify. Legacy does not promise atomic cross-table cleanup, and does
+not verify a dangling edge's far side outside `Join`. A design that tolerates the identical
 crash-window dangling edge (never silently resurrecting it as something else, always cleanly
-detachable once the detach transaction lands) is faithful, not a lesser approximation.
+detachable once the detach transaction lands) is faithful, not a lesser approximation — and D9's
+uniform freshness check (applied to `neighbors`/`count_edges` *and* `Join` alike, not just `Join`)
+is a disclosed, deliberate improvement on legacy's own narrower guarantee, not a requirement
+legacy already met.
+
+### Legacy's registry-first existence check and self-loop ordering (grounds D11/Proof item 1)
+
+`rusty_multimodal_db/src/server/serve.rs:2958-2963`, `link_across`'s doc comment (`TBL-FR-007`/
+ADR-0050), verbatim:
+
+> `TBL-FR-007` (ADR-0050): [`Request::Link`] under a relation whose descriptor names a
+> `target_table` — the far endpoint must exist in *that* table (`RecordNotFound` otherwise;
+> `Unsupported` when the server registered no such table), which the left adapter cannot check
+> itself. A relation with no `target_table` goes straight to `dispatch`, exactly as before this
+> round.
+
+`rusty_multimodal_db/src/generic/store.rs:1341-1354`, `MultiSymmetric::link`, verbatim (the
+function `server/memory.rs`'s `link_records` delegates to for `"mentions"`):
+
+```rust
+if !valid_relation_label(relation) {
+    return Err(LinkError::InvalidLabel(relation.to_string()));
+}
+if self.inner.get(a).is_none() {
+    return Err(LinkError::UnknownRecord(a));
+}
+// `TBL-FR-007`: a foreign label's far end is another table's
+// record — not this store's to check.
+if !self.is_foreign(relation) && self.inner.get(b).is_none() {
+    return Err(LinkError::UnknownRecord(b));
+}
+if a == b {
+    return Err(LinkError::SelfLoop(a));
+}
+```
+
+This confirms the exact precedence Proof item 1 now specifies: the server-level `link_across`
+check (registry-equivalent) validates the far endpoint (`right`) *before* the adapter's own
+`link`/`link_records` ever runs; only once that passes does the local existence check on `a`
+(`left`) run, and only after *that* does the self-loop check (`a == b`) fire. `server/memory.rs`'s
+`link_records` (lines 685-704) maps `LinkError::SelfLoop(_) | LinkError::InvalidLabel(_)` to
+`Malformed` and `LinkError::UnknownRecord(_)` to `RecordNotFound` — exactly the three-outcome
+precedence Proof item 1 requires this work order to reproduce.
 
 ### `uc-facade::MemoryStore`'s current relation methods (Step 4b-ii, unchanged since)
 
@@ -269,10 +326,13 @@ what turns this machinery on for real.
   Memory-side id, `to` is always the raw Entity bytes) and checking the swap risks a false
   `AlreadyLinked` against an unrelated, never-committed pair under colliding raw bytes.
 - **D11 (new, review round 1 P4C-004, mechanical) — `link_records` rejects a self-loop
-  (`left.0 == right.0`) for `"mentions"` with `Malformed`, checked before any other work.** Matches
-  legacy's own explicit rejection of a self-loop even across a foreign relation
-  (`generic/store.rs:1353`, `server/memory.rs:780` → `Malformed`), which review round 1 found the
-  original spec never specified.
+  (`left.0 == right.0`) for `"mentions"` with `Malformed`, but (Proof item 1, revised round 2
+  P4C-R2-004) only once the registry's own existence check on the far endpoint and the local
+  existence check on `left` have already passed — matching legacy's own precedence exactly (see
+  "Legacy's registry-first existence check and self-loop ordering" above; corrected citations
+  `generic/store.rs:1341-1354`, `server/memory.rs:685-704`; the original round-1 line citations
+  `generic/store.rs:1353`/`server/memory.rs:780` had drifted after the reference repo's own commits
+  advanced — verified and corrected 2026-09-09, substance unchanged).**
 - **D12 (new, review round 1 P4C-005, mechanical) — `MemoryStore::describe_relations()` is
   overridden again, listing only the named `"mentions"` descriptor
   (`target_table: Some("entity")`), explicitly omitting the generic `Neighbors(None)` wildcard the
@@ -281,11 +341,30 @@ what turns this machinery on for real.
   supplies the wildcard) was correct for Entity — Entity has no foreign relation and legitimately
   wants the generic wildcard neighbor descriptor — but is wrong for Memory once `"mentions"` is a
   real foreign relation: legacy's actual Memory descriptor omits the wildcard entirely
-  (`server/memory.rs:747`), because a bare/unlabeled `Join` against Memory must not silently route
-  through the generic same-table `Neighbors(None)` evaluation path once a real foreign relation
-  exists. This explicitly supersedes 4b-ii's F1 correction for Memory specifically; Entity's own
-  wildcard, and 4b-ii's regression test for Entity, are untouched. The existing wildcard regression
-  test's Memory-side assertion must be updated to expect the wildcard's absence again.
+  (`server/memory.rs:669-683`, `TBL-FR-008`, corrected citation — verified 2026-09-09, the original
+  round-1 citation `server/memory.rs:747` had drifted), verbatim:
+  ```rust
+  /// `TBL-FR-008`: the one relation, `mentions`, with its rows in the
+  /// `entity` table — so a same-table `Join` over it is `Unsupported`
+  /// and a cross-table one needs `right_table: Some("entity")`. The
+  /// unfiltered `neighbors` is deliberately *not* listed: its far side
+  /// is never this table's rows.
+  fn describe_relations(&self) -> Vec<RelationDescriptor> {
+      MEMORY_RELATION_LABELS
+          .iter()
+          .map(|label| RelationDescriptor {
+              name: label.to_string(),
+              kind: JoinRelation::Neighbors(Some(label.to_string())),
+              target_table: Some(MEMORY_FOREIGN_TABLE.to_string()),
+          })
+          .collect()
+  }
+  ```
+  because a bare/unlabeled `Join` against Memory must not silently route through the generic
+  same-table `Neighbors(None)` evaluation path once a real foreign relation exists. This explicitly
+  supersedes 4b-ii's F1 correction for Memory specifically; Entity's own wildcard, and 4b-ii's
+  regression test for Entity, are untouched. The existing wildcard regression test's Memory-side
+  assertion must be updated to expect the wildcard's absence again.
 - **D13 (new, review round 2 P4C-R2-001, one-line protocol exception) —
   `Connection::request`'s relationship-lock acquisition (`connection.rs:231-241`) also covers
   `Request::Join(_)`, not only `Link`/`Delete`/`WriteBatch`.** Round 2 found a live TOCTOU race:
