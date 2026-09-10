@@ -62,3 +62,15 @@ Malformed; Avg casts before division and keeps the empty 0.0 identity. This clos
 correctness evidence; this ADR remains Proposed and authorizes no production graduation.
 Authentication/authorization, actual legacy-client integration, cross-domain atomic
 commitment and performance evidence remain outside this increment.
+
+## Step 4c bounded extension (independent review pending)
+
+The owner-frozen Step 4c order identified in [EXP-0005 §22](../experiments/EXP-0005-protocol-facade.md#22-step-4c-frozen-method-and-local-implementation)
+supersedes the Memory-only descriptor/same-table dispositions above. CMM3/CMS3 stores
+foreign edges with far incarnations, without replay contacting Entity. The live facade
+checks Entity incarnations via an injected Store handle, prioritizes live Memory membership
+for collision direction, and exposes only named mentions targeting entity. The registry
+relationship lock now also spans Join. This serializes Joins with relationship writes;
+it does not make the two logs atomic. Stale tuples can survive the delete/detach crash
+window but cannot resolve to a new incarnation. The advisory report records local proof;
+this ADR remains Proposed and grants no production promotion.

@@ -1,0 +1,5 @@
+COMMAND: python tools/validate_markdown_links.py
+All repository-relative Markdown links resolve.
+EXIT: 0
+COMMAND: git diff --check
+EXIT: 0

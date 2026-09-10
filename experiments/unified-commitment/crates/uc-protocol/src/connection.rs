@@ -230,7 +230,10 @@ impl Connection<'_> {
         // the guard outlives checks, apply and every detach, but not response I/O.
         let _relationship = if matches!(
             req,
-            Request::Link { .. } | Request::Delete { .. } | Request::WriteBatch { .. }
+            Request::Link { .. }
+                | Request::Delete { .. }
+                | Request::WriteBatch { .. }
+                | Request::Join(_)
         ) {
             self.registry
                 .relationship_lock

@@ -201,3 +201,27 @@ F1 corrective eleven-command proof exited 0: 111 unified-commitment, 17 converge
 and 95 portable exp-0001 tests (223 total), formatting, warnings-denied locked/offline
 Clippy, Markdown links and git diff --check passed. All thirteen facade tests are included.
 Only result documentation changed afterward; final links/whitespace were rechecked.
+
+## Step 4c local implementation, 2026-09-09
+
+The verified frozen work order SHA-256 is
+`af142bbfa0f53071e3f187b356a9807e2a68c0dc330b5f2e1cd8f84a36891794`.
+All edits resolve inside this checkout. It authorizes real, single-log-replayable Memory
+foreign edges and live incarnation checks, plus Store::incarnation, EntityStore's override
+and the Join relationship-lock match arm. Frozen engine exclusions remain intact.
+The [advisory report](../docs/experiments/EXP-0005/STEP4C-IMPLEMENTATION-REPORT.md) maps all
+fourteen proof items, records command output and environment denials, and proposes the
+rustfmt-only expansion of the lock list as a literal line-count deviation from R1b.
+
+Host proof (`proof-S4C-1..11.log`, this worktree): all eleven commands independently re-run and
+exit 0, matching Codex's reported counts exactly — 119 unified-commitment, 17 convergence-memory,
+95 portable exp-0001 (231 total), fmt/clippy clean, links resolve, no diff-check whitespace
+issues. Host source review confirmed the two `uc-protocol` exceptions (`Store::incarnation`,
+D8; the `Request::Join` lock-scope match arm, D13) and `MemoryStore::link_records`'s precedence
+(local existence → self-loop → Entity incarnation lookup → full-tuple `AlreadyLinked`) match the
+approved spec exactly, including the round-4/5 precedence correction. Inspection 1 (fresh Claude
+CLI, session `7c3cdf22-66d4-4892-a72a-9efc03009e4b`): **APPROVED, zero findings** — traced every
+D1-D14 mechanism line-by-line against the new tests; its only limitations were exactly what the
+host's independent proof run closed (test execution, the external `rusty_multimodal_db`
+citations already re-verified during plan review). Clean close within budget: build round 0,
+inspection round 1 of 2 available, no fix round needed.

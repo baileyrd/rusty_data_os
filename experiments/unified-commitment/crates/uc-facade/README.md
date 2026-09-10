@@ -34,14 +34,21 @@ to Storage; infallible get/scan_all/Entity label metadata fail by panic instead 
 potentially inconsistent data as an empty result. This is fail-stop behavior.
 
 Nonempty atomic WriteBatch returns (0, Unsupported) without writes. Non-atomic batches
-use the inherited per-operation implementation. Memory's mentions and Entity's labels are
-same-table only; every descriptor has target_table None. Memory deduplicates reverse edge
-order for symmetric neighbor/count/AlreadyLinked semantics. Memory and Entity inherit
-Store's describe_relations default, exposing wildcard Neighbors(None) as well as named
-labels so both unlabeled and named same-table Joins remain available. Parent/children are Unsupported;
-Relation has no relation layer. Detach and compact retain Unsupported defaults.
+remain per-operation. Construct EntityStore first and pass the same Arc<dyn Store> to
+MemoryStore::new(engine, entity) and Registry. Memory mentions targets entity and lists
+only the named descriptor; a bare Join is Malformed. Entity retains same-table wildcard
+and named relations. Memory reads only foreign_edges, checks the far live incarnation,
+and resolves raw-id collisions as the local Memory direction. Count excludes stale edges.
+Detach removes all tuples targeting an id; Memory deletion removes its outgoing tuples.
+
+Memory logs/checkpoints use CMM3/CMS3, with no CMM2/CMS2 migration. Replay never accesses
+Entity. A crash between Entity delete and Memory detach may leave stale tuples, which
+live reads hide even after same-id reinsertion. Reads never clean up stored tuples.
+The existing registry mutex spans Join as well as Link/Delete/WriteBatch, serializing
+row fetch against relationship mutations. Call writes through that shared registry.
+Parent/children and compact remain Unsupported; Relation has no relation layer.
 
 The [method](../../../../docs/experiments/EXP-0005-protocol-facade.md) and
-[report](../../../../docs/experiments/EXP-0005/STEP4BII-IMPLEMENTATION-REPORT.md) identify
-authority, tests and limitations. Tests use D1 ordinary writes and real TCP with this
-workspace's codec; no legacy client, cross-table mentions or cross-domain session is tested.
+[Step 4c report](../../../../docs/experiments/EXP-0005/STEP4C-IMPLEMENTATION-REPORT.md)
+record authority, proof and limitations. Tests use D1 ordinary writes and real TCP.
+No legacy client, cross-domain session, atomic cross-log cleanup or performance claim.

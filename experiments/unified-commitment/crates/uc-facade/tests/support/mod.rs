@@ -53,9 +53,10 @@ impl Temp {
         }
         .unwrap()
         .0;
+        let entity: Arc<dyn Store> = Arc::new(EntityStore::new(entity));
         vec![
-            Arc::new(MemoryStore::new(memory)),
-            Arc::new(EntityStore::new(entity)),
+            Arc::new(MemoryStore::new(memory, entity.clone())),
+            entity,
             Arc::new(RelationStore::new(relation)),
         ]
     }

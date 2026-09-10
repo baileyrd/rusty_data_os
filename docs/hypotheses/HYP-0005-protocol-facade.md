@@ -19,3 +19,11 @@ Inspection 1's accepted F1 found missing wildcard neighbor descriptors on Memory
 The corrective tests assert complete same-table unlabeled Join rows over real TCP, failing
 before removal of the overrides and passing with the inherited descriptors. This closes
 that local regression only; independent re-review remains pending.
+
+Step 4c separately tests real Memory-to-Entity mentions under the frozen method in
+[EXP-0005 §22](../experiments/EXP-0005-protocol-facade.md#22-step-4c-frozen-method-and-local-implementation).
+Stored foreign tuples replay independently; live reads must reject stale Entity
+incarnations and resolve raw-id collisions by local membership. Channel-controlled Join
+locking must exclude Delete/reinsert through the row fetch. This supersedes the earlier
+Memory-specific wildcard and no-foreign-edge scope only. Atomic cross-log cleanup,
+production, performance and stronger durability remain unestablished; status stays Open.

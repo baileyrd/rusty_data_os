@@ -59,6 +59,12 @@ restoring the trait default's unlabeled neighbor Join. Both domain regressions r
 the prior Malformed response and pass after the fix over real TCP; corrective proof is
 recorded in the Step 4b-ii report. Phase 1 remains unchanged; independent re-review is pending.
 
+Step 4c supersedes the preceding Memory-only same-table/wildcard scope: real mentions
+now use CMM3/CMS3 foreign tuples, live Entity incarnation checks and Join relationship
+locking. The [Step 4c report](experiments/EXP-0005/STEP4C-IMPLEMENTATION-REPORT.md)
+records advisory proof and limitations. Cross-log atomic cleanup remains deferred;
+independent review is pending. No phase or production promotion follows.
+
 The historical status and authorization ledger below remain intact.
 
 ## 1. Current facts

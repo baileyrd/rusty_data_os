@@ -96,6 +96,12 @@ When Rust code begins:
 
 ## 10. Current constraint
 
+The owner-frozen Step 4c order identified in EXP-0005 section 22 separately authorizes
+CMM3/CMS3 foreign edges in uc-memory, live Entity incarnation wiring in uc-facade,
+Store::incarnation and the Join relationship-lock arm. It supersedes only the earlier
+Memory mentions/wildcard deferral below. Cross-log atomic commitment remains deferred;
+local proof is advisory pending independent review.
+
 The owner-approved frozen Step 4b-i and Step 4b-ii work orders identified in
 [EXP-0005](docs/experiments/EXP-0005-protocol-facade.md), under merge-plan step 4 paragraph 2,
 authorize the bounded protocol-22 codec, Store/dispatch, generic stream connection facade,

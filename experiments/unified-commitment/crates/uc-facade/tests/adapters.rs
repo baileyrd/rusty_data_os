@@ -69,11 +69,18 @@ fn exact_fields_capabilities_validation_and_soft_outcomes() {
         assert!(
             s.describe_relations()
                 .iter()
-                .all(|r| r.target_table.is_none())
+                .all(|r| r.target_table.as_deref() == if d == 0 { Some("entity") } else { None })
         );
         assert_eq!(s.parent(id(1)), Err(ErrorCode::Unsupported));
         assert_eq!(s.children(id(1)), Err(ErrorCode::Unsupported));
-        assert_eq!(s.detach_record("label", id(1)), Err(ErrorCode::Unsupported));
+        assert_eq!(
+            s.detach_record("label", id(1)),
+            Err(if d == 0 {
+                ErrorCode::Malformed
+            } else {
+                ErrorCode::Unsupported
+            })
+        );
         assert_eq!(s.compact(), Err(ErrorCode::Unsupported));
         for i in 0..fields(d, 1).len() {
             let mut missing = fields(d, 1);
@@ -321,7 +328,7 @@ fn transactions_check_reads_first_reject_atomically_and_commit_4096_once_with_re
 fn same_table_edges_incarnations_and_known_labels_survive_reopen() {
     let temp = Temp::new();
     let stores = temp.stores(false);
-    for (d, s) in stores.iter().take(2).enumerate() {
+    for (d, s) in stores.iter().enumerate().take(2).skip(1) {
         let label = if d == 0 { "mentions" } else { "custom_label-2" };
         s.insert_record(id(1), fields(d, 1)).unwrap();
         s.insert_record(id(2), fields(d, 2)).unwrap();
@@ -355,7 +362,7 @@ fn same_table_edges_incarnations_and_known_labels_survive_reopen() {
     drop(stores);
     let stores = temp.stores(true);
     for (d, s) in stores.iter().enumerate() {
-        if d == 2 {
+        if d != 1 {
             s.insert_record(id(1), fields(d, 1)).unwrap();
         } else {
             assert_eq!(s.neighbors(id(1)), Ok(vec![id(2)]));

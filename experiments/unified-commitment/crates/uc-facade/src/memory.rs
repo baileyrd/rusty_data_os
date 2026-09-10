@@ -1,13 +1,14 @@
 use crate::*;
 use cm_trace::{Memory, Value};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use uc_memory::{Change, MemoryEngine, State};
 
 /// Owns one independent engine and holds exclusive access across checks and commit.
-pub struct MemoryStore(Mutex<MemoryEngine>);
+pub struct MemoryStore(Mutex<MemoryEngine>, Arc<dyn Store>);
 impl MemoryStore {
-    pub fn new(engine: MemoryEngine) -> Self {
-        Self(Mutex::new(engine))
+    /// The Entity handle must be the same store registered as the foreign target.
+    pub fn new(engine: MemoryEngine, entity: Arc<dyn Store>) -> Self {
+        Self(Mutex::new(engine), entity)
     }
     fn schema() -> DomainSchema {
         schema(
@@ -89,6 +90,13 @@ impl MemoryStore {
     }
 }
 impl Store for MemoryStore {
+    fn describe_relations(&self) -> Vec<RelationDescriptor> {
+        vec![RelationDescriptor {
+            name: "mentions".into(),
+            kind: JoinRelation::Neighbors(Some("mentions".into())),
+            target_table: Some("entity".into()),
+        }]
+    }
     fn table_name(&self) -> &str {
         "memory"
     }
@@ -292,15 +300,19 @@ impl Store for MemoryStore {
         if relation != "mentions" {
             return Err(ErrorCode::Malformed);
         }
-        Ok(engine
-            .log()
-            .snapshot()
-            .edges
+        let state = engine.log().snapshot();
+        // Raw id collisions resolve to the live local record, never both directions.
+        let local = Self::current(&state, id).is_ok();
+        Ok(state
+            .foreign_edges
             .iter()
-            .filter_map(|(a, _, b, _)| {
-                if *a == id.0 {
+            .filter_map(|(a, fi, b, ti)| {
+                if state.current(a, *fi).is_err() || self.1.incarnation(RecordId(*b)) != Some(*ti) {
+                    return None;
+                }
+                if local && *a == id.0 {
                     Some(RecordId(*b))
-                } else if *b == id.0 {
+                } else if !local && *b == id.0 {
                     Some(RecordId(*a))
                 } else {
                     None
@@ -318,15 +330,29 @@ impl Store for MemoryStore {
         if relation != "mentions" {
             return Err(ErrorCode::Malformed);
         }
-        // Memory's history permits either endpoint order; count unique symmetric edges.
-        Ok(engine
+        let state = engine.log().snapshot();
+        Ok(state
+            .foreign_edges
+            .iter()
+            .filter(|(a, fi, b, ti)| {
+                state.current(a, *fi).is_ok() && self.1.incarnation(RecordId(*b)) == Some(*ti)
+            })
+            .count() as u64)
+    }
+    fn detach_record(&self, relation: &str, id: RecordId) -> Result<usize, ErrorCode> {
+        if relation != "mentions" {
+            return Err(ErrorCode::Malformed);
+        }
+        let mut engine = self.0.lock().map_err(|_| ErrorCode::Storage)?;
+        let count = engine
             .log()
             .snapshot()
-            .edges
+            .foreign_edges
             .iter()
-            .map(|(a, _, b, _)| if a <= b { (*a, *b) } else { (*b, *a) })
-            .collect::<std::collections::BTreeSet<_>>()
-            .len() as u64)
+            .filter(|(_, _, to, _)| *to == id.0)
+            .count();
+        Self::commit(&mut engine, &[Change::DetachForeign { to: id.0 }])?;
+        Ok(count)
     }
     fn link_records(
         &self,
@@ -340,19 +366,19 @@ impl Store for MemoryStore {
         }
         let state = engine.log().snapshot();
         let from_incarnation = Self::current(&state, left)?;
-        let to_incarnation = Self::current(&state, right)?;
+        if left.0 == right.0 {
+            return Err(ErrorCode::Malformed);
+        }
+        let to_incarnation = self.1.incarnation(right).ok_or(ErrorCode::RecordNotFound)?;
         if state
-            .edges
+            .foreign_edges
             .contains(&(left.0, from_incarnation, right.0, to_incarnation))
-            || state
-                .edges
-                .contains(&(right.0, to_incarnation, left.0, from_incarnation))
         {
             return Ok(LinkOutcome::AlreadyLinked);
         }
         Self::commit(
             &mut engine,
-            &[Change::Link {
+            &[Change::LinkForeign {
                 from: left.0,
                 from_incarnation,
                 to: right.0,

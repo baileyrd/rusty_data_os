@@ -185,3 +185,108 @@ fn reads_other_writes_sessions_and_compact_do_not_acquire_relationship_mutex() {
     drop(held);
     client.close();
 }
+
+#[test]
+fn join_holds_relationship_lock_until_row_fetch_finishes_before_delete_reinsert() {
+    let a = TestStore::new("a", Some("b"), &[(1, 1)]);
+    let b = TestStore::new("b", None, &[(2, 2)]);
+    a.state.lock().unwrap().edges.insert((id(1), id(2)));
+    let registry = registry(vec![a.clone(), b.clone()], 0);
+    let mut ca = Client::new(registry.clone());
+    let switch = Request::Use { table: "b".into() };
+    let delete = Request::Delete { id: id(2) };
+    let (mut cb, pipe) = duplex();
+    let (notice_tx, notice_rx) = mpsc::channel();
+    let mut server = ReadNotice {
+        pipe,
+        read: 0,
+        notify_at: 8 + encode_request(&switch).len() + encode_request(&delete).len(),
+        notice: notice_tx,
+    };
+    let cloned = registry.clone();
+    let worker = thread::spawn(move || handle_connection(&mut server, &cloned));
+    write_message(&mut cb, &encode_request(&switch)).unwrap();
+    assert_eq!(
+        decode_response(&read_message(&mut cb).unwrap()).unwrap(),
+        Response::Ok
+    );
+    let (paused_tx, paused_rx) = mpsc::channel();
+    let (release_tx, release_rx) = mpsc::channel();
+    let release_rx = Mutex::new(release_rx);
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let observed = events.clone();
+    let weak = Arc::downgrade(&registry);
+    *b.observer.lock().unwrap() = Some(Arc::new(move |event| {
+        if event == "get" || event == "delete" {
+            let reg = weak.upgrade().unwrap();
+            assert!(matches!(
+                reg.relationship_lock.as_ref().unwrap().try_lock(),
+                Err(TryLockError::WouldBlock)
+            ));
+            observed.lock().unwrap().push(event.to_owned());
+            if event == "get" {
+                paused_tx.send(()).unwrap();
+                release_rx
+                    .lock()
+                    .unwrap()
+                    .recv_timeout(Duration::from_secs(10))
+                    .unwrap();
+                observed.lock().unwrap().push("join-fetch-released".into());
+            }
+        }
+    }));
+    ca.send(Request::Join(JoinSpec {
+        relation: JoinRelation::Neighbors(Some("edge".into())),
+        right_table: Some("b".into()),
+        left: Selection::All,
+        right: Selection::All,
+        left_filter: vec![],
+        right_filter: vec![],
+        limit: None,
+    }));
+    paused_rx.recv_timeout(Duration::from_secs(10)).unwrap();
+    write_message(&mut cb, &encode_request(&delete)).unwrap();
+    write_message(
+        &mut cb,
+        &encode_request(&Request::Insert {
+            id: id(2),
+            fields: fields(9),
+        }),
+    )
+    .unwrap();
+    notice_rx.recv_timeout(Duration::from_secs(10)).unwrap();
+    // B has consumed Delete while A is paused inside get with the actual mutex held.
+    assert!(matches!(
+        registry.relationship_lock.as_ref().unwrap().try_lock(),
+        Err(TryLockError::WouldBlock)
+    ));
+    assert_eq!(*events.lock().unwrap(), ["get"]);
+    release_tx.send(()).unwrap();
+    assert_eq!(
+        ca.receive(),
+        Response::JoinedRows {
+            rows: vec![JoinedRow {
+                left_id: id(1),
+                left: fields(1),
+                right_id: id(2),
+                right: fields(2),
+            }]
+        }
+    );
+    assert_eq!(
+        decode_response(&read_message(&mut cb).unwrap()).unwrap(),
+        Response::Ok
+    );
+    assert_eq!(
+        decode_response(&read_message(&mut cb).unwrap()).unwrap(),
+        Response::Ok
+    );
+    assert_eq!(
+        *events.lock().unwrap(),
+        ["get", "join-fetch-released", "delete"]
+    );
+    assert_eq!(b.snapshot().rows.get(&id(2)), Some(&fields(9)));
+    ca.close();
+    drop(cb);
+    worker.join().unwrap().unwrap();
+}

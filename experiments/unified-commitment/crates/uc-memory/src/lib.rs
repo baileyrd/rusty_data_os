@@ -1,4 +1,4 @@
-//! EXP-0003 CMM2 adapter. Engine mutations never call the independent CMT1 model.
+//! EXP-0003 CMM3 adapter. Engine mutations never call the independent CMT1 model.
 use cm_trace::{Answer, Id, Memory, Op, Value, format, hex, run::Engine};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -19,6 +19,8 @@ pub struct Slot {
 pub struct State {
     pub slots: BTreeMap<Id, Slot>,
     pub edges: BTreeSet<(Id, u64, Id, u64)>,
+    /// Outgoing foreign edges; replay validates only the local incarnation.
+    pub foreign_edges: BTreeSet<(Id, u64, Id, u64)>,
 }
 impl State {
     pub fn records(&self) -> Vec<Memory> {
@@ -43,6 +45,15 @@ impl State {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Change {
+    LinkForeign {
+        from: Id,
+        from_incarnation: u64,
+        to: Id,
+        to_incarnation: u64,
+    },
+    DetachForeign {
+        to: Id,
+    },
     Put {
         record: Box<Memory>,
         incarnation: u64,
@@ -67,9 +78,20 @@ pub enum Change {
     },
 }
 pub fn encode_changes(changes: &[Change]) -> Vec<u8> {
-    let mut out = String::from("CMM2\n");
+    let mut out = String::from("CMM3\n");
     for change in changes {
         match change {
+            Change::LinkForeign {
+                from,
+                from_incarnation,
+                to,
+                to_incarnation,
+            } => out.push_str(&format!(
+                "linkforeign\t{from_incarnation}\t{}\t{to_incarnation}\t{}\n",
+                hex(from),
+                hex(to)
+            )),
+            Change::DetachForeign { to } => out.push_str(&format!("detachforeign\t{}\n", hex(to))),
             Change::Put {
                 record,
                 incarnation,
@@ -109,18 +131,27 @@ pub fn encode_changes(changes: &[Change]) -> Vec<u8> {
     out.into_bytes()
 }
 fn number<T: std::str::FromStr>(s: &str) -> Result<T, String> {
-    s.parse().map_err(|_| "invalid CMM2 number".into())
+    s.parse().map_err(|_| "invalid CMM3 number".into())
 }
 pub fn decode_changes(bytes: &[u8]) -> Result<Vec<Change>, String> {
     let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
-    let text = text.strip_prefix("CMM2\n").ok_or("CMM2 magic")?;
+    let text = text.strip_prefix("CMM3\n").ok_or("CMM3 magic")?;
     if !text.ends_with('\n') {
-        return Err("empty/truncated CMM2".into());
+        return Err("empty/truncated CMM3".into());
     }
     let mut changes = Vec::new();
     for line in text.lines() {
         let f: Vec<_> = line.split('\t').collect();
         let change = match f.as_slice() {
+            ["linkforeign", fi, from, ti, to] => Change::LinkForeign {
+                from: format::id(from)?,
+                from_incarnation: number(fi)?,
+                to: format::id(to)?,
+                to_incarnation: number(ti)?,
+            },
+            ["detachforeign", to] => Change::DetachForeign {
+                to: format::id(to)?,
+            },
             ["put", inc, insert, rest @ ..] if !rest.is_empty() => Change::Put {
                 record: Box::new(format::parse_memory(&rest.join("\t"))?),
                 incarnation: number(inc)?,
@@ -151,7 +182,7 @@ pub fn decode_changes(bytes: &[u8]) -> Result<Vec<Change>, String> {
                 to: format::id(to)?,
                 to_incarnation: number(to_inc)?,
             },
-            _ => return Err("CMM2 operation".into()),
+            _ => return Err("CMM3 operation".into()),
         };
         changes.push(change);
         if changes.len() > MAX_OPERATIONS {
@@ -163,6 +194,20 @@ pub fn decode_changes(bytes: &[u8]) -> Result<Vec<Change>, String> {
 fn apply_changes(state: &mut State, changes: &[Change]) -> Result<(), String> {
     for change in changes {
         match change {
+            Change::LinkForeign {
+                from,
+                from_incarnation,
+                to,
+                to_incarnation,
+            } => {
+                state.current(from, *from_incarnation)?;
+                state
+                    .foreign_edges
+                    .insert((*from, *from_incarnation, *to, *to_incarnation));
+            }
+            Change::DetachForeign { to } => {
+                state.foreign_edges.retain(|(_, _, target, _)| target != to);
+            }
             Change::Put {
                 record,
                 incarnation,
@@ -218,6 +263,7 @@ fn apply_changes(state: &mut State, changes: &[Change]) -> Result<(), String> {
                 state.current(id, *incarnation)?;
                 state.slots.get_mut(id).unwrap().record = None;
                 state.edges.retain(|(a, _, b, _)| a != id && b != id);
+                state.foreign_edges.retain(|(from, _, _, _)| from != id);
             }
             Change::Link {
                 from,
@@ -239,7 +285,7 @@ pub fn apply(state: &mut State, bytes: &[u8]) -> Result<(), String> {
     apply_changes(state, &decode_changes(bytes)?)
 }
 pub fn encode_state(state: &State) -> Result<Vec<u8>, String> {
-    let mut text = String::from("CMS2\n");
+    let mut text = String::from("CMS3\n");
     for (id, slot) in &state.slots {
         text.push_str(&format!(
             "slot\t{}\t{}\t{}\n",
@@ -253,17 +299,35 @@ pub fn encode_state(state: &State) -> Result<Vec<u8>, String> {
     for (from, fi, to, ti) in &state.edges {
         text.push_str(&format!("edge\t{fi}\t{}\t{ti}\t{}\n", hex(from), hex(to)));
     }
+    for (from, fi, to, ti) in &state.foreign_edges {
+        text.push_str(&format!(
+            "foreign_edge\t{fi}\t{}\t{ti}\t{}\n",
+            hex(from),
+            hex(to)
+        ));
+    }
     Ok(text.into_bytes())
 }
 pub fn decode_state(bytes: &[u8]) -> Result<State, String> {
     let text = std::str::from_utf8(bytes)
         .map_err(|e| e.to_string())?
-        .strip_prefix("CMS2\n")
-        .ok_or("CMS2 magic")?;
+        .strip_prefix("CMS3\n")
+        .ok_or("CMS3 magic")?;
     let mut state = State::default();
     for line in text.lines() {
         let f: Vec<_> = line.split('\t').collect();
         match f.as_slice() {
+            ["foreign_edge", fi, from, ti, to] => {
+                apply_changes(
+                    &mut state,
+                    &[Change::LinkForeign {
+                        from: format::id(from)?,
+                        from_incarnation: number(fi)?,
+                        to: format::id(to)?,
+                        to_incarnation: number(ti)?,
+                    }],
+                )?;
+            }
             ["slot", inc, id, rest @ ..] if !rest.is_empty() => {
                 let id = format::id(id)?;
                 let incarnation = number::<u64>(inc)?;
@@ -302,11 +366,11 @@ pub fn decode_state(bytes: &[u8]) -> Result<State, String> {
                 };
                 apply_changes(&mut state, &[change])?;
             }
-            _ => return Err("CMS2 entry".into()),
+            _ => return Err("CMS3 entry".into()),
         }
     }
     if encode_state(&state)? != bytes {
-        return Err("noncanonical CMS2".into());
+        return Err("noncanonical CMS3".into());
     }
     Ok(state)
 }
@@ -638,7 +702,7 @@ fn rebuild_columns(transactions: &[Vec<Change>]) -> [BTreeMap<Id, Value>; 13] {
                     column.remove(id);
                 }
             }
-            Change::Link { .. } => {}
+            Change::Link { .. } | Change::LinkForeign { .. } | Change::DetachForeign { .. } => {}
         }
     }
     columns

@@ -64,6 +64,10 @@ impl EntityStore {
     }
 }
 impl Store for EntityStore {
+    fn incarnation(&self, id: RecordId) -> Option<u64> {
+        let engine = self.0.lock().expect("entity engine mutex poisoned");
+        Self::current(&engine.log().snapshot(), id).ok()
+    }
     fn table_name(&self) -> &str {
         "entity"
     }

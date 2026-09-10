@@ -70,6 +70,10 @@ pub trait Store: Send + Sync {
     fn detach_record(&self, _relation: &str, _id: RecordId) -> Result<usize, ErrorCode> {
         Err(ErrorCode::Unsupported)
     }
+    /// Current live incarnation, or None when absent or unsupported by this table.
+    fn incarnation(&self, _id: RecordId) -> Option<u64> {
+        None
+    }
     fn compact(&self) -> Result<CompactionReport, ErrorCode> {
         Err(ErrorCode::Unsupported)
     }

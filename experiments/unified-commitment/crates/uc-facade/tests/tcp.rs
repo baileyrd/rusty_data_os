@@ -25,7 +25,7 @@ impl Server {
         let temp = Temp::new();
         let stores = temp.stores(false);
         let registry = registry(&stores);
-        assert!(!registry.has_relationship_lock());
+        assert!(registry.has_relationship_lock());
         let listener = LoopbackListener::bind().unwrap();
         let addr = listener.local_addr().unwrap();
         assert_eq!(addr.ip(), std::net::Ipv4Addr::LOCALHOST);
@@ -114,7 +114,26 @@ impl Drop for Client {
 
 #[test]
 fn real_tcp_unlabeled_memory_join() {
-    unlabeled_join(0, "memory", ["mentions", "mentions"]);
+    let server = Server::new();
+    let mut client = server.client();
+    assert_eq!(
+        server.stores[0].describe_relations(),
+        vec![RelationDescriptor {
+            name: "mentions".into(),
+            kind: JoinRelation::Neighbors(Some("mentions".into())),
+            target_table: Some("entity".into()),
+        }]
+    );
+    let mut spec = mentions_join();
+    spec.relation = JoinRelation::Neighbors(None);
+    spec.right_table = None;
+    assert!(matches!(
+        client.request(Request::Join(spec)),
+        Response::Err {
+            code: ErrorCode::Malformed,
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -511,4 +530,309 @@ fn real_tcp_aggregate_overflow_is_a_response_and_connection_remains_usable() {
         }
     }
     client.record(1, id(1), i64::MAX);
+}
+
+fn mentions_join() -> JoinSpec {
+    JoinSpec {
+        relation: JoinRelation::Neighbors(Some("mentions".into())),
+        right_table: Some("entity".into()),
+        left: Selection::All,
+        right: Selection::All,
+        left_filter: vec![],
+        right_filter: vec![],
+        limit: None,
+    }
+}
+fn link(left: u8, right: u8) -> Request {
+    Request::Link {
+        left: id(left),
+        right: id(right),
+        relation: "mentions".into(),
+    }
+}
+fn assert_mentions(client: &mut Client, pairs: &[(u8, u8)], value: i64) {
+    assert_eq!(
+        client.request(Request::Join(mentions_join())),
+        Response::JoinedRows {
+            rows: pairs
+                .iter()
+                .map(|(a, b)| JoinedRow {
+                    left_id: id(*a),
+                    left: fields(0, 1),
+                    right_id: id(*b),
+                    right: fields(1, value),
+                })
+                .collect(),
+        }
+    );
+    assert_eq!(
+        client.request(Request::CountEdges {
+            relation: "mentions".into()
+        }),
+        Response::Count {
+            count: pairs.len() as u64
+        }
+    );
+}
+fn neighbors(client: &mut Client, key: u8, expected: &[u8]) {
+    for request in [
+        Request::Neighbors { id: id(key) },
+        Request::NeighborsByRelation {
+            id: id(key),
+            relation: "mentions".into(),
+        },
+    ] {
+        assert_eq!(
+            client.request(request),
+            Response::RecordList {
+                records: expected.iter().map(|n| id(*n)).collect(),
+            }
+        );
+    }
+}
+
+#[test]
+fn real_tcp_foreign_link_precedence_and_missing_registry() {
+    let server = Server::new();
+    let mut client = server.client();
+    server.stores[0].insert_record(id(1), fields(0, 1)).unwrap();
+    for q in [1, 2] {
+        server.stores[1].insert_record(id(q), fields(1, 1)).unwrap();
+    }
+    for (q, code) in [
+        (1, ErrorCode::Malformed),
+        (2, ErrorCode::RecordNotFound),
+        (3, ErrorCode::RecordNotFound),
+    ] {
+        assert_eq!(client.request(link(q, q)), err_response(code));
+    }
+    client.ok(link(1, 2));
+    assert_eq!(
+        client.request(link(9, 2)),
+        err_response(ErrorCode::RecordNotFound)
+    );
+    assert_eq!(
+        client.request(Request::Link {
+            left: id(1),
+            right: id(2),
+            relation: "bad".into()
+        }),
+        err_response(ErrorCode::Malformed)
+    );
+    drop(client);
+    // Real socket, real Memory adapter, deliberately omit Entity registration.
+    let listener = LoopbackListener::bind().unwrap();
+    let addr = listener.local_addr().unwrap();
+    let reg = registry(&server.stores[..1]);
+    let stop = Arc::new(AtomicBool::new(false));
+    let signal = stop.clone();
+    let worker = std::thread::spawn(move || serve(listener, reg, &signal));
+    let mut client = Client(TcpStream::connect(addr).unwrap());
+    assert_eq!(
+        client.request(link(1, 1)),
+        err_response(ErrorCode::Unsupported)
+    );
+    drop(client);
+    stop.store(true, Ordering::Release);
+    worker.join().unwrap().unwrap();
+}
+
+#[test]
+fn real_tcp_foreign_neighbors_join_cascades_and_use_switched_pipeline() {
+    let server = Server::new();
+    let mut client = server.client();
+    client.ok(Request::Insert {
+        id: id(1),
+        fields: fields(0, 1),
+    });
+    client.use_table("entity");
+    client.ok(Request::Insert {
+        id: id(2),
+        fields: fields(1, 1),
+    });
+    client.use_table("memory");
+    client.ok(link(1, 2));
+    neighbors(&mut client, 1, &[2]);
+    neighbors(&mut client, 2, &[1]);
+    assert_mentions(&mut client, &[(1, 2)], 1);
+    client.ok(Request::Delete { id: id(1) });
+    assert_mentions(&mut client, &[], 1);
+    client.ok(Request::Insert {
+        id: id(1),
+        fields: fields(0, 1),
+    });
+    client.ok(link(1, 2));
+    client.use_table("entity");
+    client.ok(Request::Delete { id: id(2) });
+    client.use_table("memory");
+    neighbors(&mut client, 1, &[]);
+    assert_mentions(&mut client, &[], 1);
+    assert_eq!(server.stores[0].detach_record("mentions", id(2)), Ok(0));
+    client.use_table("entity");
+    client.ok(Request::Insert {
+        id: id(2),
+        fields: fields(1, 1),
+    });
+    client.use_table("memory");
+    client.pipeline(&[
+        Request::WriteBatch {
+            atomic: false,
+            ops: vec![WriteOp::Link {
+                left: id(1),
+                right: id(2),
+                relation: "mentions".into(),
+            }],
+        },
+        Request::Use {
+            table: "entity".into(),
+        },
+        Request::WriteBatch {
+            atomic: false,
+            ops: vec![WriteOp::Delete { id: id(2) }],
+        },
+        Request::Use {
+            table: "memory".into(),
+        },
+    ]);
+    assert_eq!(
+        client.response(),
+        Response::BatchResults {
+            results: vec![WriteResult::Linked]
+        }
+    );
+    assert_eq!(client.response(), Response::Ok);
+    assert_eq!(
+        client.response(),
+        Response::BatchResults {
+            results: vec![WriteResult::Deleted]
+        }
+    );
+    assert_eq!(client.response(), Response::Ok);
+    neighbors(&mut client, 1, &[]);
+    assert_mentions(&mut client, &[], 1);
+    assert_eq!(server.stores[0].detach_record("mentions", id(2)), Ok(0));
+}
+
+#[test]
+fn real_tcp_stale_incarnation_misses_and_relink_keeps_both_tuples() {
+    let server = Server::new();
+    let mut client = server.client();
+    server.stores[0].insert_record(id(1), fields(0, 1)).unwrap();
+    server.stores[1].insert_record(id(2), fields(1, 1)).unwrap();
+    client.ok(link(1, 2));
+    // Deliberately bypass registry detach to model the disclosed between-log crash window.
+    server.stores[1].delete_record(id(2)).unwrap();
+    neighbors(&mut client, 1, &[]);
+    neighbors(&mut client, 2, &[]);
+    assert_mentions(&mut client, &[], 1);
+    server.stores[1].insert_record(id(2), fields(1, 9)).unwrap();
+    assert_eq!(server.stores[1].incarnation(id(2)), Some(2));
+    neighbors(&mut client, 1, &[]);
+    neighbors(&mut client, 2, &[]);
+    assert_mentions(&mut client, &[], 9);
+    client.ok(link(1, 2));
+    neighbors(&mut client, 1, &[2]);
+    neighbors(&mut client, 2, &[1]);
+    assert_mentions(&mut client, &[(1, 2)], 9);
+    assert_eq!(
+        server.stores[0].link_records(id(1), id(2), "mentions"),
+        Ok(LinkOutcome::AlreadyLinked)
+    );
+    let history =
+        uc_core::read_history(&server.temp.0.join("memory").join(uc_core::HISTORY_FILE)).unwrap();
+    let mut replay = uc_memory::State::default();
+    for event in history.events {
+        uc_memory::apply(&mut replay, &event.payload).unwrap();
+    }
+    assert_eq!(
+        replay.foreign_edges,
+        [(id(1).0, 1, id(2).0, 1), (id(1).0, 1, id(2).0, 2)].into()
+    );
+    // Reads and duplicate Link have not removed the stale tuple.
+    assert_eq!(server.stores[0].detach_record("mentions", id(2)), Ok(2));
+    assert_eq!(server.stores[0].detach_record("mentions", id(2)), Ok(0));
+}
+
+#[test]
+fn real_tcp_double_collision_uses_local_direction_and_never_swapped_duplicate() {
+    let server = Server::new();
+    let mut client = server.client();
+    for q in [1, 2] {
+        server.stores[0].insert_record(id(q), fields(0, 1)).unwrap();
+        server.stores[1].insert_record(id(q), fields(1, 1)).unwrap();
+    }
+    client.ok(link(1, 2));
+    neighbors(&mut client, 2, &[]); // E2 has an incoming edge, but M2 has none.
+    assert_mentions(&mut client, &[(1, 2)], 1);
+    client.ok(link(2, 1)); // Swapped tuple must not report AlreadyLinked.
+    neighbors(&mut client, 1, &[2]);
+    neighbors(&mut client, 2, &[1]);
+    assert_mentions(&mut client, &[(1, 2), (2, 1)], 1);
+}
+
+#[test]
+fn raw_same_table_edge_never_contributes_to_mentions() {
+    use uc_core::{Durability, Outcome};
+    let temp = Temp::new();
+    let mut engine = uc_memory::MemoryEngine::create_with_label(
+        &temp.0.join("raw"),
+        Durability::D1,
+        "test".into(),
+    )
+    .unwrap()
+    .0;
+    let puts: Vec<_> = [1, 2]
+        .into_iter()
+        .map(|q| {
+            let mut record =
+                cm_trace::generate::record(q, 1, &mut cm_trace::generate::SplitMix64(7), false);
+            record.id = id(q as u8).0;
+            uc_memory::Change::Put {
+                record: Box::new(record),
+                incarnation: 1,
+                insert: true,
+            }
+        })
+        .collect();
+    assert!(matches!(
+        engine
+            .transact(engine.log().next_request_id(), &puts)
+            .unwrap(),
+        Outcome::Committed { .. }
+    ));
+    assert!(matches!(
+        engine
+            .transact(
+                engine.log().next_request_id(),
+                &[uc_memory::Change::Link {
+                    from: id(1).0,
+                    from_incarnation: 1,
+                    to: id(2).0,
+                    to_incarnation: 1,
+                }]
+            )
+            .unwrap(),
+        Outcome::Committed { .. }
+    ));
+    assert_eq!(engine.log().snapshot().edges.len(), 1);
+    let entity: Arc<dyn Store> = Arc::new(uc_facade::EntityStore::new(
+        uc_entity::EntityEngine::create(&temp.0.join("entity"), Durability::D1)
+            .unwrap()
+            .0,
+    ));
+    entity.insert_record(id(2), fields(1, 1)).unwrap();
+    let memory: Arc<dyn Store> = Arc::new(uc_facade::MemoryStore::new(engine, entity.clone()));
+    assert_eq!(memory.neighbors_by_relation(id(1), "mentions"), Ok(vec![]));
+    assert_eq!(memory.count_edges("mentions"), Ok(0));
+    let listener = LoopbackListener::bind().unwrap();
+    let addr = listener.local_addr().unwrap();
+    let reg = registry(&[memory, entity]);
+    let stop = Arc::new(AtomicBool::new(false));
+    let signal = stop.clone();
+    let worker = std::thread::spawn(move || serve(listener, reg, &signal));
+    let mut client = Client(TcpStream::connect(addr).unwrap());
+    assert_mentions(&mut client, &[], 1);
+    drop(client);
+    stop.store(true, Ordering::Release);
+    worker.join().unwrap().unwrap();
 }

@@ -132,3 +132,34 @@ convergence-memory and 95 portable exp-0001 tests passing (223 total), plus form
 warnings-denied Clippy, Markdown links and whitespace checks.
 No other finding is reopened and no cross-table scenario is attempted. Re-review remains
 pending; this adds no architecture or production promotion.
+
+## 22. Step 4c frozen method and local implementation
+
+Owner work order: `handoff-2026-09-08/step4c-foreign-edges-spec.md`, SHA-256
+`af142bbfa0f53071e3f187b356a9807e2a68c0dc330b5f2e1cd8f84a36891794`.
+The attached order supersedes Step 4b-ii's same-table Memory mentions deferral and
+Memory-only wildcard correction. Before implementation, its fourteen proof cases define
+exact real-socket response/state assertions, isolated Memory checkpoint/full replay,
+malformed/version/operation-limit rejection, deliberate same-id reincarnation and double
+collisions, and a channel-controlled two-connection Join/Delete interleaving. Any wrong
+pair, replay disagreement, stale resurrection or unlocked Join falsifies the affected claim.
+
+Memory now records outgoing LinkForeign/DetachForeign in CMM3/CMS3, with both endpoint
+incarnations. Replay verifies only local membership. A direct Entity Store handle supplies
+live incarnation capture/filtering; local Memory membership resolves ambiguous raw IDs.
+Only foreign_edges contributes to mentions. Delete cascades locally or via the existing
+registry detach. Memory advertises only named mentions targeting entity. Atomic cross-table
+commitment remains unsupported: a crash between Entity delete and Memory detach can leave
+stored stale tuples, hidden by freshness checks and removed by a later detach.
+
+Narrow protocol exceptions are Store::incarnation, EntityStore's override, and adding Join
+to the existing relationship-lock list. No query evaluator, Entity engine, Relation engine,
+core, harness, listener, authentication or dependency changes. CMM2/CMS2 migration is absent.
+See the [advisory Step 4c report](EXP-0005/STEP4C-IMPLEMENTATION-REPORT.md) for proof,
+file accounting, formatting deviation and environment limitations. Hypothesis Open,
+experiment Ready; independent review pending, with no architectural graduation.
+
+The Step 4c eleven-check proof passed: 119 unified-commitment, 17 convergence-memory,
+95 portable EXP-0001 tests; formatting, warnings-denied Clippy, links and whitespace
+all succeeded. The exact agreed workspace test records exit 0. This is local bounded
+correctness evidence only, pending independent review.
