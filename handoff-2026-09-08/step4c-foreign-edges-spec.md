@@ -50,6 +50,25 @@ Worktree `C:/dev/rusty_data_os-step4c`, branch `codex/merge-step4c-foreign-edges
 `3d794a5efa4e2af94e817b951777b3ccdd77c148` (Step 4b-ii's closing commit). Initial `git status` is
 clean.
 
+## Owner decision (2026-09-09, review round 2 dispositions)
+
+Review round 2 (`step4c-review/claudex-cy_5akev`, plan sha256 `644fd6c8…cd2601b`) returned REVISE,
+2 high + 2 medium — all four confirmed real by direct source citation, none escalated back to the
+owner: P4C-R2-002/003/004 are mechanical fixes to the round-2 design (D10/R4/Proof-1 below).
+P4C-R2-001 (a live TOCTOU race: `evaluate_join`'s neighbor resolution and its later `right.get`
+are two separate, unlocked calls, so a second connection's Delete+reinsert between them can still
+resurrect a stale edge as the wrong record even with D3/D9 in place) turned out, on tracing the
+exact call site, to require only a **one-token addition to an already-existing, already-generic
+lock-acquisition list** (`connection.rs:231-241`'s `matches!(req, Request::Link {..} |
+Request::Delete {..} | Request::WriteBatch {..})` already exists precisely to guard this class of
+cross-table race for the write paths; `Request::Join(_)` was simply never added to it). Given how
+narrow and mechanical the actual fix is — not a new mechanism, just extending a list the registry
+already generalizes over — this was applied directly (D13) rather than treated as a fresh
+design-fork question; it is disclosed here and in `BUILD-LOG.md` as a second, narrow exception to
+`uc-protocol` (in addition to R1's `Store::incarnation` method), consistent with the owner's
+stated preference (Step 4c's P4C-001 disposition) for closing a reachable gap over carrying it as
+a residual.
+
 ## Goal
 
 Add a durable, replay-correct foreign-edge mechanism to `uc-memory` only (Entity/Relation need no
@@ -232,15 +251,23 @@ what turns this machinery on for real.
   treated as not currently matching (a miss, never a wrongly-resolved pair) — it is **not**
   deleted or cleaned up by a read (reads stay side-effect-free); only `DetachForeign` (D1/D4,
   unchanged) removes an entry.
-- **D10 (new, review round 1 P4C-002 first half, unconditional zero-cost fix) —
-  `MemoryStore::link_records`'s `AlreadyLinked` check for `"mentions"` checks only the single
-  direction `(left.0, from_incarnation, right.0)`, never the swapped tuple.** The existing
-  same-table code (`memory.rs:344-350`) checks both `(left, right)` and `(right, left)` because
-  same-table `Link` is genuinely symmetric; a foreign edge is directional by construction (`from`
-  is always the Memory-side id, `to` is always the raw Entity bytes) and checking the swap risks a
-  false `AlreadyLinked` against an unrelated, never-committed pair under colliding raw bytes. Pure
-  deletion of the second `state.edges.contains(...)` disjunct for the foreign-edge path; no new
-  capability needed.
+- **D10 (new, review round 1 P4C-002 first half; revised, review round 2 P4C-R2-002) —
+  `MemoryStore::link_records`'s `AlreadyLinked` check for `"mentions"` checks the single direction
+  **and the full four-field tuple including `to_incarnation`** — `(left.0, from_incarnation,
+  right.0, to_incarnation)` — never the swapped tuple and never a match that ignores
+  `to_incarnation`.** Round 2 found that comparing only `(left, right)` while ignoring the just
+  resolved `to_incarnation` (D9) let a stale edge `(M, 1, E, 1)` falsely satisfy `AlreadyLinked`
+  for a *new* `Link(M, E, "mentions")` after `E` was deleted and reinserted at incarnation 2 — the
+  wire client is told `AlreadyLinked` (a success shape) while no edge to the *current* `E`
+  actually exists; every freshness-filtered read (D9) correctly reports a miss, so the client's
+  belief and the store's real state permanently diverge. The fix: compare the full tuple, so a
+  live-but-stale edge never blocks inserting the new, currently-valid one — both tuples may
+  coexist in `foreign_edges` (the stale one remains until its own `DetachForeign`, per D1/D4/D9;
+  it is inert for every read once its incarnation stops matching). The existing same-table code
+  (`memory.rs:344-350`) checks both `(left, right)` and `(right, left)` because same-table `Link`
+  is genuinely symmetric; a foreign edge is directional by construction (`from` is always the
+  Memory-side id, `to` is always the raw Entity bytes) and checking the swap risks a false
+  `AlreadyLinked` against an unrelated, never-committed pair under colliding raw bytes.
 - **D11 (new, review round 1 P4C-004, mechanical) — `link_records` rejects a self-loop
   (`left.0 == right.0`) for `"mentions"` with `Malformed`, checked before any other work.** Matches
   legacy's own explicit rejection of a self-loop even across a foreign relation
@@ -259,6 +286,40 @@ what turns this machinery on for real.
   exists. This explicitly supersedes 4b-ii's F1 correction for Memory specifically; Entity's own
   wildcard, and 4b-ii's regression test for Entity, are untouched. The existing wildcard regression
   test's Memory-side assertion must be updated to expect the wildcard's absence again.
+- **D13 (new, review round 2 P4C-R2-001, one-line protocol exception) —
+  `Connection::request`'s relationship-lock acquisition (`connection.rs:231-241`) also covers
+  `Request::Join(_)`, not only `Link`/`Delete`/`WriteBatch`.** Round 2 found a live TOCTOU race:
+  `evaluate_join` resolves neighbor ids via `neighbors_by_relation` (which applies D9's freshness
+  check), then separately calls `right.get(right_id)` to fetch the joined row — two unlocked calls
+  with a window between them. A second connection's `Delete`+reinsert of the Entity endpoint
+  landing in that window still lets Join return the new, unrelated incarnation's fields under the
+  old neighbor id, reproducing the exact class of bug D3/D9 were built to close, just via
+  concurrent timing instead of a single connection's own sequencing. The existing lock list at
+  `connection.rs:233` already exists precisely to close this class of race for the write paths;
+  `Request::Join(_)` was never added to it. The fix is the addition of that one match arm — no new
+  locking mechanism, no change to the lock's granularity or the registry's structure. This is a
+  second, narrow, disclosed exception to `uc-protocol` (in addition to R1's `Store::incarnation`),
+  consistent in shape and rationale with the owner's own P4C-001 disposition: close a reachable
+  gap rather than carry it as a residual, via the smallest change that actually closes it. Holding
+  the coarse relationship lock across a full Join (which scans the left table) serializes that
+  Join against concurrent `Link`/`Delete`/`WriteBatch`/other Joins on any table with a foreign
+  relation — an accepted tradeoff matching this project's existing single-mutex, not
+  per-table-pair, locking design (already true for the write paths since 4b-i).
+- **D14 (new, review round 2 P4C-R2-003, mechanical simplification) — "mentions" reads
+  (`neighbors`/`neighbors_by_relation`/`count_edges`/`Join`) consult `foreign_edges` only, never
+  the same-table `edges` set.** Round 2 found that `Change::Link` (the original same-table
+  primitive, unchanged since Step 3, D1) remains fully reachable through `MemoryEngine::transact`
+  directly — proven by an existing `uc-memory` test that exercises it — independent of what the
+  wire-facing `MemoryStore::link_records` submits. Round 1's D5/R4 wording ("read both, since only
+  `foreign_edges` will ever be populated in practice") was an unverified assumption: a same-table
+  `state.edges` entry whose raw id happens to collide with a live Entity id would have been
+  unioned into "mentions"'s answer as a fabricated foreign link the union-read plan could not
+  distinguish from a real one, and no incarnation comparison can rule this out (a Memory record
+  and an unrelated Entity record can each independently be at incarnation 1). This is strictly
+  simpler than the round-1 plan, not an added mechanism: for `"mentions"`, drop the `state.edges`
+  half of the read entirely; `foreign_edges` (populated only by `LinkForeign`, D1-D3) is the sole
+  source of truth. `state.edges` remains fully functional for whatever same-table relations may
+  exist in the future — Memory just never treats it as contributing to `"mentions"` specifically.
 
 ## Required changes
 
@@ -267,6 +328,11 @@ what turns this machinery on for real.
 grouped with the other optional/default-bodied methods. `EntityStore` overrides it per D8's exact
 four-line body. No other `Store` impl changes for this work order (default `None` is correct for
 `RelationStore` and `MemoryStore`).
+
+**R1b — `uc-protocol::connection`: the D13 lock-scope extension.** In `Connection::request`
+(`connection.rs:231-241`), add `Request::Join(_)` to the existing `matches!` list that decides
+whether to acquire `self.registry.relationship_lock` before dispatching. One match arm; no other
+line in `connection.rs` changes.
 
 **R2 — `uc-memory`: two new `Change` variants, `LinkForeign` now carrying `to_incarnation`.**
 
@@ -310,30 +376,32 @@ to the new variants too.
   `RecordNotFound` if `None` (D8/D9 — this is the live existence+incarnation check, replacing the
   registry-only boolean check as the value source for what gets recorded, though the registry's
   own `check_link` still runs first and unchanged); check `AlreadyLinked` against `foreign_edges`
-  in the single `(left.0, from_incarnation, right.0, ..)` direction only (D10 — no swapped-tuple
-  check); submit `Change::LinkForeign { from: left.0, from_incarnation, to: right.0,
-  to_incarnation }`.
+  using the full single-direction tuple `(left.0, from_incarnation, right.0, to_incarnation)`
+  (D10, revised round 2 — includes `to_incarnation`, never the swapped tuple); submit
+  `Change::LinkForeign { from: left.0, from_incarnation, to: right.0, to_incarnation }` (a stale
+  tuple for the same `(left, right)` pair at an older `to_incarnation` may already exist and is
+  left untouched, per D10/D9).
 - `detach_record(relation, id)`: validate `relation == "mentions"` (`Malformed` otherwise,
   matching legacy's `DEL-FR-005` citation), submit `Change::DetachForeign { to: id.0 }`, return
   `Ok(count)` of edges actually removed (read the pre-submit count via a snapshot diff, or have
   the engine report it — implementer's choice, tested either way).
-- `neighbors`/`neighbors_by_relation`/`count_edges`: for `"mentions"`, read `foreign_edges` using
-  D5's live-membership direction rule (check `Self::current(&state, queried_id)` first to decide
-  `from`- vs `to`-side interpretation) and D9's freshness filter (`self.entity.incarnation(to) ==
-  recorded to_incarnation` before treating a tuple as a current match), in addition to (not
-  instead of) the existing same-table `edges` read — a wire client never distinguishes
-  "same-table" vs "foreign" adjacency, so both sets contribute to the same relation's answer. (In
-  practice only `foreign_edges` will ever be populated for `"mentions"` once this lands, since no
-  code path inserts a same-table `mentions` edge for Memory — but reading both costs nothing and
-  stays correct if that ever changes.) `Join` needs no direct change (`uc-protocol::query`
-  untouched) — it calls `neighbors`/`neighbors_by_relation` and inherits the fix transitively.
+- `neighbors`/`neighbors_by_relation`/`count_edges`: for `"mentions"`, read `foreign_edges` only
+  (D14, revised round 2 — never `state.edges`) using D5's live-membership direction rule (check
+  `Self::current(&state, queried_id)` first to decide `from`- vs `to`-side interpretation) and
+  D9's freshness filter (`self.entity.incarnation(to) == recorded to_incarnation` before treating
+  a tuple as a current match). `Join` needs no direct change to its own evaluation logic
+  (`uc-protocol::query` untouched) — it calls `neighbors`/`neighbors_by_relation` and inherits the
+  fix transitively; the residual TOCTOU window between that call and `Join`'s own subsequent
+  `right.get` is closed separately by D13/R1b (the connection-level lock), not by anything in
+  `uc-facade`.
 
 ## Non-goals
 
 No change to `uc-entity`'s engine, `uc-relation`, `uc-core`, `uc-harness`, or
 `uc-facade::RelationStore` (D7). The only exceptions to "frozen" surfaces this work order takes
-are the one new optional `Store` trait method (D8) and `EntityStore`'s four-line override of it
-(D8) — both narrow, mechanical and disclosed here and in `BUILD-LOG.md`, not a broader redesign.
+are the one new optional `Store` trait method (D8), `EntityStore`'s four-line override of it, and
+the one-match-arm lock-scope extension in `uc-protocol::connection` (D13/R1b) — all narrow,
+mechanical and disclosed here and in `BUILD-LOG.md`, not a broader redesign.
 No atomic cross-table `WriteBatch` support (still `write_batch_checked`'s 4b-i fail-closed default,
 unchanged). No migration path for an existing `CMM2` Memory store (D2 — none exists with real data
 yet). No new relation kind, no SQL, no listener/bind/auth change (all Step 4b-ii scope, untouched
@@ -350,8 +418,16 @@ required test coverage, named explicitly in the implementation report:
 1. A real cross-table `Link(memory_id, entity_id, "mentions")` over a real socket succeeds when
    the Entity table is registered and the id exists; `Malformed`/`Unsupported`/`RecordNotFound` in
    the same shapes Step 4b-i's synthetic-double tests already established for the unregistered/
-   missing-endpoint cases, now against real adapters. `left.0 == right.0` is rejected `Malformed`
-   before any other check (D11/P4C-004).
+   missing-endpoint cases, now against real adapters. (Revised, P4C-R2-004 — the registry's own
+   existence check runs *before* `link_records` is ever reached, so a self-loop's wire outcome
+   depends on what the registry sees first, not on D11 alone; D11's `Malformed` fires only once
+   the registry's own check would otherwise pass.) Test all three distinct self-loop outcomes
+   explicitly, in registry-first precedence order: `Link(q, q, "mentions")` where `q` exists as a
+   live Entity id → `Malformed` (D11, registry's existence check passes, self-loop check fires);
+   where `q` does not exist as any live Entity id → `RecordNotFound` (registry's own check fails
+   first, D11 never reached); where the Entity table is unregistered → `Unsupported` (registry
+   fails first for a different reason). No claim that self-loop rejection universally precedes
+   every other error shape.
 2. `neighbors`/`neighbors_by_relation("mentions")` against the Memory table finds the Entity id
    after linking, **and** the same query given the Entity id as input finds the Memory id back
    (D5's dual-direction, live-membership-resolved lookup).
@@ -387,3 +463,26 @@ required test coverage, named explicitly in the implementation report:
     `Malformed`, exactly reproducing legacy's own descriptor shape (D12). Entity's own wildcard
     descriptor (from the trait default, Step 4b-ii's F1) is unaffected — update the existing
     wildcard regression test's Memory-side assertion to expect the wildcard's absence again.
+12. (New, P4C-R2-001 closure, D13) A deterministic two-connection interleaving test: connection A
+    starts a `Join` across Memory→Entity via `"mentions"` and is paused (by test instrumentation,
+    not a real sleep race) after its relationship lock is acquired but before it releases;
+    connection B attempts a concurrent `Delete`+reinsert of the joined Entity endpoint and
+    observably blocks until A's Join completes (confirmed by a happens-before signal, e.g. B's
+    request only returns after A's), demonstrating the lock — not timing luck — is what prevents
+    the race. A second variant without the fix (temporarily, in a throwaway test double or by
+    testing pre-D13 behavior) is not required; the requirement is a positive test that the lock
+    scope now includes `Join`, e.g. asserting `Connection::request` acquires the lock for
+    `Request::Join(_)` the same way it does for `Request::Delete`.
+13. (New, P4C-R2-002 closure, D10) After `Link(M, E, "mentions")` succeeds, delete `E` and
+    reinsert a new `E` at the same id (incarnation 2), then `Link(M, E, "mentions")` again:
+    the second `Link` succeeds (not `AlreadyLinked`), `foreign_edges` now holds both the stale
+    `(M, .., E, 1)` and the fresh `(M, .., E, 2)` tuples, and every freshness-filtered read
+    (`neighbors`/`Join`/`count_edges`) reports exactly the fresh pair, never the stale one and
+    never both.
+14. (New, P4C-R2-003 closure, D14) Construct a `MemoryEngine` directly (bypassing
+    `MemoryStore::link_records`) and submit a raw same-table `Change::Link` between two Memory
+    records `A` and `B` via `MemoryEngine::transact`, matching the existing
+    `uc-memory` test the review cited. Separately register an Entity record whose id equals `B`'s.
+    Confirm `MemoryStore::neighbors_by_relation(A, "mentions")`/`count_edges("mentions")`/`Join`
+    do **not** report or return the colliding Entity id — the same-table edge contributes nothing
+    to `"mentions"`, only real `LinkForeign` entries do.
