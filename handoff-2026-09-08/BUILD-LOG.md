@@ -543,3 +543,100 @@ full findings are committed for continuity (see below). Next action on resume: g
 answer on P4C-001 (narrow-the-window-and-disclose vs. a small `Store`-trait extension vs.
 reconsider), fold in the unconditional P4C-002 `AlreadyLinked` fix plus a disclosure decision for
 its collision half, apply the mechanical P4C-003/004/005 fixes, and resubmit for review round 2.
+
+## Step 4c — handoff resumed (2026-09-09, new machine/session)
+
+Resumed on a different physical machine than the one that wrote the handoff prompt (confirmed:
+`C:\tools\naner\home\.claude` and its runner path did not exist here; the claudex-loop skill was
+instead resolved from this machine's own plugin cache at
+`C:\Users\baileyrd\.claude\plugins\cache\claudex-loop\...`). Two environment defects specific to
+this machine were found and fixed before any spec work, both with the owner's explicit sign-off
+(both are git-config/state changes, not covered by the handoff's standing push authorization):
+
+- **CRLF/`core.autocrlf`:** this machine had `core.autocrlf=true` globally and the repo carries no
+  `.gitattributes` forcing LF, so every checked-out text file had CRLF line endings while the git
+  blobs are LF. This silently broke one `cm-trace` test
+  (`run::tests::retained_binary_patch_reconstructs_every_manifest_hash_in_fresh_worktree`, which
+  hashes literal on-disk bytes and compares against an LF-computed manifest hash) on a completely
+  unmodified Step 4b-ii baseline — confirmed pre-existing, unrelated to any Step 4c change. Fixed
+  by setting `core.autocrlf false` for this repo only (not global) and re-normalizing both the
+  `step4c` worktree and the main `handoff/merge-2026-09-08` worktree (`git rm -r --cached . && git
+  reset --hard`, run only after confirming each worktree was clean and, for the main worktree,
+  after capturing the one real in-flight edit to rewrite back afterward). All 11 proof-chain
+  commands pass cleanly post-fix; logs in `proof-baseline-1..11.log`.
+- **Stale `rusty_multimodal_db` clone:** the local legacy reference repo (`C:/dev/rusty_multimodal_db`)
+  was 401 commits behind its own `origin/main`, missing `src/server/memory.rs` and
+  `src/server/serve.rs` entirely — the exact files this spec's D3/D11/D12 cite for legacy fidelity.
+  This caused review round 3 to return `BLOCKED` (see below) rather than a design finding. Fixed
+  by fast-forwarding (`git merge --ff-only origin/main`, a non-destructive, no-owner-decision-needed
+  update since the local branch was purely behind, not diverged). Every citation was then
+  re-verified directly against the current source: all were substantively correct, but several
+  exact line numbers had drifted and one verbatim quote (the `delete_across` crash-window doc
+  comment) had been condensed since originally written. Corrected excerpts (with the current line
+  numbers and stable ADR/spec IDs — `DEL-FR-007`, `TBL-FR-007`, `TBL-FR-008`, `DEL-FR-005`) are now
+  embedded verbatim in the spec itself, so future review rounds don't depend on sandbox access to
+  a second repo.
+
+## Step 4c — review rounds 2 through 5 (2026-09-09)
+
+Owner disposition on the two round-1 high findings (asked via `AskUserQuestion` on resume):
+**P4C-001 → extend the `Store` trait** (not narrow-the-window-and-disclose) — rationale: a client
+fully controls insert ids on the wire, so delete-then-reinsert-same-id is a normal, reachable case
+by this project's own established standard (Steps 3/4a), not a residual-worthy freak collision.
+**P4C-002 → also fix the collision half now**, not accepted as a disclosed residual, on the same
+reachability reasoning. Both closed via one small extension: a new optional `Store::incarnation`
+trait method (D8) plus `MemoryStore` holding a direct `Arc<dyn Store>` handle to the Entity table
+(D9) — this closes P4C-001 (live incarnation freshness check on every read) and P4C-002's
+collision half (deterministic live-membership direction resolution, D5 revised) with one
+mechanism, not two.
+
+- **Review round 2** (`step4c-review/claudex-cy_5akev`, plan sha256 `644fd6c8…cd2601b`):
+  **REVISE**, 2 high + 2 medium. **P4C-R2-001 (high):** a live TOCTOU race — `evaluate_join`
+  resolves neighbor ids (freshness-checked) then separately calls `right.get`, unlocked; a second
+  connection's Delete+reinsert in that window still resurrects the wrong record. Traced to a
+  one-token gap in an already-generic lock list (`connection.rs`'s `Request::Link | Delete |
+  WriteBatch` match never included `Join`); closed directly (D13) rather than escalated, since the
+  fix is exactly as narrow and mechanical as the trait extension the owner already approved for
+  the same reasoning. **P4C-R2-002 (medium):** `AlreadyLinked` ignored the freshly-resolved
+  `to_incarnation`, letting a stale edge block linking to the entity's *current* incarnation —
+  fixed by comparing the full four-field tuple (D10 revised). **P4C-R2-003 (high):** same-table
+  `state.edges` remains reachable via public `MemoryEngine::transact` independent of the wire
+  facade, and the round-1 union-read plan would have let a colliding same-table edge leak into
+  `"mentions"` as a fabricated foreign link — fixed by dropping the union entirely; `foreign_edges`
+  is now the sole source for `"mentions"` reads (D14), which is simpler than the original plan, not
+  an added mechanism. **P4C-R2-004 (medium):** Proof item 1's claim that self-loop rejection always
+  precedes every other error ignored that the registry's own far-endpoint check runs before
+  `link_records` is ever reached — revised to test all distinct wire outcomes in actual precedence
+  order.
+- **Review round 3** (`step4c-review/claudex-tb0owyi6`, plan sha256 `88a3c757…4584724`):
+  **BLOCKED**, zero findings — not a design defect; the reviewer's sandbox had no access to
+  `rusty_multimodal_db` (a separate repo from the one under review) and declined to approve
+  unverifiable legacy-fidelity claims. Resolved by the stale-clone fix and citation correction
+  above (embedding verbatim excerpts in the spec itself rather than relying on file-path citations
+  to an inaccessible second repo).
+- **Review round 4** (`step4c-review/claudex-og96zwiw`, plan sha256 `937c8fcf…7d407ad4`):
+  **REVISE**, 1 medium. **P4C-R3-001:** R4's own implementation instructions still told the builder
+  to reject a self-loop *before* checking `left`'s local existence, directly contradicting D11's
+  already-corrected precedence text (round 3) and legacy's actual order (registry far-endpoint
+  check → local `left` existence → self-loop). A reachable case this got wrong: `q` existing in
+  Entity but not in Memory should be `RecordNotFound`, not `Malformed`. Fixed by reordering R4's
+  instructions and adding the missing outcome to Proof item 1.
+- **Review round 5** (`step4c-review/claudex-6837z2qf`, plan sha256 `af142bbf…4a36891794`):
+  **APPROVED**, zero findings. "No material unresolved defects found in the proposed Step 4c
+  design." Approval is for the plan only, not an implementation or completed validation, per the
+  runner's own convention.
+
+Final design, approved: D1-D14 (`step4c-foreign-edges-spec.md`, current). Two narrow, disclosed
+exceptions to previously-"frozen" `uc-protocol`, both mechanical and matching the shape of
+Step 4b-ii's own four D7-style exceptions: (1) `Store::incarnation`, a new optional trait method,
+plus `EntityStore`'s four-line override (D8); (2) one match-arm addition extending
+`Connection::request`'s existing relationship-lock acquisition to also cover `Request::Join` (D13).
+`uc-entity`'s engine, `uc-relation`, `uc-core`, `uc-harness` and `RelationStore` remain completely
+untouched. Total: five review rounds, eleven distinct findings across rounds 1-4 (P4C-001/002/003/
+004/005, P4C-R2-001/002/003/004, P4C-R3-001), all resolved without a design reconsideration —
+every fork after the initial P4C-001/002 disposition turned out to be mechanical once traced to
+its exact source location.
+
+Build launching against the approved spec (plan sha256 `af142bbf…4a36891794`,
+`runs/step4c-review5/claudex-6837z2qf/result.json` as `--approval`). Budgets: MAX_FIX_ROUNDS=2,
+MAX_INSPECTION_ROUNDS=2, matching every prior Step 4 increment.
