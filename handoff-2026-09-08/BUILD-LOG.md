@@ -736,3 +736,50 @@ rigor, not a reason to expand or abandon the deliberately bounded scope the Host
 
 Build launching against the approved spec. Budgets: MAX_FIX_ROUNDS=2, MAX_INSPECTION_ROUNDS=2,
 matching every prior step.
+
+## Step 5 build, inspection and close (2026-09-09)
+
+- Build (`step5-build/claudex-jtxv273h`, exit 0): 124 unified-commitment tests (119 prior + 5 new),
+  236 total across the three workspaces, 56/56 digests matching, all eleven proof commands exit 0.
+  Two files: new `uc-facade/tests/remind_me_migration.rs` (id mapping, the two-key envelope,
+  checkpoint-acceptance assertions, digest comparison) and
+  `tests/fixtures/remind-me/export.json` (the synthetic flat mixed export envelope). No production
+  crate touched. Six disclosed deviations, all sound on review: a genuine 27-vs-28 field count
+  correction (the spec's own explicit list totals 28); no `node_id` assignment for Entity (the
+  frozen `uc-entity` schema has no such field to assign into, confirmed against the spec's own
+  cited schema); Proof item 4's "bidirectional Join" wording corrected to forward Join plus
+  bidirectional Neighbors (Join is directed Memory→Entity per Step 4c's design; only the
+  underlying `neighbors`/`neighbors_by_relation` lookup is bidirectional); raw-engine checkpoint
+  access since the facade wrapper exposes none (no public API changed); leap-second rejection
+  (fail closed, no invented folding policy); fixtures left uncommitted per the runner's own
+  no-commit-during-build convention.
+- Host review (source read directly): `mapped_id`/`original_id`/`entity_identity` implement D3's
+  id scheme exactly (prefix-strip/pad/hex-validate); `memory_fields`/`reconstruct_memory` implement
+  D2/D4's projection-plus-21-field-envelope split exactly, including the `option_projection`
+  None-vs-default handling and the envelope's exact 2-key/21-field/28-field assertions;
+  `check_report` asserts checkpoint position, empty `rejected_checkpoints`, `dropped_tail`, and
+  `gaps` — stricter than the spec required.
+- Host proof (`proof-S5-1..11.log`, this worktree): independently re-run, all eleven commands exit
+  0, 236 tests (124+17+95) matching Codex's reported count exactly; an independent Python
+  json/hashlib check reproduced all 56 digests.
+- Inspection 1 (fresh Claude CLI): **APPROVED, one low finding.** S5-1: `export.json`'s
+  `entity_relation`/`memory_entity` block order didn't match `export.rs`'s real emission order
+  (`entities → memory_entity → entity_relation`, verified directly against
+  `remind_me_core/src/export.rs:298-307`) — no functional effect, since the test classifies
+  records independently by `record_type` and only requires entities-first, true either way. Fixed
+  directly by the host (a pure JSON reorder, no logic change); re-verified the full `uc-facade`
+  suite (all 5 new tests plus the 12 existing TCP tests) and a targeted fmt/clippy/diff-check
+  recheck (`proof-S5-fix1-1..3.log`) — no regression. Clean close within budget: fix round 1 of 2
+  used, inspection round 1 of 2 used.
+
+## Step 5 closed (host commit)
+
+Committed on `codex/merge-step5-migration-proof` (worktree `C:/dev/rusty_data_os-step5`, pushed —
+commit `7111bba`): the migration-proof test suite and fixture, the corrected fixture ordering, and
+all host proof/inspection evidence.
+
+Residuals: none disclosed as open — the one inspection finding was fixed and re-verified, not
+carried. **Explicitly not done, by design (see the work order's own "Host decision"):** no real
+`rusty_remind_me` consumer has migrated; no live data was touched; full feature parity (search,
+vitality, wiki, vectors, sync) remains unbuilt and unscoped. Opening the listener beyond loopback
+and real authentication remain open (carried from Step 4c).
