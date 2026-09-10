@@ -678,3 +678,61 @@ deterministic interleaving test, and all host proof/inspection evidence.
 Residuals: none disclosed as open — inspection round 1/2 closed clean, no findings to carry.
 Not started: opening the listener beyond loopback; real authentication (both named alongside 4c
 as options when the owner was last asked which gap to tackle next, still open).
+
+## Step 5 — Codex plan review (a verified, non-destructive core-memory migration proof)
+
+- Owner set an autonomous goal (`/goal`, 2026-09-09): "complete the merge and migration without my
+  interaction," directing the host not to pause and ask. Before drafting a literal migration work
+  order, the host investigated `rusty_remind_me`'s actual current state per the merge plan's own
+  explicit instruction to do so. Found the plan's Step 5 premise stale: `rusty_remind_me` has grown
+  into a 24-table system (FTS5 full-text search, ACT-R vitality/decay scoring, a markdown wiki,
+  vector embeddings/ANN, multi-node sync through a real production hub the owner recently migrated
+  to new infrastructure) with none of it represented in `rusty_data_os`'s 13-field experimental
+  Memory domain.
+- Host decision (autonomous, documented in full in `step5-remind-me-migration-proof-spec.md`'s own
+  "Host decision" section): do not attempt a literal migration — it would either silently regress
+  the owner's live, daily-used personal memory system, or require a large unscoped feature-parity
+  effort never authorized by any prior step. Instead, scope Step 5 to building and verifying the
+  real *mechanism* the plan's sub-steps 1-4 require (export, import, comparison, reopen/rebuild,
+  backup/restore), proven against synthetic fixtures modeled precisely on `remind_me_core`'s actual
+  schema and id-generation code — never against real data (this machine has no local copy of it).
+  Sub-step 5 (point the consumer at the new engine) is explicitly not performed.
+- Review round 1 (`step5-review1/claudex-y600yi8y`, plan sha256 not recorded — see spec commit
+  `a6cd411`): **REVISE**, 2 high + 3 medium. Codex independently read `rusty_remind_me`'s real
+  source (despite it being outside `--repo`) and found the round-1 mapping design's "lossless
+  round-trip" claim was not actually achievable: `None`-vs-default collisions on `memory_type`/
+  `status`, sub-millisecond timestamp truncation, no valid encoding for `Option<String>` fields
+  required to be non-nullable `Str` in the wire schema, an underspecified relation/join mapping
+  (a compliant implementation could regenerate relation ids and discard join timestamps), and
+  fixtures modeled as raw table rows rather than the real reusable exporter's actual flat
+  mixed-record envelope (which drops `node_id` from entities/relations entirely and stamps
+  `role: "assistant"` on every memory). All five confirmed real and fixed: 13 `uc-memory` fields
+  redefined as lossy queryable projections; a 21-field lossless stash (up from 14) as the sole
+  source of truth for exact reconstruction; full relation/join identity and field mapping
+  specified; fixtures rebuilt around the real export envelope with the safe `include_deleted`
+  default explicitly and disclosedly overridden for this proof only.
+- Review round 2 (`step5-review2/claudex-_s8iheow`, plan sha256 `169cdf4`'s commit): **REVISE**, 3
+  medium. Entity/Relation sidecar-only fields (no home in `uc-entity`/`uc-relation`) were compared
+  after backup/restore/rebuild even though they only ever lived in the test process's own memory —
+  would have silently compared the fixture against itself. `metadata` is `serde_json::Value`, not
+  guaranteed an object, so the stash's merge-into-top-level-keys design had no encoding for
+  null/array/scalar metadata. Neither checkpoint/reopen nor backup/reopen asserted a checkpoint was
+  actually accepted, so a silently-corrupted checkpoint could pass via `uc-core`'s
+  fallback-to-replay path. All three fixed: sidecar-only fields rescoped to import-time-only
+  verification, explicitly not claimed to survive backup/restore; a fixed two-key envelope
+  (`{"original_metadata": ..., "_remind_me_migration_extra": {...}}`) replacing the merge design,
+  handling any JSON shape with no collision case; explicit `OpenReport.checkpoint`/
+  `rejected_checkpoints` assertions added to both checkpoint-backed stages, complementing the
+  existing checkpoint-free-rebuild assertion.
+- Review round 3 (`step5-review3/claudex-u8pt_n0v`, plan sha256 matching commit `8c80067`):
+  **APPROVED**, zero findings. "No material unresolved defects found in the bounded synthetic
+  migration-proof plan. Approval does not establish consumer migration readiness or implementation
+  correctness" — exactly the bounded claim this work order makes for itself.
+
+Final design, approved: `step5-remind-me-migration-proof-spec.md`, current. Three review rounds,
+eight findings (2 high, 6 medium) across rounds 1-2, all resolved by grounding in actual
+`remind_me_core` source rather than assumption — every finding was a real gap in the *proof's*
+rigor, not a reason to expand or abandon the deliberately bounded scope the Host decision set.
+
+Build launching against the approved spec. Budgets: MAX_FIX_ROUNDS=2, MAX_INSPECTION_ROUNDS=2,
+matching every prior step.
